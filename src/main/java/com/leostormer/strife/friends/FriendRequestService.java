@@ -118,8 +118,6 @@ public class FriendRequestService {
 
     public void blockUser(User sender, User receiver) {
         Optional<FriendRequest> result = friendRequestRepository.findOneBySenderIdAndReceiverId(sender.getId(), receiver.getId());
-        result = result.isPresent() ? result
-                : friendRequestRepository.findOneBySenderIdAndReceiverId(receiver.getId(), sender.getId());
         if (result.isPresent() && result.get().getStatus() == FriendStatus.BLOCKED)
             return;
 

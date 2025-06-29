@@ -98,12 +98,16 @@ public class UserController {
         }
     }
 
-    @PostMapping("/friends/block")
+    @PostMapping("/block-user")
     public ResponseEntity<String> blockUser(Principal principal, @RequestParam ObjectId receiverId) {
         User sender = userService.getUserByUsername(principal.getName()).get();
         try {
             userService.blockUser(sender, receiverId);
             return ResponseEntity.ok("User blocked successfully");
+        } catch (UnauthorizedFriendRequestActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error blocking user: " + e.getMessage());
         }
