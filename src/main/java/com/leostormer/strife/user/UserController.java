@@ -113,6 +113,21 @@ public class UserController {
         }
     }
 
+    @DeleteMapping("/unblock-user")
+    public ResponseEntity<String> unblockUser(Principal principal, @RequestParam ObjectId receiverId) {
+        User sender = userService.getUserByUsername(principal.getName()).get();
+        try {
+            userService.unblockUser(sender, receiverId);
+            return ResponseEntity.ok("User unblocked successfully");
+        } catch (UnauthorizedFriendRequestActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error unblocking user: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<UserView> registerUser(@RequestBody User user) {
         try {

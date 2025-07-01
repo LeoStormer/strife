@@ -1,6 +1,6 @@
 package com.leostormer.strife.friends;
 
-public enum FriendStatus {
+public enum FriendRequestResponse {
     PENDING,
     ACCEPTED,
     BLOCKED

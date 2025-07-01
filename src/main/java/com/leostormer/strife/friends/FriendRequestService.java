@@ -22,25 +22,24 @@ public class FriendRequestService {
     }
 
     /**
-     * Returns a list of friend requests sent by or to user.
+     * Returns a list of friend requests sent to or by user.
      * 
      * @param user
      * @return all friend requests
      */
     public List<FriendRequest> getAllFriendRequests(User user) {
-        return friendRequestRepository.findBySenderIdOrReceiverId(user.getId(), user.getId());
+        return friendRequestRepository.findAllUserRequests(user.getId());
     }
 
     /**
-     * Returns a list of friend requests sent by or to user that have been
+     * Returns a list of friend requests sent to or by user that have been
      * accepted.
      * 
      * @param user
      * @return all accepted friend requests
      */
     public List<FriendRequest> getAllAcceptedFriendRequests(User user) {
-        return friendRequestRepository.findBySenderIdOrReceiverIdAndStatus(user.getId(), user.getId(),
-                FriendStatus.ACCEPTED);
+        return friendRequestRepository.findAllUserAcceptedRequests(user.getId());
     }
 
     /**
@@ -51,8 +50,7 @@ public class FriendRequestService {
      * @return all blocked friend requests
      */
     public List<FriendRequest> getAllBlockedFriendRequests(User user) {
-        return friendRequestRepository.findBySenderIdOrReceiverIdAndStatus(user.getId(), user.getId(),
-                FriendStatus.BLOCKED);
+        return friendRequestRepository.findAllUserBlockedRequests(user.getId());
     }
 
     /**
@@ -63,53 +61,57 @@ public class FriendRequestService {
      * @return all pending friend requests
      */
     public List<FriendRequest> getAllPendingFriendRequests(User user) {
-        return friendRequestRepository.findBySenderIdOrReceiverIdAndStatus(user.getId(), user.getId(),
-                FriendStatus.PENDING);
+        return friendRequestRepository.findAllUserPendingRequests(user.getId());
     }
 
     /**
      * Creates a friend request between two users.
      * 
-     * @param sender the <code>User</code> that is sending the request
+     * @param sender   the <code>User</code> that is sending the request
      * @param receiver the <code>User</code> that is receiving the request
-     * @throws DuplicateFriendRequestException if a friend request between these two users already exists
+     * @throws DuplicateFriendRequestException if a friend request between these two
+     *                                         users already exists
      */
     public FriendRequest sendFriendRequest(User sender, User receiver) {
-        if (friendRequestRepository.existsBySenderIdAndReceiverId(sender.getId(), receiver.getId())
-                || friendRequestRepository.existsBySenderIdAndReceiverId(receiver.getId(), sender.getId())) {
+        if (friendRequestRepository.findOneByUserIds(sender.getId(), receiver.getId()).isPresent()) {
             throw new DuplicateFriendRequestException();
         }
 
-        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).build();
+        FriendRequest friendRequest = FriendRequest.builder().user1(sender).user2(receiver).build();
         return friendRequestRepository.save(friendRequest);
     }
 
     /**
      * Accepts a friend request sent to a user.
      * 
+     * @param receiver  the <code>User</code> who received the friend
+     *                  request
      * @param requestId the id of the <code>FriendRequest</code>
-     * @param receiverId the id of the <code>User</code> who received the friend request
-     * @return the saved friend request object 
-     * @throws FriendRequestNotFoundException if no such friend request with id == requestId exists
-     * @throws UnauthorizedFriendRequestActionException if the friend request's status is blocked or if it was not sent to recieverId
+     * @return the saved friend request object
+     * @throws FriendRequestNotFoundException           if no such friend request
+     *                                                  with id == requestId exists
+     * @throws UnauthorizedFriendRequestActionException if the request was not sent
+     *                                                  to reciever or receiver has
+     *                                                  been blocked
      */
     public FriendRequest acceptFriendRequest(User receiver, ObjectId requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(FriendRequestNotFoundException::new);
-        if (!request.getReceiver().equals(receiver) || request.getStatus().equals(FriendStatus.BLOCKED))
+                
+        if (!request.getUser2().getId().equals(receiver.getId()) || request.getUser1Response().equals(FriendRequestResponse.BLOCKED))
             throw new UnauthorizedFriendRequestActionException();
 
-        if (request.getStatus().equals(FriendStatus.ACCEPTED))
+        if (request.getUser2Response().equals(FriendRequestResponse.ACCEPTED))
             return request;
 
-        request.setStatus(FriendStatus.ACCEPTED);
+        request.setUser2Response(FriendRequestResponse.ACCEPTED);
         return friendRequestRepository.save(request);
     }
 
     public void removeFriendRequest(User user, ObjectId requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(FriendRequestNotFoundException::new);
-        if (request.getSender().equals(user) || request.getReceiver().equals(user)) {
+        if (request.isValidUser(user) && !request.hasBeenBlocked(user)) {
             friendRequestRepository.deleteById(requestId);
         } else {
             throw new UnauthorizedFriendRequestActionException();
@@ -117,12 +119,27 @@ public class FriendRequestService {
     }
 
     public void blockUser(User sender, User receiver) {
-        Optional<FriendRequest> result = friendRequestRepository.findOneBySenderIdAndReceiverId(sender.getId(), receiver.getId());
-        if (result.isPresent() && result.get().getStatus() == FriendStatus.BLOCKED)
+        Optional<FriendRequest> result = friendRequestRepository.findOneByUserIds(sender.getId(), receiver.getId());
+        if (result.isPresent() && result.get().hasSentBlockRequest(sender))
             return;
 
-        FriendRequest friendRequest = result.orElse(FriendRequest.builder().sender(sender).receiver(receiver).build());
-        friendRequest.setStatus(FriendStatus.BLOCKED);
+        FriendRequest friendRequest = result.orElse(FriendRequest.builder().user1(sender).user2(receiver).build());
+        friendRequest.setUserResponse(sender, FriendRequestResponse.BLOCKED);
         friendRequestRepository.save(friendRequest);
+    }
+
+    public void unblockUser(User sender, User receiver) {
+        FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(sender.getId(), receiver.getId())
+                .orElseThrow(() -> new FriendRequestNotFoundException("Blocked Friend Request Not Found"));
+
+        if (!friendRequest.hasSentBlockRequest(sender))
+            throw new UnauthorizedFriendRequestActionException("Cannot unblock user that has not been blocked");
+
+        if (friendRequest.hasBeenBlocked(sender)) {
+            friendRequest.setUserResponse(sender, FriendRequestResponse.PENDING);
+            friendRequestRepository.save(friendRequest);
+        } else {
+            friendRequestRepository.delete(friendRequest);
+        }
     }
 }

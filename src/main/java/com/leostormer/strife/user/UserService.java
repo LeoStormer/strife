@@ -39,16 +39,22 @@ public class UserService implements UserDetailsService {
     public List<User> getBlockedUsers(User user) {
         return friendRequestService.getAllBlockedFriendRequests(user)
                 .stream()
-                .map(request -> request.getSender().getId().equals(user.getId()) ? request.getReceiver()
-                        : request.getSender())
+                .filter(request -> request.hasSentBlockRequest(user))
+                .map(request -> request.getOtherUser(user))
                 .toList();
     }
 
     public List<User> getFriends(User user) {
         return friendRequestService.getAllAcceptedFriendRequests(user)
                 .stream()
-                .map(request -> request.getSender().equals(user) ? request.getReceiver()
-                        : request.getSender())
+                .map(request -> request.getOtherUser(user))
+                .toList();
+    }
+
+    public List<User> getPendingFriends(User user) {
+        return friendRequestService.getAllPendingFriendRequests(user)
+                .stream()
+                .map(request -> request.getOtherUser(user))
                 .toList();
     }
 
@@ -75,6 +81,14 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
         friendRequestService.blockUser(sender, receiver);
+    }
+
+    public void unblockUser(User sender, ObjectId receiverId) {
+        if (sender.getId().equals(receiverId))
+            throw new UnauthorizedFriendRequestActionException("You cannot unblock yourself");
+
+        User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
+        friendRequestService.unblockUser(sender, receiver);
     }
 
     public User registerUser(User user) {
