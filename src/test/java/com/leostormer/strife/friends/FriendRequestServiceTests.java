@@ -197,7 +197,7 @@ public class FriendRequestServiceTests {
     }
 
     @Test
-    void shouldUnblockUserAndDeleteRequest() {
+    void shouldUnblockUserAndDeleteRequestIfNotBlocked() {
         User user1 = userService.getUserByUsername("testuser1").get();
         User user2 = userService.getUserByUsername("testuser2").get();
 
@@ -209,7 +209,7 @@ public class FriendRequestServiceTests {
     }
 
     @Test
-    void shouldUnblockUserAndKeepRequest() {
+    void shouldUnblockUserAndKeepRequestIfBlocked() {
         User user1 = userService.getUserByUsername("testuser1").get();
         User user2 = userService.getUserByUsername("testuser2").get();
 
