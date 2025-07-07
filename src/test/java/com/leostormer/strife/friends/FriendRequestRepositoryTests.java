@@ -3,6 +3,7 @@ package com.leostormer.strife.friends;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -127,12 +128,15 @@ public class FriendRequestRepositoryTests {
     }
 
     @Test
-    void shouldFindRequestByUser1_IdOrUser2_Id() {
+    void shouldFindRequestByUserIdsWithoutCaringAboutOrder() {
         User user1 = userRepository.findOneByUsername("user1").get();
+        User user2 = userRepository.findOneByUsername("user2").get();
 
-        List<FriendRequest> request = friendRequestRepository.findAllUserRequests(user1.getId());
-
-        assertTrue(request.size() == 3);
+        Optional<FriendRequest> request = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId());
+        Optional<FriendRequest> request2 = friendRequestRepository.findOneByUserIds(user2.getId(), user1.getId());
+        assertTrue(request.isPresent());
+        assertTrue(request2.isPresent());
+        assertTrue(request.get().getId().equals(request2.get().getId()));
     }
 
     @Test
@@ -205,5 +209,14 @@ public class FriendRequestRepositoryTests {
 
         requests = friendRequestRepository.findAllUserPendingRequests(user5.getId());
         assertTrue(requests.size() == 0);
+    }
+
+    @Test
+    void shouldExistByUserIdsWithoutCaringAboutOrder() {
+        User user1 = userRepository.findOneByUsername("user1").get();
+        User user3 = userRepository.findOneByUsername("user3").get();
+
+        assertTrue(friendRequestRepository.existsByUserIds(user1.getId(), user3.getId()));
+        assertTrue(friendRequestRepository.existsByUserIds(user3.getId(), user1.getId()));
     }
 }
