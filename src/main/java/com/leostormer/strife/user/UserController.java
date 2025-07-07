@@ -44,19 +44,19 @@ public class UserController {
 
     @GetMapping("/blocked")
     public ResponseEntity<List<UserView>> getBlockedUsers(Principal principal) {
-        User user = userService.getUserByUsername(principal.getName()).get();
+        User user = userService.getUser(principal);
         return ResponseEntity.ok(userService.getBlockedUsers(user).stream().map(UserView::new).toList());
     }
 
     @GetMapping("/friends")
     public ResponseEntity<List<UserView>> getUserFriends(Principal principal) {
-        User user = userService.getUserByUsername(principal.getName()).get();
+        User user = userService.getUser(principal);
         return ResponseEntity.ok(userService.getFriends(user).stream().map(UserView::new).toList());
     }
 
     @PostMapping("/friends/friend-request")
     public ResponseEntity<FriendRequestView> sendFriendRequest(Principal principal, @RequestParam ObjectId receiverId) {
-        User sender = userService.getUserByUsername(principal.getName()).get();
+        User sender = userService.getUser(principal);
         try {
             return ResponseEntity.ok(new FriendRequestView(userService.sendFriendRequest(sender, receiverId)));
         } catch (UserNotFoundException e) {
@@ -71,7 +71,7 @@ public class UserController {
     @PutMapping("/friends/friend-request")
     public ResponseEntity<FriendRequestView> acceptFriendRequest(Principal principal,
             @RequestParam ObjectId requestId) {
-        User receiver = userService.getUserByUsername(principal.getName()).get();
+        User receiver = userService.getUser(principal);
         try {
             return ResponseEntity.ok(new FriendRequestView(userService.acceptFriendRequest(receiver, requestId)));
         } catch (FriendRequestNotFoundException e) {
@@ -85,7 +85,7 @@ public class UserController {
 
     @DeleteMapping("/friends/friend-request")
     public ResponseEntity<String> removeFriendRequest(Principal principal, @RequestParam ObjectId requestId) {
-        User user = userService.getUserByUsername(principal.getName()).get();
+        User user = userService.getUser(principal);
         try {
             userService.removeFriendRequest(user, requestId);
             return ResponseEntity.ok("Friend request removed");
@@ -100,7 +100,7 @@ public class UserController {
 
     @PostMapping("/block-user")
     public ResponseEntity<String> blockUser(Principal principal, @RequestParam ObjectId receiverId) {
-        User sender = userService.getUserByUsername(principal.getName()).get();
+        User sender = userService.getUser(principal);
         try {
             userService.blockUser(sender, receiverId);
             return ResponseEntity.ok("User blocked successfully");
@@ -115,7 +115,7 @@ public class UserController {
 
     @DeleteMapping("/unblock-user")
     public ResponseEntity<String> unblockUser(Principal principal, @RequestParam ObjectId receiverId) {
-        User sender = userService.getUserByUsername(principal.getName()).get();
+        User sender = userService.getUser(principal);
         try {
             userService.unblockUser(sender, receiverId);
             return ResponseEntity.ok("User unblocked successfully");

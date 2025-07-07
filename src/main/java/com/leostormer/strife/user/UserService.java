@@ -1,5 +1,6 @@
 package com.leostormer.strife.user;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +29,17 @@ public class UserService implements UserDetailsService {
     @Autowired
     private final FriendRequestService friendRequestService;
 
+    public User getUser(Principal principal) {
+        // currently authenticated principal should always correspond to an active user in database
+        return getUserByUsername(principal.getName()).get();
+    }
+
     public Optional<User> getUserById(ObjectId userId) {
         return userRepository.findById(userId);
+    }
+
+    public boolean doesUserExist(ObjectId userId) {
+        return userRepository.existsById(userId);
     }
 
     public Optional<User> getUserByUsername(String username) {
