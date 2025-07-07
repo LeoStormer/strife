@@ -15,9 +15,9 @@ public interface FriendRequestRepository
     List<FriendRequest> findByUser1_Id(ObjectId user1Id);
     List<FriendRequest> findByUser2_Id(ObjectId user2Id);
 
-    @Query("{ $or : [ { user1 : ?0, user2 : ?1 }, { user1Id : ?1, user2 : ?0 } ] }")
+    @Query("{ $or : [ { user1 : ?0, user2 : ?1 }, { user1 : ?1, user2 : ?0 } ] }")
     Optional<FriendRequest> findOneByUserIds(ObjectId userId1, ObjectId userId2);
 
-    @Query("{ $or : [ { user1 : ?0, user2 : ?1 }, { user1Id : ?1, user2 : ?0 } ] }")
+    @Query(value = "{ $or : [ { user1 : ?0, user2 : ?1 }, { user1 : ?1, user2 : ?0 } ] }", exists = true)
     boolean existsByUserIds(ObjectId userId1, ObjectId userId2);
 }
