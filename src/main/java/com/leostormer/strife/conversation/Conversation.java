@@ -11,7 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Document(collection = "chats")
+@Document(collection = "conversations")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
