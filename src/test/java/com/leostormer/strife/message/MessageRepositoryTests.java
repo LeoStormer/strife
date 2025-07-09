@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,16 +26,17 @@ import com.leostormer.strife.user.UserRepository;
 @ActiveProfiles("test")
 public class MessageRepositoryTests {
     @Autowired
-    public MessageRepository messageRepository;
+    MessageRepository messageRepository;
 
     @Autowired
-    public ConversationRepository conversationRepository;
+    ConversationRepository conversationRepository;
 
     @Autowired
-    public UserRepository userRepository;
+    UserRepository userRepository;
 
     @BeforeAll
-    static void setupUsers(@Autowired UserRepository userRepository, @Autowired ConversationRepository conversationRepository) {
+    static void setupUsers(@Autowired UserRepository userRepository,
+            @Autowired ConversationRepository conversationRepository) {
         User[] users = new User[3];
         for (int i = 0; i < 3; i++) {
             User user = new User();
@@ -44,15 +45,16 @@ public class MessageRepositoryTests {
             user.setPassword("password" + passwordDigits);
             users[i] = userRepository.save(user);
         }
-        
+
         Conversation convo1 = new Conversation(users[0], users[1], true, true);
-        Conversation convo2 = new Conversation(users[1], users[2], true , true);
+        Conversation convo2 = new Conversation(users[1], users[2], true, true);
         Conversation convo3 = new Conversation(users[0], users[2], true, false);
         conversationRepository.saveAll(List.of(convo1, convo2, convo3));
     }
 
     @AfterAll
-    static void clearUsers(@Autowired UserRepository userRepository, @Autowired ConversationRepository conversationRepository) {
+    static void clearUsers(@Autowired UserRepository userRepository,
+            @Autowired ConversationRepository conversationRepository) {
         userRepository.deleteAll();
         conversationRepository.deleteAll();
     }
@@ -95,10 +97,11 @@ public class MessageRepositoryTests {
         Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
         DirectMessage message = messageRepository.insertMessage(user1, conversation, "This is a new message!");
 
-        Optional<DirectMessage> message2 = messageRepository.findDirectMessageById(message.getId());
-        assertTrue(message2.isPresent());
-        assertTrue(message2.get().getId().equals(message.getId()));
-        assertTrue(message2.get().getContent().equals(message.getContent()));
+        Optional<DirectMessage> messageFromRepository = messageRepository.findDirectMessageById(message.getId());
+        assertTrue(messageFromRepository.isPresent());
+        assertTrue(messageFromRepository.get().getId().equals(message.getId()));
+        assertTrue(messageFromRepository.get().getContent().equals(message.getContent()));
+        assertTrue(messageFromRepository.get().getConversation().getId().equals(conversation.getId()));
     }
 
     @Test
@@ -123,7 +126,7 @@ public class MessageRepositoryTests {
         assertTrue(message.getId().equals(updatedMessage.getId()));
         assertFalse(message.getContent().equals(updatedMessage.getContent()));
     }
-    
+
     @Test
     void shouldDeleteAllByConversation() {
         User user1 = userRepository.findOneByUsername("User1").get();
@@ -133,6 +136,17 @@ public class MessageRepositoryTests {
         assertTrue(messageRepository.getMessages(conversation, searchOptions).size() == 10);
         messageRepository.deleteAllByConversation(conversation);
         assertTrue(messageRepository.getMessages(conversation, searchOptions).size() == 0);
+    }
+
+    @Test
+    void shouldExistByConversation() {
+        User user1 = userRepository.findOneByUsername("User1").get();
+        User user2 = userRepository.findOneByUsername("User2").get();
+        User user3 = userRepository.findOneByUsername("User3").get();
+        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
+        assertTrue(messageRepository.existsbyConversation(conversation));
+        Conversation conversation2 = conversationRepository.findByUserIds(user1.getId(), user3.getId()).get();
+        assertFalse(messageRepository.existsbyConversation(conversation2));
     }
 
     @Test
@@ -157,6 +171,11 @@ public class MessageRepositoryTests {
 
     @Test
     void shouldDeleteAllByChannel() {
+
+    }
+
+    @Test
+    void shouldExistByChannel() {
 
     }
 }

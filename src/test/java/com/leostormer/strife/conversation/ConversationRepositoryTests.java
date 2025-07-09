@@ -38,11 +38,15 @@ public class ConversationRepositoryTests {
         user3.setUsername("User3");
         user3.setPassword("password12345");
         user3 = userRepository.save(user3);
+        User user4 = new User();
+        user4.setUsername("User4");
+        user4.setPassword("password123456");
+        user4 = userRepository.save(user4);
 
-        Conversation convo1 = new Conversation(user1, user2, true, true);
-        Conversation convo2 = new Conversation(user1, user3, true, true);
-        Conversation convo3 = new Conversation(user2, user3, true, true);
-        conversationRepository.saveAll(List.of(convo1, convo2, convo3));
+        conversationRepository
+                .saveAll(List.of(new Conversation(user1, user2, true, true), new Conversation(user1, user3, true, true),
+                        new Conversation(user2, user3, true, true), new Conversation(user4, user1, true, false),
+                        new Conversation(user4, user2, true, false), new Conversation(user4, user3, true, false)));
     }
 
     @AfterEach
@@ -53,7 +57,7 @@ public class ConversationRepositoryTests {
 
     @Test
     void shouldGetAllUserConversations() {
-        User[] users = new User[3];
+        User[] users = new User[4];
         for (int i = 0; i < users.length; i++) {
             users[i] = userRepository.findOneByUsername("User" + (i + 1)).get();
         }
@@ -61,6 +65,7 @@ public class ConversationRepositoryTests {
         assertTrue(conversationRepository.getAllUserConversations(users[0].getId()).size() == 2);
         assertTrue(conversationRepository.getAllUserConversations(users[1].getId()).size() == 2);
         assertTrue(conversationRepository.getAllUserConversations(users[2].getId()).size() == 2);
+        assertTrue(conversationRepository.getAllUserConversations(users[3].getId()).size() == 3);
     }
 
     @Test
