@@ -31,11 +31,23 @@ public class Conversation {
 
     private boolean user2Participating;
 
+    private boolean locked;
+
     public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating) {
         this.user1 = user1;
         this.user2 = user2;
         this.user1Participating = user1Participating;
         this.user2Participating = user2Participating;
+        this.locked = false;
+    }
+
+    public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating,
+            boolean locked) {
+        this.user1 = user1;
+        this.user2 = user2;
+        this.user1Participating = user1Participating;
+        this.user2Participating = user2Participating;
+        this.locked = locked;
     }
 
     public boolean isValidUser(User user) {

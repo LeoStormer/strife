@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.leostormer.strife.conversation.ConversationService;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestService;
 import com.leostormer.strife.friends.UnauthorizedFriendRequestActionException;
@@ -28,6 +29,8 @@ public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     @Autowired
     private final FriendRequestService friendRequestService;
+    @Autowired
+    private final ConversationService conversationService;
 
     public User getUser(Principal principal) {
         // currently authenticated principal should always correspond to an active user in database
@@ -91,6 +94,9 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
         friendRequestService.blockUser(sender, receiver);
+        
+        // Users who have blocked each other cant speak to each other
+        conversationService.lockConversation(sender, receiver);
     }
 
     public void unblockUser(User sender, ObjectId receiverId) {
@@ -99,6 +105,11 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
         friendRequestService.unblockUser(sender, receiver);
+        Optional<FriendRequest> optional = friendRequestService.getFriendRequestByUsers(sender, receiver);
+        if (optional.isEmpty())
+            // friend request was deleted meaning, sender is neither blocking
+            // nor blocked by receiver
+            conversationService.unlockConversation(sender, receiver);
     }
 
     public User registerUser(User user) {
