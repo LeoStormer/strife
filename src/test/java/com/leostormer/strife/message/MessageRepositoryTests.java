@@ -1,12 +1,14 @@
 package com.leostormer.strife.message;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -16,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.channel.Channel;
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.conversation.Conversation;
 import com.leostormer.strife.conversation.ConversationRepository;
 import com.leostormer.strife.user.User;
@@ -33,9 +37,20 @@ public class MessageRepositoryTests {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    ChannelRepository channelRepository;
+
+    static ObjectId channelId;
+
+    static ObjectId conversationId;
+
+    ObjectId existingDirectMessageId;
+
+    ObjectId existingChannelMessageId;
+
     @BeforeAll
     static void setupUsers(@Autowired UserRepository userRepository,
-            @Autowired ConversationRepository conversationRepository) {
+            @Autowired ConversationRepository conversationRepository, @Autowired ChannelRepository channelRepository) {
         User[] users = new User[3];
         for (int i = 0; i < 3; i++) {
             User user = new User();
@@ -45,29 +60,55 @@ public class MessageRepositoryTests {
             users[i] = userRepository.save(user);
         }
 
-        Conversation convo1 = new Conversation(users[0], users[1], true, true);
-        Conversation convo2 = new Conversation(users[1], users[2], true, true);
-        Conversation convo3 = new Conversation(users[0], users[2], true, false);
-        conversationRepository.saveAll(List.of(convo1, convo2, convo3));
+        Conversation conversation = new Conversation(users[0], users[1], true, true);
+        conversation = conversationRepository.save(conversation);
+        conversationId = conversation.getId();
+
+        Channel channel = new Channel();
+        channel.setName("Test");
+        channelId = channelRepository.save(channel).getId();
     }
 
     @AfterAll
     static void clearUsers(@Autowired UserRepository userRepository,
-            @Autowired ConversationRepository conversationRepository) {
+            @Autowired ConversationRepository conversationRepository, @Autowired ChannelRepository channelRepository) {
         userRepository.deleteAll();
         conversationRepository.deleteAll();
+        channelRepository.deleteAll();
     }
 
     @BeforeEach
     void setup() {
-        User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
+        User[] users = { userRepository.findOneByUsername("User1").get(),
+                userRepository.findOneByUsername("User2").get(),
+                userRepository.findOneByUsername("User3").get() };
+        Conversation conversation = conversationRepository.findById(conversationId).get();
 
-        for (int i = 0; i < 10; i++) {
+        DirectMessage existingDirectMessage = new DirectMessage();
+        existingDirectMessage.setConversation(conversation);
+        existingDirectMessage.setSender(users[0]);
+        existingDirectMessage.setContent("This is a message! 0");
+        existingDirectMessageId = messageRepository.save(existingDirectMessage).getId();
+
+        for (int i = 1; i < 10; i++) {
             DirectMessage message = new DirectMessage();
             message.setConversation(conversation);
-            message.setSender(i % 2 == 0 ? user1 : user2);
+            message.setSender(users[i % 2]);
+            message.setContent("This is a message! " + i);
+            messageRepository.save(message);
+        }
+
+        Channel channel = channelRepository.findById(channelId).get();
+        ChannelMessage existingChannelMessage = new ChannelMessage();
+        existingChannelMessage.setChannel(channel);
+        existingChannelMessage.setContent("This is a message! 0");
+        existingChannelMessage.setSender(users[0]);
+        existingChannelMessageId = messageRepository.save(existingChannelMessage).getId();
+
+        for (int i = 1; i < 10; i++) {
+            ChannelMessage message = new ChannelMessage();
+            message.setChannel(channel);
+            message.setSender(users[i % 3]);
             message.setContent("This is a message! " + i);
             messageRepository.save(message);
         }
@@ -81,100 +122,110 @@ public class MessageRepositoryTests {
     @Test
     void shouldInsertDirectMessage() {
         User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
+        Conversation conversation = conversationRepository.findById(conversationId).get();
         String messageContent = "AAAAAAHHHHHH!";
         DirectMessage message = messageRepository.insertMessage(user1, conversation, messageContent);
-        assertNotNull(message.getId());
+        assertTrue(messageRepository.existsById(message.getId()));
         assertTrue(message.getContent().equals(messageContent));
     }
 
     @Test
     void shouldFindDirectMessageById() {
         User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
-        DirectMessage message = messageRepository.insertMessage(user1, conversation, "This is a new message!");
-
-        Optional<DirectMessage> messageFromRepository = messageRepository.findDirectMessageById(message.getId());
+        Optional<DirectMessage> messageFromRepository = messageRepository
+                .findDirectMessageById(existingDirectMessageId);
         assertTrue(messageFromRepository.isPresent());
-        assertTrue(messageFromRepository.get().getId().equals(message.getId()));
-        assertTrue(messageFromRepository.get().getContent().equals(message.getContent()));
-        assertTrue(messageFromRepository.get().getConversation().getId().equals(conversation.getId()));
+        assertEquals(user1.getId(), messageFromRepository.get().getSender().getId());
+        assertEquals("This is a message! 0", messageFromRepository.get().getContent());
+        assertEquals(conversationId, messageFromRepository.get().getConversation().getId());
     }
 
     @Test
     void shouldGetDirectMessages() {
-        User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
-
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().build();
-        List<DirectMessage> messages = messageRepository.getMessages(conversation, searchOptions);
+        List<DirectMessage> messages = messageRepository.getDirectMessages(conversationId, searchOptions);
         assertTrue(messages.size() == 10);
         assertTrue(messages.get(0).getContent().equals("This is a message! 0"));
     }
 
     @Test
     void shouldUpdateDirectMessage() {
-        User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
-        DirectMessage message = messageRepository.insertMessage(user1, conversation, "This is a new message!");
-        DirectMessage updatedMessage = messageRepository.updateDirectMessage(message.getId(), "I have been updated");
-        assertTrue(message.getId().equals(updatedMessage.getId()));
-        assertFalse(message.getContent().equals(updatedMessage.getContent()));
-    }
-
-    @Test
-    void shouldDeleteAllByConversation() {
-        User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
-        MessageSearchOptions searchOptions = MessageSearchOptions.builder().build();
-        assertTrue(messageRepository.getMessages(conversation, searchOptions).size() == 10);
-        messageRepository.deleteAllByConversation(conversation);
-        assertTrue(messageRepository.getMessages(conversation, searchOptions).size() == 0);
+        String newMessageContent = "I have been updated";
+        DirectMessage originalMessage = messageRepository.findDirectMessageById(existingDirectMessageId).get();
+        messageRepository.updateDirectMessage(existingDirectMessageId, newMessageContent);
+        DirectMessage updatedMessage = messageRepository.findDirectMessageById(existingDirectMessageId).get();
+        assertNotEquals(originalMessage.getContent(), updatedMessage.getContent());
+        assertEquals(originalMessage.getSender().getId(), updatedMessage.getSender().getId());
+        assertEquals(originalMessage.getConversation().getId(), updatedMessage.getConversation().getId());
+        assertEquals(newMessageContent, updatedMessage.getContent());
     }
 
     @Test
     void shouldExistByConversation() {
-        User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-        User user3 = userRepository.findOneByUsername("User3").get();
-        Conversation conversation = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
-        assertTrue(messageRepository.existsbyConversation(conversation));
-        Conversation conversation2 = conversationRepository.findByUserIds(user1.getId(), user3.getId()).get();
-        assertFalse(messageRepository.existsbyConversation(conversation2));
+        assertTrue(messageRepository.existsbyConversation(conversationId));
+    }
+
+    @Test
+    void shouldDeleteAllByConversation() {
+        assertTrue(messageRepository.existsbyConversation(conversationId));
+
+        messageRepository.deleteAllByConversation(conversationId);
+
+        assertFalse(messageRepository.existsbyConversation(conversationId));
     }
 
     @Test
     void shouldInsertChannelMessage() {
-
+        User user1 = userRepository.findOneByUsername("User1").get();
+        Channel channel = channelRepository.findById(channelId).get();
+        String messageContent = "content";
+        ChannelMessage message = messageRepository.insertMessage(user1, channel, messageContent);
+        assertTrue(messageRepository.existsById(message.getId()));
+        assertEquals(message.getChannel().getId(), channel.getId());
+        assertEquals(message.getSender().getId(), user1.getId());
+        assertEquals(message.getContent(), messageContent);
     }
 
     @Test
     void shouldFindChannelMessageById() {
-
+        User user1 = userRepository.findOneByUsername("User1").get();
+        Optional<ChannelMessage> message = messageRepository.findChannelMessageById(existingChannelMessageId);
+        assertTrue(message.isPresent());
+        assertEquals(user1.getId(), message.get().getSender().getId());
+        assertEquals(channelId, message.get().getChannel().getId());
     }
 
     @Test
     void shouldGetChannelMessages() {
-
+        MessageSearchOptions searchOptions = MessageSearchOptions.builder().build();
+        List<ChannelMessage> messages = messageRepository.getChannelMessages(channelId, searchOptions);
+        assertTrue(messages.size() == 10);
+        assertTrue(messages.get(0).getContent().equals("This is a message! 0"));
     }
 
     @Test
     void shouldUpdateChannelMessage() {
-
-    }
-
-    @Test
-    void shouldDeleteAllByChannel() {
-
+        String newMessageContent = "I have been updated";
+        ChannelMessage originalMessage = messageRepository.findChannelMessageById(existingChannelMessageId).get();
+        messageRepository.updateChannelMessage(existingChannelMessageId, newMessageContent);
+        ChannelMessage updatedMessage = messageRepository.findChannelMessageById(existingChannelMessageId).get();
+        assertNotEquals(originalMessage.getContent(), updatedMessage.getContent());
+        assertEquals(originalMessage.getSender().getId(), updatedMessage.getSender().getId());
+        assertEquals(originalMessage.getChannel().getId(), updatedMessage.getChannel().getId());
+        assertEquals(newMessageContent, updatedMessage.getContent());
     }
 
     @Test
     void shouldExistByChannel() {
+        assertTrue(messageRepository.existsByChannel(channelId));
+    }
 
+    @Test
+    void shouldDeleteAllByChannel() {
+        assertTrue(messageRepository.existsByChannel(channelId));
+
+        messageRepository.deleteAllByChannel(channelId);
+
+        assertFalse(messageRepository.existsByChannel(channelId));
     }
 }
