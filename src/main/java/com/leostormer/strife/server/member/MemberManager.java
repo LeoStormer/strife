@@ -18,7 +18,7 @@ import com.leostormer.strife.server.ServerRepository;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.user.User;
 
-import static com.leostormer.strife.server.ExceptionMessage.*;
+import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
 public interface MemberManager extends IUsesServerRepository {
     default void joinServer(User user, ObjectId serverId) {

@@ -4,10 +4,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.message.MessageSearchDirection;
 import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.message.MessageView;
-import com.leostormer.strife.message.UnauthorizedMessageActionException;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserService;
 
@@ -61,7 +61,7 @@ public class ConversationController {
         try {
             return ResponseEntity.ok()
                     .body(new ConversationView(conversationService.startNewConversation(user, otherUser.get())));
-        } catch (UnauthorizedConversationActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -76,7 +76,7 @@ public class ConversationController {
         try {
             conversationService.leaveConversation(user, conversationId);
             return ResponseEntity.ok().body("Conversation successfully left");
-        } catch (UnauthorizedConversationActionException | IllegalArgumentException e) {
+        } catch (UnauthorizedActionException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error leaving conversation: " + e.getMessage());
@@ -93,7 +93,7 @@ public class ConversationController {
             List<MessageView> messages = conversationService.getMessages(user, conversationId, searchOptions).stream()
                     .map(dm -> new MessageView(dm)).toList();
             return ResponseEntity.ok().body(messages);
-        } catch (UnauthorizedConversationActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -109,7 +109,7 @@ public class ConversationController {
                     .getMessages(user, conversationId, MessageSearchOptions.latest()).stream()
                     .map(dm -> new MessageView(dm)).toList();
             return ResponseEntity.ok().body(messages);
-        } catch (UnauthorizedConversationActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -125,7 +125,7 @@ public class ConversationController {
                     .getMessages(user, conversationId, MessageSearchOptions.earliest()).stream()
                     .map(dm -> new MessageView(dm)).toList();
             return ResponseEntity.ok().body(messages);
-        } catch (UnauthorizedConversationActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -154,7 +154,7 @@ public class ConversationController {
         try {
             return ResponseEntity.ok()
                     .body(new MessageView(conversationService.editMessage(user, conversationId, messageId, messageContent)));
-        } catch(UnauthorizedConversationActionException | UnauthorizedMessageActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -170,6 +170,8 @@ public class ConversationController {
         try {
             conversationService.deleteMessage(user, messageId);
             return ResponseEntity.ok().body("Message successfully deleted");
+        } catch (UnauthorizedActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error deleting message: " + e.getMessage());
         }

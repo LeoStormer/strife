@@ -2,7 +2,7 @@ package com.leostormer.strife.server;
 
 import com.leostormer.strife.exceptions.IExceptionMessage;
 
-public enum ExceptionMessage implements IExceptionMessage {
+public enum ServerExceptionMessage implements IExceptionMessage {
     SERVER_NOT_FOUND("Server not found"),
     CHANNEL_NOT_FOUND("Channel not found"),
     MESSAGE_NOT_FOUND("Message not found"),
@@ -12,7 +12,7 @@ public enum ExceptionMessage implements IExceptionMessage {
 
     private String message;
 
-    private ExceptionMessage(String message) {
+    private ServerExceptionMessage(String message) {
         this.message = message;
     }
 

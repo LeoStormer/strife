@@ -12,7 +12,7 @@ import com.leostormer.strife.server.ServerRepository;
 import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.user.User;
 
-import static com.leostormer.strife.server.ExceptionMessage.*;
+import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
 import java.util.List;
 import java.util.Map;

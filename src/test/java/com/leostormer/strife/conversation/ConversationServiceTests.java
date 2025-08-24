@@ -19,13 +19,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestRepository;
 import com.leostormer.strife.message.DirectMessage;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchDirection;
 import com.leostormer.strife.message.MessageSearchOptions;
-import com.leostormer.strife.message.UnauthorizedMessageActionException;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 import com.leostormer.strife.user.UserService;
@@ -156,10 +156,10 @@ public class ConversationServiceTests {
 
     @Test
     void shouldNotStartConversationBetweenBlockedUsers() {
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.startNewConversation(user1, user3);
         });
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.startNewConversation(user3, user1);
         });
     }
@@ -199,7 +199,7 @@ public class ConversationServiceTests {
     void shouldNotLeaveConversationUserNotPartOf() {
         initializeConversations();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.leaveConversation(user3, conversation.getId());
         });
     }
@@ -240,7 +240,7 @@ public class ConversationServiceTests {
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         MessageSearchOptions searchOptions = MessageSearchOptions.builder()
                 .searchDirection(MessageSearchDirection.DESCENDING).build();
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.getMessages(user3, conversation.getId(), searchOptions);
         });
     }
@@ -258,7 +258,7 @@ public class ConversationServiceTests {
         initializeConversations();
         ObjectId conversationId = conversationService.getConversationByUsers(user1, user2).get().getId();
         conversationService.leaveConversation(user2, conversationId);
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.sendMessage(user2, conversationId, "Hello as well");
         });
     }
@@ -267,7 +267,7 @@ public class ConversationServiceTests {
     void shouldNotSendMessageIfUserNotPartOfConversation() {
         initializeConversations();
         ObjectId conversationId = conversationService.getConversationByUsers(user1, user2).get().getId();
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.sendMessage(user3, conversationId, "I can be anything");
         });
     }
@@ -277,10 +277,10 @@ public class ConversationServiceTests {
         initializeConversations();
         userService.blockUser(user2, user1.getId());
         ObjectId conversationId = conversationService.getConversationByUsers(user1, user2).get().getId();
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.sendMessage(user1, conversationId, "I can be anything");
         });
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.sendMessage(user2, conversationId, "I can be anything");
         });
     }
@@ -307,7 +307,7 @@ public class ConversationServiceTests {
         initializeConversationsAndMessages();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         ObjectId messageId = messageRepository.insertMessage(user1, conversation, "I can be anything").getId();
-        assertThrows(UnauthorizedMessageActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.editMessage(user2, conversation.getId(), messageId, "Any new message");
         });
     }
@@ -320,11 +320,11 @@ public class ConversationServiceTests {
         ObjectId messageId2 = messageRepository.insertMessage(user2, conversation, "I am being rude too").getId();
         userService.blockUser(user2, user1.getId());
 
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.editMessage(user1, conversation.getId(), messageId, "Any new message");
         });
 
-        assertThrows(UnauthorizedConversationActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.editMessage(user2, conversation.getId(), messageId2, "Any new message");
         });
     }
@@ -345,7 +345,7 @@ public class ConversationServiceTests {
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         ObjectId messageId = conversationService
                 .getMessages(user1, conversation.getId(), MessageSearchOptions.earliest()).get(1).getId();
-        assertThrows(UnauthorizedMessageActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             conversationService.deleteMessage(user1, messageId);
         });
     }

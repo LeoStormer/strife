@@ -4,7 +4,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import static com.leostormer.strife.server.ExceptionMessage.*;
+import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
 import java.util.List;
 import java.util.Map;
