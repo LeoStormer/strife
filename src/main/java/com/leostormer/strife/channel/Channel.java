@@ -1,0 +1,78 @@
+package com.leostormer.strife.channel;
+
+import java.util.Map;
+
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.DocumentReference;
+
+import com.leostormer.strife.server.Permissions;
+import com.leostormer.strife.server.Server;
+import com.leostormer.strife.server.member.Member;
+import com.leostormer.strife.server.role.Role;
+import com.leostormer.strife.user.User;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Document(collection = "channels")
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class Channel {
+    @Id
+    private ObjectId id;
+
+    @DocumentReference(collection = "servers", lazy = true)
+    private Server server;
+
+    private String name;
+
+    private String category;
+
+    private String description;
+
+    @Builder.Default
+    private boolean isPublic = true;
+
+    /**
+     * List of roles that are allowed to access this channel.
+     * Is ignored if the channel is public
+     */
+    private Map<ObjectId, Long> rolePermissions;
+
+    /**
+     * List of users that are allowed to access this channel.
+     * Is ignored if the channel is public
+     */
+    private Map<ObjectId, Long> userPermissions;
+
+    public long getPermissions(Role role) {
+        return rolePermissions.getOrDefault(role.getId(), Permissions.NONE);
+    }
+
+    public long getPermissions(User user) {
+        return userPermissions.getOrDefault(user.getId(), Permissions.NONE);
+    }
+
+    public long getPermissions(Member member) {
+        long permissions = Permissions.NONE;
+        for (ObjectId roleId : member.getRoleIds()) {
+            permissions |= rolePermissions.getOrDefault(roleId, Permissions.NONE);
+        }
+
+        return permissions | userPermissions.getOrDefault(member.getUserId(), Permissions.NONE);
+    }
+
+    public void setPermissions(Role role, long permissions) {
+        rolePermissions.put(role.getId(), permissions);
+    }
+
+    public void setPermissions(User user, long permissions) {
+        userPermissions.put(user.getId(), permissions);
+    }
+}

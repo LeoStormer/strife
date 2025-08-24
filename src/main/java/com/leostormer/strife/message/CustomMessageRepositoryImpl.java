@@ -13,9 +13,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import com.leostormer.strife.channel.Channel;
 import com.leostormer.strife.conversation.Conversation;
-import com.leostormer.strife.server.Channel;
-import com.leostormer.strife.server.Server;
 import com.leostormer.strife.user.User;
 
 @Repository
@@ -41,14 +40,14 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
-    public List<DirectMessage> getMessages(Conversation conversation, MessageSearchOptions searchOptions) {
-        Criteria criteria = Criteria.where("conversation").is(conversation.getId()).and("timestamp");
+    public List<DirectMessage> getDirectMessages(ObjectId conversationId, MessageSearchOptions searchOptions) {
+        Criteria criteria = Criteria.where("conversation").is(conversationId).and("timestamp");
         Sort sort = Sort.by("timestamp");
         Query query = new Query();
         if (searchOptions.getSearchDirection().equals(MessageSearchDirection.DESCENDING)) {
-            query.addCriteria(criteria.lt(searchOptions.getTimestamp())).with(sort.descending());
+            query.addCriteria(criteria.lte(searchOptions.getTimestamp())).with(sort.descending());
         } else if (searchOptions.getSearchDirection().equals(MessageSearchDirection.ASCENDING)) {
-            query.addCriteria(criteria.gt(searchOptions.getTimestamp())).with(sort.ascending());
+            query.addCriteria(criteria.gte(searchOptions.getTimestamp())).with(sort.ascending());
         }
         query.limit(searchOptions.getLimit());
 
@@ -56,8 +55,8 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
-    public DirectMessage updateDirectMessage(ObjectId id, String messageContent) {
-        Query query = new Query().addCriteria(Criteria.where("_id").is(id));
+    public DirectMessage updateDirectMessage(ObjectId messageId, String messageContent) {
+        Query query = new Query().addCriteria(Criteria.where("_id").is(messageId));
         Update update = new Update().set("content", messageContent);
 
         return mongoTemplate.update(DirectMessage.class).matching(query).apply(update)
@@ -65,19 +64,14 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
-    public void deleteAllByConversation(Conversation... conversations) {
-        ObjectId[] ids = new ObjectId[conversations.length];
-        for (int i = 0; i < conversations.length; i++) {
-            ids[i] = conversations[i].getId();
-        }
-
-        mongoTemplate.remove(new Query().addCriteria(Criteria.where("conversation").in((Object[]) ids)),
+    public void deleteAllByConversation(ObjectId... conversationIds) {
+        mongoTemplate.remove(new Query().addCriteria(Criteria.where("conversation").in((Object[]) conversationIds)),
                 DirectMessage.class);
     }
 
     @Override
-    public boolean existsbyConversation(Conversation conversation) {
-        return mongoTemplate.exists(new Query().addCriteria(Criteria.where("conversation").is(conversation.getId())),
+    public boolean existsbyConversation(ObjectId conversationId) {
+        return mongoTemplate.exists(new Query().addCriteria(Criteria.where("conversation").is(conversationId)),
                 DirectMessage.class);
     }
 
@@ -89,19 +83,18 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
-    public ChannelMessage insertMessage(User sender, Server server, Channel channel, String content) {
+    public ChannelMessage insertMessage(User sender, Channel channel, String content) {
         ChannelMessage message = new ChannelMessage();
         message.setSender(sender);
-        message.setServer(server);
-        message.setChannel(channel.getName());
+        message.setChannel(channel);
         message.setContent(content);
 
         return mongoTemplate.insert(message);
     }
 
     @Override
-    public List<ChannelMessage> getMessages(Server server, Channel channel, MessageSearchOptions searchOptions) {
-        Criteria criteria = Criteria.where("server").is(server.getId()).and("channel").is(channel.getName())
+    public List<ChannelMessage> getChannelMessages(ObjectId channelId, MessageSearchOptions searchOptions) {
+        Criteria criteria = Criteria.where("channel").is(channelId)
                 .and("timestamp");
         Sort sort = Sort.by("timestamp");
         Query query = new Query();
@@ -116,8 +109,8 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
-    public ChannelMessage updateChannelMessage(ObjectId id, String messageContent) {
-        Query query = new Query().addCriteria(Criteria.where("_id").is(id));
+    public ChannelMessage updateChannelMessage(ObjectId messageId, String messageContent) {
+        Query query = new Query().addCriteria(Criteria.where("_id").is(messageId));
         Update update = new Update().set("content", messageContent);
 
         return mongoTemplate.update(ChannelMessage.class).matching(query).apply(update)
@@ -125,23 +118,18 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
-    public void deleteAllByChannel(Server server, Channel... channels) {
-        String[] channelNames = new String[channels.length];
-        for (int i = 0; i < channels.length; i++) {
-            channelNames[i] = channels[i].getName();
-        }
-
+    public void deleteAllByChannel(ObjectId... channelIds) {
         mongoTemplate.remove(
                 new Query().addCriteria(
-                        Criteria.where("server").is(server.getId()).and("channel").in((Object[]) channelNames)),
+                        Criteria.where("channel").in((Object[]) channelIds)),
                 ChannelMessage.class);
     }
 
     @Override
-    public boolean existsByChannel(Server server, Channel channel) {
+    public boolean existsByChannel(ObjectId channelId) {
         return mongoTemplate.exists(
                 new Query()
-                        .addCriteria(Criteria.where("server").is(server.getId()).and("channel").is(channel.getName())),
+                        .addCriteria(Criteria.where("channel").is(channelId)),
                 ChannelMessage.class);
     }
 }
