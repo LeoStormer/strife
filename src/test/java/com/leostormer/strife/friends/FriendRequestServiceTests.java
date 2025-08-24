@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 import com.leostormer.strife.user.UserService;
@@ -75,7 +76,7 @@ public class FriendRequestServiceTests {
     void shouldNotSendDuplicateFriendRequest() {
         friendRequestService.sendFriendRequest(user1, user2);
 
-        assertThrows(DuplicateFriendRequestException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             friendRequestService.sendFriendRequest(user1, user2);
         });
     }
@@ -84,7 +85,7 @@ public class FriendRequestServiceTests {
     void senderShouldNotAcceptFriendRequest() {
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
 
-        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             friendRequestService.acceptFriendRequest(user1, friendRequest.getId());
         });
     }
@@ -150,7 +151,7 @@ public class FriendRequestServiceTests {
         assertTrue(friendRequest.hasSentBlockRequest(user1));
 
         // Attempt to remove the blocked request
-        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             friendRequestService.removeFriendRequest(user2, friendRequest.getId());
         });
     }
@@ -161,7 +162,7 @@ public class FriendRequestServiceTests {
         friendRequestService.blockUser(user1, user2);
 
         // attempt to accept the friend request after blocking
-        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             friendRequestService.acceptFriendRequest(user2, friendRequest.getId());
         });
     }

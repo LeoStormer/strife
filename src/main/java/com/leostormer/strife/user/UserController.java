@@ -17,10 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.leostormer.strife.friends.DuplicateFriendRequestException;
-import com.leostormer.strife.friends.FriendRequestNotFoundException;
+import com.leostormer.strife.exceptions.ResourceNotFoundException;
+import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequestView;
-import com.leostormer.strife.friends.UnauthorizedFriendRequestActionException;
 
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -59,9 +58,9 @@ public class UserController {
         User sender = userService.getUser(principal);
         try {
             return ResponseEntity.ok(new FriendRequestView(userService.sendFriendRequest(sender, receiverId)));
-        } catch (UserNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
-        } catch (DuplicateFriendRequestException | UnauthorizedFriendRequestActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -74,9 +73,9 @@ public class UserController {
         User receiver = userService.getUser(principal);
         try {
             return ResponseEntity.ok(new FriendRequestView(userService.acceptFriendRequest(receiver, requestId)));
-        } catch (FriendRequestNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        } catch (UnauthorizedFriendRequestActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(null);
@@ -89,9 +88,9 @@ public class UserController {
         try {
             userService.removeFriendRequest(user, requestId);
             return ResponseEntity.ok("Friend request removed");
-        } catch (FriendRequestNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (UnauthorizedFriendRequestActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error removing friend request: " + e.getMessage());
@@ -104,9 +103,9 @@ public class UserController {
         try {
             userService.blockUser(sender, receiverId);
             return ResponseEntity.ok("User blocked successfully");
-        } catch (UnauthorizedFriendRequestActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (UserNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error blocking user: " + e.getMessage());
@@ -119,9 +118,9 @@ public class UserController {
         try {
             userService.unblockUser(sender, receiverId);
             return ResponseEntity.ok("User unblocked successfully");
-        } catch (UnauthorizedFriendRequestActionException e) {
+        } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (UserNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error unblocking user: " + e.getMessage());

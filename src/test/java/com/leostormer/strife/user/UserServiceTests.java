@@ -12,10 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestRepository;
 import com.leostormer.strife.friends.FriendRequestService;
-import com.leostormer.strife.friends.UnauthorizedFriendRequestActionException;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -146,7 +146,7 @@ public class UserServiceTests {
     @Test
     void shouldNotSendFriendRequestToSelf() {
         User user1 = userService.getUserByUsername("user1").orElseThrow();
-        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             userService.sendFriendRequest(user1, user1.getId());
         });
     }
@@ -154,7 +154,7 @@ public class UserServiceTests {
     @Test
     void shouldNotBlockSelf() {
         User user1 = userService.getUserByUsername("user1").orElseThrow();
-        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             userService.blockUser(user1, user1.getId());
         });
     }
@@ -162,7 +162,7 @@ public class UserServiceTests {
     @Test
     void shouldNotUnblockSelf() {
         User user1 = userService.getUserByUsername("user1").orElseThrow();
-        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
+        assertThrows(UnauthorizedActionException.class, () -> {
             userService.unblockUser(user1, user1.getId());
         });
     }

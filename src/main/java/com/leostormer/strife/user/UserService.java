@@ -13,9 +13,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.leostormer.strife.conversation.ConversationService;
+import com.leostormer.strife.exceptions.ResourceNotFoundException;
+import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestService;
-import com.leostormer.strife.friends.UnauthorizedFriendRequestActionException;
 
 import lombok.AllArgsConstructor;
 
@@ -23,6 +24,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UserService implements UserDetailsService {
 
+    private static final String USER_NOT_FOUND = "User not found";
     @Autowired
     private final UserRepository userRepository;
     @Autowired
@@ -73,9 +75,9 @@ public class UserService implements UserDetailsService {
 
     public FriendRequest sendFriendRequest(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
-            throw new UnauthorizedFriendRequestActionException();
+            throw new UnauthorizedActionException("You cannot send a friend request to yourself");
 
-        User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
+        User receiver = userRepository.findById(receiverId).orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
         return friendRequestService.sendFriendRequest(sender, receiver);
     }
@@ -90,9 +92,9 @@ public class UserService implements UserDetailsService {
 
     public void blockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
-            throw new UnauthorizedFriendRequestActionException("You cannot block yourself");
+            throw new UnauthorizedActionException("You cannot block yourself");
 
-        User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
+        User receiver = userRepository.findById(receiverId).orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         friendRequestService.blockUser(sender, receiver);
         
         // Users who have blocked each other cant speak to each other
@@ -101,9 +103,9 @@ public class UserService implements UserDetailsService {
 
     public void unblockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
-            throw new UnauthorizedFriendRequestActionException("You cannot unblock yourself");
+            throw new UnauthorizedActionException("You cannot unblock yourself");
 
-        User receiver = userRepository.findById(receiverId).orElseThrow(UserNotFoundException::new);
+        User receiver = userRepository.findById(receiverId).orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         friendRequestService.unblockUser(sender, receiver);
         Optional<FriendRequest> optional = friendRequestService.getFriendRequestByUsers(sender, receiver);
         if (optional.isEmpty())
