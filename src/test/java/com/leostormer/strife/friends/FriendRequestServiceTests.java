@@ -3,10 +3,12 @@ package com.leostormer.strife.friends;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,34 +35,37 @@ public class FriendRequestServiceTests {
     @Autowired
     FriendRequestService friendRequestService;
 
-    @BeforeEach
-    void setUp() {
-        User user1 = new User();
+    static User user1;
+
+    static User user2;
+
+    @BeforeAll
+    static void setUp(@Autowired UserService userService) {
+        user1 = new User();
         user1.setUsername("testuser1");
         user1.setPassword("password123");
 
-        User user2 = new User();
+        user2 = new User();
         user2.setUsername("testuser2");
         user2.setPassword("password1234");
 
-        userService.registerUser(user1);
-        userService.registerUser(user2);
+        user1 = userService.registerUser(user1);
+        user2 = userService.registerUser(user2);
+    }
+
+    @AfterAll
+    static void clearUsers(@Autowired UserRepository userRepository) {
+        userRepository.deleteAll();
     }
 
     @AfterEach
     void cleanUp() {
-        userRepository.deleteAll();
         friendRequestRepository.deleteAll();
     }
 
     @Test
     void shouldSendFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
-        friendRequest = friendRequestRepository.findById(friendRequest.getId()).get();
-        assertNotNull(friendRequest);
         assertTrue(friendRequestRepository.existsById(friendRequest.getId()));
         assertTrue(friendRequest.getUser1Response() == FriendRequestResponse.ACCEPTED);
         assertTrue(friendRequest.getUser2Response() == FriendRequestResponse.PENDING);
@@ -68,37 +73,24 @@ public class FriendRequestServiceTests {
 
     @Test
     void shouldNotSendDuplicateFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         friendRequestService.sendFriendRequest(user1, user2);
 
-        try {
+        assertThrows(DuplicateFriendRequestException.class, () -> {
             friendRequestService.sendFriendRequest(user1, user2);
-        } catch (Exception e) {
-            assertTrue(e instanceof DuplicateFriendRequestException);
-        }
+        });
     }
 
     @Test
     void senderShouldNotAcceptFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
 
-        try {
+        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
             friendRequestService.acceptFriendRequest(user1, friendRequest.getId());
-        } catch (Exception e) {
-            assertTrue(e instanceof UnauthorizedFriendRequestActionException);
-        }
+        });
     }
 
     @Test
     void receiverShouldAcceptFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
         friendRequestService.acceptFriendRequest(user2, friendRequest.getId());
 
@@ -110,31 +102,22 @@ public class FriendRequestServiceTests {
 
     @Test
     void senderShouldRemoveFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
         friendRequestService.removeFriendRequest(user1, friendRequest.getId());
 
-        assertTrue(friendRequestRepository.findById(friendRequest.getId()).isEmpty());
+        assertFalse(friendRequestRepository.existsById(friendRequest.getId()));
     }
 
     @Test
     void receiverShouldRemoveFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
         friendRequestService.removeFriendRequest(user2, friendRequest.getId());
 
-        assertTrue(friendRequestRepository.findById(friendRequest.getId()).isEmpty());
+        assertFalse(friendRequestRepository.existsById(friendRequest.getId()));
     }
 
     @Test
     void shouldBlockUser() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         friendRequestService.blockUser(user1, user2);
         FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId())
                 .orElse(null);
@@ -145,9 +128,6 @@ public class FriendRequestServiceTests {
 
     @Test
     void shouldAllowBothUsersToBlockEachOther() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         friendRequestService.blockUser(user1, user2);
         friendRequestService.blockUser(user2, user1);
 
@@ -161,9 +141,6 @@ public class FriendRequestServiceTests {
 
     @Test
     void blockedUserShouldNotRemoveBlockedFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         friendRequestService.blockUser(user1, user2);
         FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId())
                 .orElse(null);
@@ -173,34 +150,24 @@ public class FriendRequestServiceTests {
         assertTrue(friendRequest.hasSentBlockRequest(user1));
 
         // Attempt to remove the blocked request
-        try {
+        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
             friendRequestService.removeFriendRequest(user2, friendRequest.getId());
-        } catch (Exception e) {
-            assertTrue(e instanceof UnauthorizedFriendRequestActionException);
-        }
+        });
     }
 
     @Test
     void blockedUserShouldNotAcceptFriendRequest() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
         friendRequestService.blockUser(user1, user2);
 
         // attempt to accept the friend request after blocking
-        try {
+        assertThrows(UnauthorizedFriendRequestActionException.class, () -> {
             friendRequestService.acceptFriendRequest(user2, friendRequest.getId());
-        } catch (Exception e) {
-            assertTrue(e instanceof UnauthorizedFriendRequestActionException);
-        }
+        });
     }
 
     @Test
     void shouldUnblockUserAndDeleteRequestIfNotBlocked() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         friendRequestService.blockUser(user1, user2);
         friendRequestService.unblockUser(user1, user2);
         FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId()).orElse(null);
@@ -210,9 +177,6 @@ public class FriendRequestServiceTests {
 
     @Test
     void shouldUnblockUserAndKeepRequestIfBlocked() {
-        User user1 = userService.getUserByUsername("testuser1").get();
-        User user2 = userService.getUserByUsername("testuser2").get();
-
         friendRequestService.blockUser(user1, user2);
         friendRequestService.blockUser(user2, user1);
 

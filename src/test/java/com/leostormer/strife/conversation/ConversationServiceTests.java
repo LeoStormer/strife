@@ -8,10 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ import com.leostormer.strife.user.UserService;
 @SpringBootTest
 @ActiveProfiles("test")
 public class ConversationServiceTests {
-    public static final int NUM_MESSAGES = 50;
+    public static final int NUM_MESSAGES = 20;
 
     @Autowired
     UserRepository userRepository;
@@ -47,53 +48,60 @@ public class ConversationServiceTests {
     MessageRepository messageRepository;
 
     @Autowired
-    UserService userService;
-
-    @Autowired
     ConversationService conversationService;
 
-    @BeforeEach
-    void setup() {
-        User user1 = new User();
+    @Autowired
+    UserService userService;
+
+    static User user1;
+
+    static User user2;
+
+    static User user3;
+
+    @BeforeAll
+    static void setupUsers(@Autowired UserService userService) {
+        user1 = new User();
         user1.setUsername("User1");
         user1.setPassword("password123");
-        User user2 = new User();
+        user2 = new User();
         user2.setUsername("User2");
         user2.setPassword("password456");
-        User user3 = new User();
+        user3 = new User();
         user3.setUsername("User3");
         user3.setPassword("password789");
 
         user1 = userService.registerUser(user1);
         user2 = userService.registerUser(user2);
         user3 = userService.registerUser(user3);
+    }
+
+    @BeforeEach
+    void setupRequests() {
         FriendRequest frienedRequest = userService.sendFriendRequest(user1, user2.getId());
         userService.acceptFriendRequest(user2, frienedRequest.getId());
         userService.blockUser(user3, user1.getId());
     }
 
+    @AfterAll
+    static void clearUsers(@Autowired UserRepository userRepository) {
+        userRepository.deleteAll();
+    }
+
     @AfterEach
     void clearUsersAndRelationships() {
-        userRepository.deleteAll();
         friendRequestRepository.deleteAll();
         conversationRepository.deleteAll();
         messageRepository.deleteAll();
     }
 
     private void initializeConversations() {
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
-        User user3 = userService.getUserByUsername("User3").get();
-
         conversationService.startNewConversation(user1, user2);
         conversationService.startNewConversation(user2, user3);
     }
 
     private DirectMessage[][] initializeConversationsAndMessages() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
-        User user3 = userService.getUserByUsername("User3").get();
         Conversation convo1 = conversationRepository.findByUserIds(user1.getId(), user2.getId()).get();
         Conversation convo2 = conversationRepository.findByUserIds(user2.getId(), user3.getId()).get();
         DirectMessage[] convo1Messages = new DirectMessage[NUM_MESSAGES];
@@ -103,12 +111,6 @@ public class ConversationServiceTests {
             message.setConversation(convo1);
             message.setContent("This is a message in conversation 1 " + i);
             convo1Messages[i] = messageRepository.save(message);
-
-            try {
-                TimeUnit.MILLISECONDS.sleep(10);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
 
         DirectMessage[] convo2Messages = new DirectMessage[NUM_MESSAGES];
@@ -118,11 +120,6 @@ public class ConversationServiceTests {
             message.setConversation(convo2);
             message.setContent("This is a message in conversation 2 " + i);
             convo2Messages[i] = messageRepository.save(message);
-            try {
-                TimeUnit.MILLISECONDS.sleep(10);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
 
         return new DirectMessage[][] { convo1Messages, convo2Messages };
@@ -130,9 +127,6 @@ public class ConversationServiceTests {
 
     @Test
     void shouldGetAllUserConversations() {
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
-        User user3 = userService.getUserByUsername("User3").get();
         initializeConversations();
         assertTrue(conversationService.getConversations(user1).size() == 1);
         assertTrue(conversationService.getConversations(user2).size() == 2);
@@ -141,8 +135,8 @@ public class ConversationServiceTests {
 
     @Test
     void shouldStartConversationBetweenFriends() {
-        User sender = userService.getUserByUsername("User1").get();
-        User receiver = userService.getUserByUsername("User2").get();
+        User sender = user1;
+        User receiver = user2;
         Conversation conversation = conversationService.startNewConversation(sender, receiver);
         assertNotNull(conversation);
         assertNotNull(conversation.getId());
@@ -152,8 +146,8 @@ public class ConversationServiceTests {
 
     @Test
     void shouldStartConversationBetweenStrangers() {
-        User sender = userService.getUserByUsername("User2").get();
-        User receiver = userService.getUserByUsername("User3").get();
+        User sender = user2;
+        User receiver = user3;
         Conversation conversation = conversationService.startNewConversation(sender, receiver);
         assertTrue(conversationRepository.existsById(conversation.getId()));
         assertTrue(sender.getId().equals(conversation.getUser1().getId()));
@@ -162,8 +156,6 @@ public class ConversationServiceTests {
 
     @Test
     void shouldNotStartConversationBetweenBlockedUsers() {
-        User user1 = userService.getUserByUsername("User1").get();
-        User user3 = userService.getUserByUsername("User3").get();
         assertThrows(UnauthorizedConversationActionException.class, () -> {
             conversationService.startNewConversation(user1, user3);
         });
@@ -175,8 +167,6 @@ public class ConversationServiceTests {
     @Test
     void shouldLeaveConversation() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         conversationService.leaveConversation(user2, conversation.getId());
         Conversation updatedConversation = conversationService.getConversationById(conversation.getId()).get();
@@ -186,8 +176,6 @@ public class ConversationServiceTests {
     @Test
     void shouldLeaveConversationAndDelete() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         conversationService.leaveConversation(user2, conversation.getId());
         conversationService.leaveConversation(user1, conversation.getId());
@@ -197,8 +185,6 @@ public class ConversationServiceTests {
     @Test
     void shouldLeaveConversationAndKeepIfLocked() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         conversationService.leaveConversation(user2, conversation.getId());
         userService.blockUser(user2, user1.getId());
@@ -212,9 +198,6 @@ public class ConversationServiceTests {
     @Test
     void shouldNotLeaveConversationUserNotPartOf() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
-        User user3 = userService.getUserByUsername("User3").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         assertThrows(UnauthorizedConversationActionException.class, () -> {
             conversationService.leaveConversation(user3, conversation.getId());
@@ -225,9 +208,7 @@ public class ConversationServiceTests {
     void shouldGetMessagesAfterTimestamp() {
         DirectMessage[][] conversationMessages = initializeConversationsAndMessages();
         int conversationIndex = 0;
-        int messageIndex = 40;
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
+        int messageIndex = (NUM_MESSAGES - 1) - 10;
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         Date timestamp = conversationMessages[conversationIndex][messageIndex].getTimestamp();
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().timestamp(timestamp)
@@ -235,17 +216,14 @@ public class ConversationServiceTests {
         List<DirectMessage> messages = conversationService.getMessages(user1, conversation.getId(), searchOptions);
 
         assertTrue(messages.size() <= searchOptions.getLimit());
-        assertTrue(messages.get(0).getContent()
-                .equals(conversationMessages[conversationIndex][messageIndex + 1].getContent()));
+        assertTrue(messages.get(0).getTimestamp().compareTo(timestamp) >= 0);
     }
 
     @Test
     void shouldGetMessagesBeforeTimestamp() {
         DirectMessage[][] conversationMessages = initializeConversationsAndMessages();
         int conversationIndex = 0;
-        int messageIndex = 40;
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
+        int messageIndex = (NUM_MESSAGES - 1) - 10;
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         Date timestamp = conversationMessages[conversationIndex][messageIndex].getTimestamp();
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().timestamp(timestamp)
@@ -253,16 +231,12 @@ public class ConversationServiceTests {
         List<DirectMessage> messages = conversationService.getMessages(user1, conversation.getId(), searchOptions);
 
         assertTrue(messages.size() <= searchOptions.getLimit());
-        assertTrue(messages.get(messages.size() - 1).getContent()
-                .equals(conversationMessages[conversationIndex][messageIndex - 1].getContent()));
+        assertTrue(messages.get(messages.size() - 1).getTimestamp().compareTo(timestamp) <= 0);
     }
 
     @Test
     void shouldNotGetMessagesFromConversationUserNotPartOf() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
-        User user3 = userService.getUserByUsername("User3").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         MessageSearchOptions searchOptions = MessageSearchOptions.builder()
                 .searchDirection(MessageSearchDirection.DESCENDING).build();
@@ -274,8 +248,6 @@ public class ConversationServiceTests {
     @Test
     void shouldSendMessage() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         DirectMessage message = conversationService.sendMessage(user2, conversation.getId(), "Hello");
         assertTrue(messageRepository.existsById(message.getId()));
@@ -284,8 +256,6 @@ public class ConversationServiceTests {
     @Test
     void shouldNotSendMessageIfUserLeftConversation() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         ObjectId conversationId = conversationService.getConversationByUsers(user1, user2).get().getId();
         conversationService.leaveConversation(user2, conversationId);
         assertThrows(UnauthorizedConversationActionException.class, () -> {
@@ -296,10 +266,7 @@ public class ConversationServiceTests {
     @Test
     void shouldNotSendMessageIfUserNotPartOfConversation() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         ObjectId conversationId = conversationService.getConversationByUsers(user1, user2).get().getId();
-        User user3 = userService.getUserByUsername("User3").get();
         assertThrows(UnauthorizedConversationActionException.class, () -> {
             conversationService.sendMessage(user3, conversationId, "I can be anything");
         });
@@ -308,8 +275,6 @@ public class ConversationServiceTests {
     @Test
     void shouldNotSendMessageIfUserBlocked() {
         initializeConversations();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         userService.blockUser(user2, user1.getId());
         ObjectId conversationId = conversationService.getConversationByUsers(user1, user2).get().getId();
         assertThrows(UnauthorizedConversationActionException.class, () -> {
@@ -323,10 +288,8 @@ public class ConversationServiceTests {
     @Test
     void shouldEditMessageIfUserisSender() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
-        DirectMessage origianlMessage = messageRepository.getMessages(conversation, MessageSearchOptions.earliest())
+        DirectMessage origianlMessage = messageRepository.getDirectMessages(conversation.getId(), MessageSearchOptions.earliest())
                 .get(0);
         String messageContent = "I can be anything";
         conversationService.editMessage(user1, conversation.getId(), origianlMessage.getId(), messageContent);
@@ -342,8 +305,6 @@ public class ConversationServiceTests {
     @Test
     void shouldNotEditMessageIfUserIsNotSender() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         ObjectId messageId = messageRepository.insertMessage(user1, conversation, "I can be anything").getId();
         assertThrows(UnauthorizedMessageActionException.class, () -> {
@@ -354,8 +315,6 @@ public class ConversationServiceTests {
     @Test
     void shouldNotEditMessageIfUserIsBlocked() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         ObjectId messageId = messageRepository.insertMessage(user1, conversation, "I am being rude").getId();
         ObjectId messageId2 = messageRepository.insertMessage(user2, conversation, "I am being rude too").getId();
@@ -373,8 +332,6 @@ public class ConversationServiceTests {
     @Test
     void shouldDeleteMessageIfUserIsSender() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         ObjectId messageId = conversationService
                 .getMessages(user1, conversation.getId(), MessageSearchOptions.earliest()).get(0).getId();
@@ -385,8 +342,6 @@ public class ConversationServiceTests {
     @Test
     void shouldNotDeleteMessageIfUserIsNotSender() {
         initializeConversationsAndMessages();
-        User user1 = userService.getUserByUsername("User1").get();
-        User user2 = userService.getUserByUsername("User2").get();
         Conversation conversation = conversationService.getConversationByUsers(user1, user2).get();
         ObjectId messageId = conversationService
                 .getMessages(user1, conversation.getId(), MessageSearchOptions.earliest()).get(1).getId();

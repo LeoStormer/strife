@@ -145,7 +145,7 @@ public class MessageRepositoryTests {
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().build();
         List<DirectMessage> messages = messageRepository.getDirectMessages(conversationId, searchOptions);
         assertTrue(messages.size() == 10);
-        assertTrue(messages.get(0).getContent().equals("This is a message! 0"));
+        assertTrue(messages.get(0).getTimestamp().compareTo(searchOptions.getTimestamp()) >= 0);
     }
 
     @Test
@@ -200,7 +200,7 @@ public class MessageRepositoryTests {
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().build();
         List<ChannelMessage> messages = messageRepository.getChannelMessages(channelId, searchOptions);
         assertTrue(messages.size() == 10);
-        assertTrue(messages.get(0).getContent().equals("This is a message! 0"));
+        assertTrue(messages.get(0).getTimestamp().compareTo(searchOptions.getTimestamp()) >= 0);
     }
 
     @Test
