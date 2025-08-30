@@ -1,5 +1,8 @@
 package com.leostormer.strife.server;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -9,8 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.leostormer.strife.channel.Channel;
-import com.leostormer.strife.channel.ChannelRepository;
+import com.leostormer.strife.server.channel.Channel;
+import com.leostormer.strife.server.channel.ChannelRepository;
 import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.user.User;
@@ -28,14 +31,13 @@ public class ServerServiceTestSetup {
     @Autowired
     protected ServerService serverService;
 
-    @Autowired
-    protected UserRepository userRepository;
-
     protected ObjectId existingServerId;
 
     protected ObjectId channel1Id;
 
     protected ObjectId channel2Id;
+
+    protected ObjectId adminOnlyPrivateChannelId;
 
     protected ObjectId ownerRoleId;
 
@@ -57,7 +59,7 @@ public class ServerServiceTestSetup {
 
     protected static User bannedUser;
 
-    private static User createUser(String userName, UserRepository userRepository){
+    private static User createUser(String userName, UserRepository userRepository) {
         User user = new User();
         user.setUsername(userName);
         return userRepository.save(user);
@@ -93,13 +95,14 @@ public class ServerServiceTestSetup {
         existingServer.getRoles().put(grandAdministratorRole.getId(), grandAdministratorRole);
         grandAdministratorRoleId = grandAdministratorRole.getId();
 
-        Role moderatorRole = new Role(new ObjectId(), "Moderator", 1, Permissions.revokePermission(Permissions.ALL,
-                PermissionType.ADMINISTRATOR, PermissionType.MANAGE_SERVER));
+        Role moderatorRole = new Role(new ObjectId(), "Moderator", 1,
+                Permissions.revokePermission(Permissions.ALL,
+                        PermissionType.ADMINISTRATOR, PermissionType.MANAGE_SERVER));
         existingServer.getRoles().put(moderatorRole.getId(), moderatorRole);
         moderatorRoleId = moderatorRole.getId();
 
-        Role defaultRole = new Role(new ObjectId(), "Member", 0, Permissions.getPermissions(PermissionType.SEND_MESSAGES,
-                PermissionType.VIEW_CHANNELS, PermissionType.CHANGE_NICKNAME));
+        Role defaultRole = new Role(new ObjectId(), "Member", 0,
+                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS));
         existingServer.getRoles().put(defaultRole.getId(), defaultRole);
         defaultRoleId = defaultRole.getId();
 
@@ -115,7 +118,7 @@ public class ServerServiceTestSetup {
 
         Member noPermissionMember = Member.fromUser(noPermissionsUser);
         existingServer.getMembers().add(noPermissionMember);
-        
+
         Member bannedMember = Member.fromUser(bannedUser);
         bannedMember.setBanned(true);
         bannedMember.setBanReason("Because i can");
@@ -128,6 +131,17 @@ public class ServerServiceTestSetup {
                 .description("A general channel.").name("general").build()).getId();
         channel2Id = channelRepository.save(Channel.builder().server(existingServer).category("General")
                 .description("An events channel.").name("events").build()).getId();
+
+        Map<ObjectId, Long> rolePermissions = new HashMap<>();
+        rolePermissions.put(grandAdministratorRoleId, Permissions.ALL);
+        rolePermissions.put(moderatorRoleId, Permissions.revokePermission(moderatorRole.getPermissions(),
+                PermissionType.ADMINISTRATOR, PermissionType.MANAGE_CHANNELS));
+        adminOnlyPrivateChannelId = channelRepository
+                .save(Channel.builder().server(existingServer).category("Admin")
+                        .description("Admin only channel")
+                        .name("admin-discussion").isPublic(false)
+                        .rolePermissions(rolePermissions).build())
+                .getId();
     }
 
     @AfterEach

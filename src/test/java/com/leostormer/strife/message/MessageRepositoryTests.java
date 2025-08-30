@@ -18,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.leostormer.strife.channel.Channel;
-import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.conversation.Conversation;
 import com.leostormer.strife.conversation.ConversationRepository;
+import com.leostormer.strife.server.channel.Channel;
+import com.leostormer.strife.server.channel.ChannelRepository;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 

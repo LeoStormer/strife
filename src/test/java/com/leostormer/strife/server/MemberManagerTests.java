@@ -13,7 +13,6 @@ import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.member.MemberRoleUpdateOperation;
 
 public class MemberManagerTests extends ServerServiceTestSetup {
-    
     @Test
     public void shouldJoinServer() {
         serverService.joinServer(nonMemberUser, existingServerId);
@@ -83,7 +82,7 @@ public class MemberManagerTests extends ServerServiceTestSetup {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.kickMember(moderator, owner.getId(), existingServerId);
         });
-        
+
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.kickMember(moderator, moderator.getId(), existingServerId);
         });
@@ -99,11 +98,13 @@ public class MemberManagerTests extends ServerServiceTestSetup {
         assertFalse(serverRepository.isMember(existingServerId, noPermissionsUser.getId()));
         serverService.banMember(owner, moderator.getId(), existingServerId, "Test Reason");
         assertFalse(serverRepository.isMember(existingServerId, moderator.getId()));
+        serverService.banMember(owner, nonMemberUser.getId(), existingServerId, "I don't like you");
+        // can ban users not in the server
+        assertFalse(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
     }
 
     @Test
     public void shouldNotBanMemberWithoutPermission() {
-
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.banMember(basicMemberUser, noPermissionsUser.getId(), existingServerId, "Test");
         });
@@ -127,7 +128,7 @@ public class MemberManagerTests extends ServerServiceTestSetup {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.banMember(moderator, owner.getId(), existingServerId, "Test");
         });
-        
+
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.banMember(moderator, moderator.getId(), existingServerId, "Test");
         });
@@ -209,7 +210,8 @@ public class MemberManagerTests extends ServerServiceTestSetup {
         Member noPermissionsMember = serverRepository.getMember(existingServerId, noPermissionsUser.getId()).get();
         assertTrue(noPermissionsMember.getRoleIds().stream().anyMatch(id -> id.equals(defaultRoleId)));
 
-        MemberRoleUpdateOperation operation2 = new MemberRoleUpdateOperation(List.of(defaultRoleId), List.of(moderatorRoleId));
+        MemberRoleUpdateOperation operation2 = new MemberRoleUpdateOperation(List.of(defaultRoleId),
+                List.of(moderatorRoleId));
         serverService.updateMemberRoles(owner, moderator.getId(), existingServerId, operation2);
         Member moderatorMember = serverRepository.getMember(existingServerId, moderator.getId()).get();
         assertTrue(moderatorMember.getRoleIds().stream().anyMatch(id -> id.equals(defaultRoleId)));
@@ -235,19 +237,22 @@ public class MemberManagerTests extends ServerServiceTestSetup {
 
     @Test
     public void shouldNotUpdateRolesEqualOrHigherThanAccessed() {
-        MemberRoleUpdateOperation addHigherRole = new MemberRoleUpdateOperation(List.of(grandAdministratorRoleId), List.of());
+        MemberRoleUpdateOperation addHigherRole = new MemberRoleUpdateOperation(List.of(grandAdministratorRoleId),
+                List.of());
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.updateMemberRoles(moderator, moderator.getId(), existingServerId, addHigherRole);
         });
 
-        MemberRoleUpdateOperation removeOwnHighestRole = new MemberRoleUpdateOperation(List.of(), List.of(moderatorRoleId));
+        MemberRoleUpdateOperation removeOwnHighestRole = new MemberRoleUpdateOperation(List.of(),
+                List.of(moderatorRoleId));
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.updateMemberRoles(moderator, moderator.getId(), existingServerId, removeOwnHighestRole);
         });
 
-        MemberRoleUpdateOperation ownerRemovesOwnHighestRole = new MemberRoleUpdateOperation(List.of(), List.of(ownerRoleId));
+        MemberRoleUpdateOperation ownerRemovesOwnerRole = new MemberRoleUpdateOperation(List.of(),
+                List.of(ownerRoleId));
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.updateMemberRoles(owner, owner.getId(), existingServerId, ownerRemovesOwnHighestRole);
+            serverService.updateMemberRoles(owner, owner.getId(), existingServerId, ownerRemovesOwnerRole);
         });
     }
 }
