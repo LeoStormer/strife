@@ -3,7 +3,7 @@ package com.leostormer.strife.message;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
-import com.leostormer.strife.channel.Channel;
+import com.leostormer.strife.server.channel.Channel;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

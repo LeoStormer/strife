@@ -51,6 +51,13 @@ public class Member {
                 .build();
     }
 
+    /**
+     * Creates a banned member.
+     * 
+     * @param member
+     * @param banReason
+     * @return
+     */
     public static Member createBannedMember(Member member, String banReason) {
         return Member.builder().userId(member.getUserId()).nickName(member.getNickName()).isBanned(true)
                 .banReason(banReason).build();
@@ -80,9 +87,15 @@ public class Member {
     @Builder.Default
     private List<ObjectId> roleIds = new ArrayList<ObjectId>();
 
+    /**
+     * Whether this member is banned from the server.
+     */
     @Builder.Default
     private boolean isBanned = false;
 
+    /**
+     * Whether this member is the owner of the server.
+     */
     @Builder.Default
     private boolean isOwner = false;
 

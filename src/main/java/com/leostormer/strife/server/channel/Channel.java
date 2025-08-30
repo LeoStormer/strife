@@ -1,4 +1,4 @@
-package com.leostormer.strife.channel;
+package com.leostormer.strife.server.channel;
 
 import java.util.Map;
 
@@ -43,13 +43,15 @@ public class Channel {
      * List of roles that are allowed to access this channel.
      * Is ignored if the channel is public
      */
-    private Map<ObjectId, Long> rolePermissions;
+    @Builder.Default
+    private Map<ObjectId, Long> rolePermissions = Map.of();
 
     /**
      * List of users that are allowed to access this channel.
      * Is ignored if the channel is public
      */
-    private Map<ObjectId, Long> userPermissions;
+    @Builder.Default
+    private Map<ObjectId, Long> userPermissions = Map.of();
 
     public long getPermissions(Role role) {
         return rolePermissions.getOrDefault(role.getId(), Permissions.NONE);

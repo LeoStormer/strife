@@ -60,14 +60,10 @@ public interface MemberManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member commandMember = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(commandUser.getId()))
-                .findFirst()
+        Member commandMember = server.getMember(commandUser.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
-        Member memberToKick = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(userToKickId))
-                .findFirst()
+        Member memberToKick = server.getMember(userToKickId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (commandMember.isBanned() || memberToKick.isBanned())
@@ -85,18 +81,14 @@ public interface MemberManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member commandMember = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(commandUser.getId()))
-                .findFirst()
-                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
-
-        Member memberToBan = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(userToBanId))
-                .findFirst()
+        Member commandMember = server.getMember(commandUser.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (commandMember.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        Member memberToBan = server.getMember(userToBanId)
+                .orElse(Member.builder().userId(userToBanId).nickName("Unknown User").build());
 
         if (!(commandMember.getRolePriority() > memberToBan.getRolePriority()
                 && Permissions.hasPermission(commandMember.getPermissions(), PermissionType.BAN_MEMBERS)))
@@ -110,24 +102,20 @@ public interface MemberManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member commandMember = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(commandUser.getId()))
-                .findFirst()
-                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
-
-        Member memberToUnban = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(bannedUserId))
-                .findFirst()
+        Member commandMember = server.getMember(commandUser.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (commandMember.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
 
-        if (!memberToUnban.isBanned())
-            return;
-
         if (!Permissions.hasPermission(commandMember.getPermissions(), PermissionType.BAN_MEMBERS))
             throw new UnauthorizedActionException("User is not authorized to unban members");
+
+        Member memberToUnban = server.getMember(bannedUserId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (!memberToUnban.isBanned())
+            return;
 
         serverRepository.removeMember(serverId, bannedUserId);
     }
@@ -137,14 +125,10 @@ public interface MemberManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member commandUsingMember = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(commandUser.getId()))
-                .findFirst()
+        Member commandUsingMember = server.getMember(commandUser.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
-        Member memberToUpdate = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(userToChangeId))
-                .findFirst()
+        Member memberToUpdate = server.getMember(userToChangeId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (commandUsingMember.isBanned() || memberToUpdate.isBanned())
@@ -161,7 +145,8 @@ public interface MemberManager extends IUsesServerRepository {
 
     private static List<ObjectId> sanitizeRoleList(Map<ObjectId, Role> validRoles, List<ObjectId> roleList,
             Comparator<ObjectId> ordering) {
-        return roleList.stream().filter(id -> validRoles.containsKey(id)).sorted(ordering).toList();
+        return roleList == null ? List.of()
+                : roleList.stream().filter(id -> validRoles.containsKey(id)).sorted(ordering).toList();
     }
 
     default void updateMemberRoles(User roleGiver, ObjectId roleReceiverId, ObjectId serverId,
@@ -170,21 +155,17 @@ public interface MemberManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member roleGiverMember = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(roleGiver.getId()))
-                .findFirst()
+        Member roleGiverMember = server.getMember(roleGiver)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
-        Member memberToUpdate = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(roleReceiverId))
-                .findFirst()
+        if (!Permissions.hasPermission(roleGiverMember.getPermissions(), PermissionType.MANAGE_ROLES))
+            throw new UnauthorizedActionException("User is not authorized to manage roles in this server");
+
+        Member memberToUpdate = server.getMember(roleReceiverId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (roleGiverMember.isBanned() || memberToUpdate.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
-
-        if (!Permissions.hasPermission(roleGiverMember.getPermissions(), PermissionType.MANAGE_ROLES))
-            throw new UnauthorizedActionException("User is not authorized to manage roles in this server");
 
         Map<ObjectId, Role> roles = server.getRoles();
         Comparator<ObjectId> orderByDescendingPriority = (id1, id2) -> roles.get(id1)

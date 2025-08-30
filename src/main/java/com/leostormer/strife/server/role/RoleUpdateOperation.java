@@ -21,7 +21,7 @@ public class RoleUpdateOperation {
     private final List<ObjectId> rolesToRemove;
 
     /**
-     * A list of existing roles to chane properties of in the server.
+     * A list of existing roles to change properties of in the server.
      */
     private final List<Role> rolesToUpdate;
 }

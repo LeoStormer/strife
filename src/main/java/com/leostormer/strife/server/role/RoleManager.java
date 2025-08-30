@@ -14,21 +14,75 @@ import com.leostormer.strife.user.User;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface RoleManager extends IUsesServerRepository {
+    static final Comparator<Role> ascendingOrder = (r1, r2) -> Integer.compare(r1.getPriority(), r2.getPriority());
+
+    private RoleUpdateOperation sanitizeOperation(Map<ObjectId, Role> serverRoles, RoleUpdateOperation operation) {
+        List<Role> rolesToAdd = operation.getRolesToAdd();
+        rolesToAdd = rolesToAdd == null ? List.of() : rolesToAdd;
+
+        List<ObjectId> rolesToRemove = operation.getRolesToRemove();
+        rolesToRemove = rolesToRemove == null ? List.of()
+                : rolesToRemove.stream().filter(id -> serverRoles.containsKey(id))
+                        .toList();
+
+        List<Role> rolesToUpdate = operation.getRolesToUpdate();
+        rolesToUpdate = rolesToUpdate == null ? List.of()
+                : rolesToUpdate.stream().filter(r -> serverRoles.containsKey(r.getId()))
+                        .toList();
+
+        return new RoleUpdateOperation(rolesToAdd, rolesToRemove, rolesToUpdate);
+    }
+
+    private List<Role> mergeLists(List<Role> existingRoles, List<Role> rolesToAdd) {
+        // Both lists are assumed to be sorted in ascending order
+        // merges both lists into a single sorted list so that
+        // if two roles have the same priority the one from rolesToAdd comes first.
+        int i = 0;
+        int j = 0;
+
+        List<Role> mergedList = new ArrayList<>();
+        while (i < existingRoles.size() && j < rolesToAdd.size()) {
+            Role role1 = existingRoles.get(i);
+            Role role2 = rolesToAdd.get(j);
+
+            if (role1.getPriority() < role2.getPriority()) {
+                mergedList.add(role1);
+                i++;
+            } else {
+                mergedList.add(role2);
+                j++;
+            }
+        }
+
+        while (i < existingRoles.size()) {
+            mergedList.add(existingRoles.get(i));
+            i++;
+        }
+
+        while (j < rolesToAdd.size()) {
+            mergedList.add(rolesToAdd.get(j));
+            j++;
+        }
+
+        return mergedList;
+    }
 
     default void updateRoles(User user, ObjectId serverId, RoleUpdateOperation operation) {
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member member = server.getMembers().stream()
-                .filter(m -> m.getUserId().equals(user.getId()))
-                .findFirst()
+        Member member = server.getMember(user.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -39,11 +93,10 @@ public interface RoleManager extends IUsesServerRepository {
 
         int highestRolePriority = member.getRolePriority();
         Map<ObjectId, Role> serverRoles = server.getRoles();
-        List<Role> rolesToAdd = operation.getRolesToAdd();
-        List<ObjectId> rolesToRemove = operation.getRolesToRemove().stream().filter(id -> serverRoles.containsKey(id))
-                .toList();
-        List<Role> rolesToUpdate = operation.getRolesToUpdate().stream().filter(r -> serverRoles.containsKey(r.getId()))
-                .toList();
+        RoleUpdateOperation santizedOperation = sanitizeOperation(serverRoles, operation);
+        List<Role> rolesToAdd = santizedOperation.getRolesToAdd();
+        List<ObjectId> rolesToRemove = santizedOperation.getRolesToRemove();
+        List<Role> rolesToUpdate = santizedOperation.getRolesToUpdate();
 
         if (rolesToRemove.stream().anyMatch(id -> serverRoles.get(id).getPriority() >= highestRolePriority)
                 || rolesToUpdate.stream()
@@ -51,22 +104,29 @@ public interface RoleManager extends IUsesServerRepository {
             throw new UnauthorizedActionException("User is not authorized to manage roles at or above their highest");
 
         int delta = rolesToAdd.size() - rolesToRemove.size();
-        int newHighestRolePriority = highestRolePriority + delta;
+        int newHighestRolePriority = member.isOwner() ? Integer.MAX_VALUE : highestRolePriority + delta;
         if (Stream.concat(rolesToUpdate.stream(), rolesToAdd.stream())
                 .anyMatch(r -> r.getPriority() >= newHighestRolePriority))
             throw new UnauthorizedActionException("User is not authorised to manage roles at or above their highest");
 
         rolesToAdd.forEach(r -> r.setId(new ObjectId()));
+        rolesToAdd = Stream.concat(rolesToUpdate.stream(), rolesToAdd.stream()).sorted(ascendingOrder).toList();
 
-        Stream.concat(rolesToUpdate.stream(), rolesToAdd.stream()).forEach(r -> serverRoles.put(r.getId(), r));
-        rolesToRemove.stream().forEach(id -> serverRoles.remove(id));
+        Set<ObjectId> filteredIds = Stream.concat(rolesToRemove.stream(), rolesToAdd.stream().map(r -> r.getId()))
+                .collect(Collectors.toSet());
+        List<Role> existingRoles = serverRoles.values().stream().filter(r -> !filteredIds.contains(r.getId()))
+                .sorted(ascendingOrder).toList();
+        List<Role> mergedList = mergeLists(existingRoles, rolesToAdd);
 
-        AtomicInteger currentPriority = new AtomicInteger();
-        serverRoles.values().stream().filter((r) -> r.getPriority() != Integer.MAX_VALUE)// ignore owner role
-                .sorted((r1, r2) -> -1 * r1.compareTo(r2)).sequential().forEach(r -> {
-                    r.setPriority(currentPriority.getAndIncrement());
-                });
-        serverRepository.updateRoles(serverId, serverRoles);
+        Map<ObjectId, Role> updatedRoles = new HashMap<>();
+        for (int i = 0; i < mergedList.size(); i++) {
+            Role r = mergedList.get(i);
+            if (r.getPriority() != Integer.MAX_VALUE) // ignore owner role
+                r.setPriority(i);
+            updatedRoles.put(r.getId(), r);
+        }
+
+        serverRepository.updateRoles(serverId, updatedRoles);
     }
 
 }

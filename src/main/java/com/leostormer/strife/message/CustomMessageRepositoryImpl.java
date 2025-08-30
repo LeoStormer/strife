@@ -13,8 +13,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
-import com.leostormer.strife.channel.Channel;
 import com.leostormer.strife.conversation.Conversation;
+import com.leostormer.strife.server.channel.Channel;
 import com.leostormer.strife.user.User;
 
 @Repository

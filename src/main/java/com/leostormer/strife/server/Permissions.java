@@ -1,16 +1,32 @@
 package com.leostormer.strife.server;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.leostormer.strife.server.role.Role;
 
 public class Permissions {
     public static final long NONE = 0L;
+
     public static final long ALL = ~NONE;
 
     public static boolean hasPermission(long permissions, PermissionType permissionType) {
         return (permissions & PermissionType.ADMINISTRATOR.getValue()) != 0
                 || (permissions & permissionType.getValue()) != 0;
+    }
+
+    // returns true if the permissions include all of the specified permission types
+    // or if the ADMINISTRATOR permission is present
+    public static boolean hasAllPermissions(long permissions, PermissionType... permissionTypes) {
+        if ((permissions & PermissionType.ADMINISTRATOR.getValue()) != 0)
+            return true;
+
+        for (PermissionType permissionType : permissionTypes) {
+            if ((permissions & permissionType.getValue()) == 0)
+                return false;
+        }
+
+        return true;
     }
 
     public static long grantPermission(long currentPermissions, PermissionType... permissionTypes) {
@@ -47,5 +63,14 @@ public class Permissions {
         return roles.stream().reduce(Permissions.NONE,
                 (subPermissions, role) -> Permissions.combinePermissions(subPermissions, role.getPermissions()),
                 (perm1, perm2) -> Permissions.combinePermissions(perm1, perm2));
+    }
+
+    public static List<Integer> getBitPositions(PermissionType... permissionTypes) {
+        List<Integer> bitPositions = new ArrayList<>(permissionTypes.length);
+        for (PermissionType type : permissionTypes) {
+            bitPositions.add(Long.numberOfTrailingZeros(type.getValue()));
+        }
+
+        return bitPositions;
     }
 }

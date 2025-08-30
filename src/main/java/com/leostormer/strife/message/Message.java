@@ -1,5 +1,6 @@
 package com.leostormer.strife.message;
 
+import java.util.Comparator;
 import java.util.Date;
 
 import org.bson.types.ObjectId;
@@ -31,4 +32,7 @@ public abstract class Message {
 
     @DocumentReference(collection = "users", lazy = true)
     private User sender;
+
+    public static Comparator<Message> sortByTimestampAscending = (m1, m2) -> m1.getTimestamp()
+            .compareTo(m2.getTimestamp());
 }

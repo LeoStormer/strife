@@ -1,4 +1,4 @@
-package com.leostormer.strife.channel;
+package com.leostormer.strife.server.channel;
 
 import java.util.Map;
 
