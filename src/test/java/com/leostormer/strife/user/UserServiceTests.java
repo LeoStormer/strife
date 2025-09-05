@@ -1,5 +1,7 @@
 package com.leostormer.strife.user;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,26 +32,32 @@ public class UserServiceTests {
     @Autowired
     UserService userService;
 
+    private User user1;
+    private User user2;
+    private User user3;
+    private User user4;
+
     @BeforeEach
     void setUp() {
-        User user1 = new User();
+        user1 = new User();
         user1.setUsername("user1");
         user1.setPassword("password123");
-        User user2 = new User();
+        user1 = userRepository.save(user1);
+
+        user2 = new User();
         user2.setUsername("user2");
         user2.setPassword("password456");
-        User user3 = new User();
+        user2 = userRepository.save(user2);
+
+        user3 = new User();
         user3.setUsername("user3");
         user3.setPassword("password789");
-        User user4 = new User();
+        user3 = userRepository.save(user3);
+
+        user4 = new User();
         user4.setUsername("user4");
         user4.setPassword("password101112");
-
-        List<User> users = userRepository.saveAll(List.of(user1, user2, user3, user4));
-        user1 = users.get(0);
-        user2 = users.get(1);
-        user3 = users.get(2);
-        user4 = users.get(3);
+        user4 = userRepository.save(user4);
 
         // Accepted
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
@@ -84,7 +92,6 @@ public class UserServiceTests {
 
     @Test
     void shouldNotRegisterUserWithExistingUsername() {
-        User user1 = new User();
         user1.setUsername("user1");
         user1.setPassword("password123");
         assertThrows(UsernameTakenException.class, () -> {
@@ -93,12 +100,28 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldGetAllAcceptedFriends() {
-        User user1 = userService.getUserByUsername("user1").orElseThrow();
-        User user2 = userService.getUserByUsername("user2").orElseThrow();
-        User user3 = userService.getUserByUsername("user3").orElseThrow();
-        User user4 = userService.getUserByUsername("user4").orElseThrow();
+    void shouldUpdateUserDetails() {
+        UserUpdate userUpdate = new UserUpdate();
+        userUpdate.setPassword("SecurePassword!@#ASD");
+        userService.updateUserDetails(user1, userUpdate);
+        User updatedUser = userRepository.findById(user1.getId()).get();
+        assertEquals(user1.getUsername(), updatedUser.getUsername());
+        assertEquals(user1.getEmail(), updatedUser.getEmail());
+        assertEquals(user1.getProfilePic(), updatedUser.getProfilePic());
+        assertNotEquals(user1.getPassword(), updatedUser.getPassword());
+    }
 
+    @Test
+    public void shouldNotUpdateUserDetailsWithExistingUsername() {
+        UserUpdate updatedUser = new UserUpdate();
+        updatedUser.setUsername(user2.getUsername());
+        assertThrows(UsernameTakenException.class, () -> {
+            userService.updateUserDetails(user1, updatedUser);
+        });
+    }
+
+    @Test
+    void shouldGetAllAcceptedFriends() {
         List<User> friends = userService.getFriends(user1);
         assertTrue(friends.size() == 1);
         friends = userService.getFriends(user2);
@@ -111,11 +134,6 @@ public class UserServiceTests {
 
     @Test
     void shouldGetAllPendingFriends() {
-        User user1 = userService.getUserByUsername("user1").orElseThrow();
-        User user2 = userService.getUserByUsername("user2").orElseThrow();
-        User user3 = userService.getUserByUsername("user3").orElseThrow();
-        User user4 = userService.getUserByUsername("user4").orElseThrow();
-
         List<User> pendingFriends = userService.getPendingFriends(user1);
         assertTrue(pendingFriends.size() == 0);
         pendingFriends = userService.getPendingFriends(user2);
@@ -128,11 +146,6 @@ public class UserServiceTests {
 
     @Test
     void shouldGetAllBlockedUsers() {
-        User user1 = userService.getUserByUsername("user1").orElseThrow();
-        User user2 = userService.getUserByUsername("user2").orElseThrow();
-        User user3 = userService.getUserByUsername("user3").orElseThrow();
-        User user4 = userService.getUserByUsername("user4").orElseThrow();
-
         List<User> blockedUsers = userService.getBlockedUsers(user1);
         assertTrue(blockedUsers.size() == 1);
         blockedUsers = userService.getBlockedUsers(user2);
@@ -145,7 +158,6 @@ public class UserServiceTests {
 
     @Test
     void shouldNotSendFriendRequestToSelf() {
-        User user1 = userService.getUserByUsername("user1").orElseThrow();
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.sendFriendRequest(user1, user1.getId());
         });
@@ -153,7 +165,6 @@ public class UserServiceTests {
 
     @Test
     void shouldNotBlockSelf() {
-        User user1 = userService.getUserByUsername("user1").orElseThrow();
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.blockUser(user1, user1.getId());
         });
@@ -161,7 +172,6 @@ public class UserServiceTests {
 
     @Test
     void shouldNotUnblockSelf() {
-        User user1 = userService.getUserByUsername("user1").orElseThrow();
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.unblockUser(user1, user1.getId());
         });

@@ -1,41 +1,24 @@
 package com.leostormer.strife.user;
 
-import java.util.Date;
-
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Document(collection = "users")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class User {
-    @Id
-    private ObjectId id;
-
-    @NotEmpty
+@AllArgsConstructor
+public class UserUpdate {
     @Pattern(regexp = "^(?!.*\\.{2})(?!.*[_.]$)(?!.*^[_.]).*?[a-z0-9_.]{2,32}$")
     private String username;
 
-    @NotEmpty
     @Size(min = 8)
     private String password;
 
-    @Email()
+    @Email(message = "Email should be valid")
     private String email;
 
     private String profilePic;
-
-    @CreatedDate
-    private Date createdDate;
 }

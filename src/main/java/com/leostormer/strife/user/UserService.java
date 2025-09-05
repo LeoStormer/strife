@@ -35,7 +35,8 @@ public class UserService implements UserDetailsService {
     private final ConversationService conversationService;
 
     public User getUser(Principal principal) {
-        // currently authenticated principal should always correspond to an active user in database
+        // currently authenticated principal should always correspond to an active user
+        // in database
         return getUserByUsername(principal.getName()).get();
     }
 
@@ -77,7 +78,8 @@ public class UserService implements UserDetailsService {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot send a friend request to yourself");
 
-        User receiver = userRepository.findById(receiverId).orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
         return friendRequestService.sendFriendRequest(sender, receiver);
     }
@@ -94,9 +96,10 @@ public class UserService implements UserDetailsService {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot block yourself");
 
-        User receiver = userRepository.findById(receiverId).orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         friendRequestService.blockUser(sender, receiver);
-        
+
         // Users who have blocked each other cant speak to each other
         conversationService.lockConversation(sender, receiver);
     }
@@ -105,7 +108,8 @@ public class UserService implements UserDetailsService {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot unblock yourself");
 
-        User receiver = userRepository.findById(receiverId).orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+        User receiver = userRepository.findById(receiverId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
         friendRequestService.unblockUser(sender, receiver);
         Optional<FriendRequest> optional = friendRequestService.getFriendRequestByUsers(sender, receiver);
         if (optional.isEmpty())
@@ -120,6 +124,29 @@ public class UserService implements UserDetailsService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
+    }
+
+    public User updateUserDetails(User user, UserUpdate userUpdate) {
+        User userData = new User(user.getId(), user.getUsername(), user.getPassword(), user.getEmail(),
+                user.getProfilePic(), user.getCreatedDate());
+
+        if (userUpdate.getEmail() != null)
+            userData.setEmail(userUpdate.getEmail());
+
+        if (userUpdate.getProfilePic() != null)
+            userData.setProfilePic(userUpdate.getProfilePic());
+
+        if (userUpdate.getPassword() != null && !userUpdate.getPassword().isEmpty())
+            userData.setPassword(passwordEncoder.encode(userUpdate.getPassword()));
+
+        if (userUpdate.getUsername() != null && !userUpdate.getUsername().isEmpty()
+                && !user.getUsername().equals(userUpdate.getUsername())) {
+            if (userRepository.existsByUsername(userUpdate.getUsername()))
+                throw new UsernameTakenException();
+            userData.setUsername(userUpdate.getUsername());
+        }
+
+        return userRepository.save(userData);
     }
 
     @Override

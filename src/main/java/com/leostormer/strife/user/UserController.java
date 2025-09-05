@@ -21,6 +21,7 @@ import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequestView;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
 
@@ -128,9 +129,21 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserView> registerUser(@RequestBody User user) {
+    public ResponseEntity<UserView> registerUser(@Valid @RequestBody User user) {
         try {
             return ResponseEntity.ok(new UserView(userService.registerUser(user)));
+        } catch (UsernameTakenException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<UserView> updateUserDetails(Principal principal, @Valid @RequestBody UserUpdate userData) {
+        User user = userService.getUser(principal);
+        try {
+            return ResponseEntity.ok(new UserView(userService.updateUserDetails(user, userData)));
         } catch (UsernameTakenException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
