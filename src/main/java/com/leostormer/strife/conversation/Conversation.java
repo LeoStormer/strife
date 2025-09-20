@@ -33,14 +33,6 @@ public class Conversation {
 
     private boolean locked;
 
-    public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating) {
-        this.user1 = user1;
-        this.user2 = user2;
-        this.user1Participating = user1Participating;
-        this.user2Participating = user2Participating;
-        this.locked = false;
-    }
-
     public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating,
             boolean locked) {
         this.user1 = user1;
@@ -48,6 +40,14 @@ public class Conversation {
         this.user1Participating = user1Participating;
         this.user2Participating = user2Participating;
         this.locked = locked;
+    }
+
+    public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating) {
+        this(user1, user2, user1Participating, user2Participating, false);
+    }
+
+    public Conversation(User user1, User user2) {
+        this(user1, user2, true, true, false);
     }
 
     public boolean isValidUser(User user) {

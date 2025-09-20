@@ -9,9 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.server.channel.Channel;
 import com.leostormer.strife.server.channel.ChannelRepository;
 import com.leostormer.strife.server.member.Member;
@@ -19,9 +18,7 @@ import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class ServerServiceTestSetup {
+public class ServerServiceTestSetup extends AbstractIntegrationTest {
     @Autowired
     protected ServerRepository serverRepository;
 

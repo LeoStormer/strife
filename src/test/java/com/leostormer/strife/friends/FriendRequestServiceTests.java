@@ -12,17 +12,14 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 import com.leostormer.strife.user.UserService;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class FriendRequestServiceTests {
+public class FriendRequestServiceTests extends AbstractIntegrationTest {
 
     @Autowired
     UserRepository userRepository;

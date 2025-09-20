@@ -9,15 +9,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.AbstractRepositoryTest;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 
-@DataMongoTest
-@ActiveProfiles("test")
-public class ConversationRepositoryTests {
+public class ConversationRepositoryTests extends AbstractRepositoryTest {
     @Autowired
     public ConversationRepository conversationRepository;
 
@@ -44,8 +41,8 @@ public class ConversationRepositoryTests {
         user4 = userRepository.save(user4);
 
         conversationRepository
-                .saveAll(List.of(new Conversation(user1, user2, true, true), new Conversation(user1, user3, true, true),
-                        new Conversation(user2, user3, true, true), new Conversation(user4, user1, true, false),
+                .saveAll(List.of(new Conversation(user1, user2), new Conversation(user1, user3),
+                        new Conversation(user2, user3), new Conversation(user4, user1, true, false),
                         new Conversation(user4, user2, true, false), new Conversation(user4, user3, true, false)));
     }
 

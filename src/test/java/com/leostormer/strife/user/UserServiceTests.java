@@ -11,21 +11,20 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestRepository;
 import com.leostormer.strife.friends.FriendRequestService;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class UserServiceTests {
+public class UserServiceTests extends AbstractIntegrationTest {
     @Autowired
     UserRepository userRepository;
+
     @Autowired
     FriendRequestRepository friendRequestRepository;
+
     @Autowired
     FriendRequestService friendRequestService;
 

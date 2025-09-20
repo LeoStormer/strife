@@ -6,15 +6,12 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.test.context.ActiveProfiles;
 
+import com.leostormer.strife.AbstractRepositoryTest;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.server.ServerRepository;
 
-@DataMongoTest
-@ActiveProfiles("test")
-public class InviteRepositoryTests {
+public class InviteRepositoryTests extends AbstractRepositoryTest {
     @Autowired
     InviteRepository inviteRepository;
 
