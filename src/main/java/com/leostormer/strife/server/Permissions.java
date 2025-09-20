@@ -29,6 +29,20 @@ public class Permissions {
         return true;
     }
 
+    // returns true if the permissions include any of the specified permission types
+    // or if the ADMINISTRATOR permission is present
+    public static boolean hasAnyPermissions(long permissions, PermissionType... permissionTypes) {
+        if ((permissions & PermissionType.ADMINISTRATOR.getValue()) != 0)
+            return true;
+
+        for (PermissionType permissionType : permissionTypes) {
+            if ((permissions & permissionType.getValue()) != 0)
+                return true;
+        }
+
+        return false;
+    }
+
     public static long grantPermission(long currentPermissions, PermissionType... permissionTypes) {
         long newPermissions = currentPermissions;
         for (PermissionType type : permissionTypes)

@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Repository;
 
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.member.Member;
 
+@Repository
 public class CustomChannelRepositoryImpl implements CustomChannelRepository {
     @Autowired
     private MongoTemplate mongoTemplate;

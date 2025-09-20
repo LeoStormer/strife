@@ -29,3 +29,5 @@ de:
     mongodb:
       embedded:
         version: 8.0.0
+        storage:
+          repl-set-name: rs0

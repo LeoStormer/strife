@@ -102,7 +102,7 @@ public class ServerServiceTestSetup {
         moderatorRoleId = moderatorRole.getId();
 
         Role defaultRole = new Role(new ObjectId(), "Member", 0,
-                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS));
+                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS, PermissionType.CHANGE_NICKNAME));
         existingServer.getRoles().put(defaultRole.getId(), defaultRole);
         defaultRoleId = defaultRole.getId();
 

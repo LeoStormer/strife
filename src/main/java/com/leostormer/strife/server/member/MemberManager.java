@@ -134,8 +134,11 @@ public interface MemberManager extends IUsesServerRepository {
         if (commandUsingMember.isBanned() || memberToUpdate.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
 
-        if (!(commandUser.getId().equals(userToChangeId)
-                || (Permissions.hasPermission(commandUsingMember.getPermissions(), PermissionType.CHANGE_NICKNAME)
+        long permissions = commandUsingMember.getPermissions();
+        if (!((commandUser.getId().equals(userToChangeId)
+                && Permissions.hasAnyPermissions(permissions, PermissionType.CHANGE_NICKNAME,
+                        PermissionType.MANAGE_NICKNAMES))
+                || (Permissions.hasPermission(permissions, PermissionType.MANAGE_NICKNAMES)
                         && commandUsingMember.getRolePriority() > memberToUpdate.getRolePriority())))
             throw new UnauthorizedActionException("User is not authorized to change nicknames in this server");
 

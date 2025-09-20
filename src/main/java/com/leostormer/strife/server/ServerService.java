@@ -18,6 +18,8 @@ import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.server.channel.Channel;
 import com.leostormer.strife.server.channel.ChannelManager;
 import com.leostormer.strife.server.channel.ChannelRepository;
+import com.leostormer.strife.server.invite.InviteManager;
+import com.leostormer.strife.server.invite.InviteRepository;
 import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.member.MemberManager;
 import com.leostormer.strife.server.role.Role;
@@ -29,7 +31,7 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class ServerService implements MemberManager, RoleManager, ChannelManager {
+public class ServerService implements MemberManager, RoleManager, ChannelManager, InviteManager {
     @Autowired
     private final ServerRepository serverRepository;
 
@@ -38,6 +40,9 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
 
     @Autowired
     private final ChannelRepository channelRepository;
+
+    @Autowired
+    private final InviteRepository inviteRepository;
 
     @Override
     public long getPermissions(Channel channel, Member member) {
@@ -56,7 +61,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
                 Permissions.getPermissions(PermissionType.SEND_MESSAGES,
                         PermissionType.VIEW_CHANNELS, PermissionType.CHANGE_NICKNAME));
         server.getRoles().put(defaultRole.getId(), defaultRole);
-        Member ownerMember = Member.fromUser(owner, ownerRole);
+        Member ownerMember = Member.fromUser(owner, ownerRole, defaultRole);
         ownerMember.setOwner(true);
         server.getMembers().add(ownerMember);
         server = serverRepository.save(server);
@@ -108,9 +113,13 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         oldOwner.setPermissions(Permissions.combinePermissions(
                 oldOwner.getRoleIds().stream().map(id -> serverRoles.get(id).getPermissions()).toList()));
         oldOwner.setOwner(false);
+        oldOwner.setPermissions(Permissions.combinePermissions(
+                oldOwner.getRoleIds().stream().map(id -> serverRoles.get(id).getPermissions()).toList()));
 
         newOwnerMember.getRoleIds().add(0, ownerRole);
         newOwnerMember.setOwner(true);
+        newOwnerMember.setPermissions(Permissions.combinePermissions(
+                newOwnerMember.getRoleIds().stream().map(id -> serverRoles.get(id).getPermissions()).toList()));
 
         server.setOwner(newOwner);
         serverRepository.save(server);
@@ -210,5 +219,10 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
     @Override
     public ChannelRepository getChannelRepository() {
         return channelRepository;
+    }
+
+    @Override
+    public InviteRepository getInviteRepository() {
+        return inviteRepository;
     }
 }

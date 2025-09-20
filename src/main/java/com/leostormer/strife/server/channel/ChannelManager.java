@@ -61,7 +61,7 @@ public interface ChannelManager extends IUsesServerRepository {
     default Channel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
             String channelDescription, boolean isPublic) {
         Server server = getServerRepository().findById(serverId)
-                .orElseThrow(() -> new UnauthorizedActionException(SERVER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
         Member member = server.getMember(user)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
@@ -99,7 +99,7 @@ public interface ChannelManager extends IUsesServerRepository {
 
         Map<ObjectId, Long> rolePermissions = operation.getRolePermissions();
         if (rolePermissions != null && rolePermissions.keySet().stream().anyMatch(id -> !serverRoles.containsKey(id)))
-            throw new ResourceNotFoundException(ROLE_NOT_FOUND.getMessage());
+            throw new ResourceNotFoundException(ROLE_NOT_FOUND);
 
         Map<ObjectId, Long> userPermissions = operation.getUserPermissions();
         if (userPermissions != null

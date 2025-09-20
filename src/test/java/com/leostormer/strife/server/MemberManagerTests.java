@@ -169,6 +169,14 @@ public class MemberManagerTests extends ServerServiceTestSetup {
     }
 
     @Test
+    public void shouldNotChangeNicknameOfSelfWithoutPermision() {
+        String nickname = "New Name";
+        assertThrows(UnauthorizedActionException.class, () -> {
+            serverService.changeNickName(noPermissionsUser, noPermissionsUser.getId(), existingServerId, nickname);
+        });
+    }
+
+    @Test
     public void shouldChangeNicknameOfLowerRankedMember() {
         String newNickName = "New Name";
         serverService.changeNickName(moderator, basicMemberUser.getId(), existingServerId, newNickName);

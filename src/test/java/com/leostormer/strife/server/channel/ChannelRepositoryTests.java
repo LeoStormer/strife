@@ -154,10 +154,6 @@ public class ChannelRepositoryTests {
 
     @Test
     public void shouldGetVisibleChannels() {
-        for (PermissionType permissionType : PermissionType.values()) {
-            System.out.println(
-                    "ABCDE: " + permissionType.name() + " - " + Long.numberOfTrailingZeros(permissionType.getValue()));
-        }
         ObjectId serverId = server.getId();
         Member ownerMember = server.getMember(owner).get();
         List<Channel> ownerView = channelRepository.getVisibleChannels(serverId, ownerMember);
