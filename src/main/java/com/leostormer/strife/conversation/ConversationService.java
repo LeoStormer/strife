@@ -9,9 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.message.DirectMessage;
+import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.user.User;
@@ -22,7 +23,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ConversationService {
     @Autowired
-    private final ConversationRepository conversationRepository;
+    private final ChannelRepository conversationRepository;
 
     @Autowired
     private final MessageRepository messageRepository;
@@ -34,11 +35,11 @@ public class ConversationService {
     private static final String DEFAULT_UNAUTHORIZED_MESSAGE = "You are not authorized to act on this conversation";
 
     public Optional<Conversation> getConversationByUsers(User user1, User user2) {
-        return conversationRepository.findByUserIds(user1.getId(), user2.getId());
+        return conversationRepository.findConversationByUserIds(user1.getId(), user2.getId());
     }
 
     public Optional<Conversation> getConversationById(ObjectId id) {
-        return conversationRepository.findById(id);
+        return conversationRepository.findConversationById(id);
     }
 
     public List<Conversation> getConversations(User user) {
@@ -67,15 +68,17 @@ public class ConversationService {
         if (otherUsers.stream().anyMatch(u -> u.getId().equals(user1.getId())))
             throw new UnauthorizedActionException("You cannot start a conversation with yourself");
 
+        if (otherUsers.stream().map(u -> conversationRepository.findConversationByUserIds(user1.getId(), u.getId()))
+                .anyMatch(c -> c.isPresent() && c.get().isLocked()))
+            throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
+
         User[] usersInConversation = Stream.concat(otherUsers.stream(), Stream.of(user1)).toArray(User[]::new);
-        Optional<Conversation> result = conversationRepository.findByUserIds(Stream.of(usersInConversation).map(u -> u.getId()).toArray(ObjectId[]::new));
+        Optional<Conversation> result = conversationRepository
+                .findConversationByUserIds(Stream.of(usersInConversation).map(u -> u.getId()).toArray(ObjectId[]::new));
         if (result.isEmpty())
             return conversationRepository.save(new Conversation(usersInConversation));
 
         Conversation conversation = result.get();
-        if (conversation.isLocked())
-            throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
-
         if (conversation.isPresent(user1))
             throw new UnauthorizedActionException(
                     "You cannot start a conversation you're already participating in");
@@ -86,12 +89,12 @@ public class ConversationService {
 
     @Transactional
     public void deleteConversation(ObjectId conversationId) {
-        messageRepository.deleteAllByConversation(conversationId);
+        messageRepository.deleteAllByChannel(conversationId);
         conversationRepository.deleteById(conversationId);
     }
 
     public void leaveConversation(User user, ObjectId conversationId) {
-        Conversation conversation = conversationRepository.findById(conversationId)
+        Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
 
         if (!conversation.isValidUser(user))
@@ -110,20 +113,20 @@ public class ConversationService {
         }
     }
 
-    public List<DirectMessage> getMessages(User user, ObjectId conversationId, MessageSearchOptions searchOptions) {
-        Conversation conversation = conversationRepository.findById(conversationId)
+    public List<Message> getMessages(User user, ObjectId conversationId, MessageSearchOptions searchOptions) {
+        Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
 
         if (!conversation.isValidUser(user))
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
-        List<DirectMessage> dms = messageRepository.getDirectMessages(conversationId, searchOptions);
+        List<Message> dms = messageRepository.getMessages(conversationId, searchOptions);
         dms.sort((dm1, dm2) -> dm1.getTimestamp().compareTo(dm2.getTimestamp()));
         return dms;
     }
 
-    public DirectMessage sendMessage(User sender, ObjectId conversationId, String messageContent) {
-        Conversation conversation = conversationRepository.findById(conversationId)
+    public Message sendMessage(User sender, ObjectId conversationId, String messageContent) {
+        Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
 
         if (conversation.isLocked() || !conversation.isValidUser(sender) || !conversation.isPresent(sender))
@@ -132,24 +135,24 @@ public class ConversationService {
         return messageRepository.insertMessage(sender, conversation, messageContent);
     }
 
-    public DirectMessage editMessage(User sender, ObjectId conversationId, ObjectId messageId, String messageContent) {
-        Conversation conversation = conversationRepository.findById(conversationId)
+    public Message editMessage(User sender, ObjectId conversationId, ObjectId messageId, String messageContent) {
+        Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
 
         if (conversation.isLocked())
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
-        DirectMessage message = messageRepository.findDirectMessageById(messageId)
+        Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(MESSAGE_NOT_FOUND));
 
         if (!message.getSender().getId().equals(sender.getId()))
             throw new UnauthorizedActionException("User is not authorized to edit this message");
 
-        return messageRepository.updateDirectMessage(messageId, messageContent);
+        return messageRepository.updateMessage(messageId, messageContent);
     }
 
     public void deleteMessage(User sender, ObjectId messageId) {
-        DirectMessage message = messageRepository.findDirectMessageById(messageId)
+        Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(MESSAGE_NOT_FOUND));
 
         if (!message.getSender().getId().equals(sender.getId()))

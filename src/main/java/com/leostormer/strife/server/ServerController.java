@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.message.ChannelMessage;
+import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.message.MessageView;
-import com.leostormer.strife.server.channel.ChannelUpdateOperation;
-import com.leostormer.strife.server.channel.ChannelView;
 import com.leostormer.strife.server.invite.InviteView;
 import com.leostormer.strife.server.member.MemberRoleUpdateOperation;
 import com.leostormer.strife.server.role.RoleUpdateOperation;
+import com.leostormer.strife.server.server_channel.ChannelUpdateOperation;
+import com.leostormer.strife.server.server_channel.ChannelView;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserService;
 
@@ -341,7 +341,7 @@ public class ServerController {
             @RequestParam ObjectId channelId, @RequestBody String content) {
         User user = userService.getUser(principal);
         try {
-            ChannelMessage message = serverService.sendMessage(user, serverId, channelId, content);
+            Message message = serverService.sendMessage(user, serverId, channelId, content);
             return ResponseEntity.ok().body(new MessageView(message));
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -357,7 +357,7 @@ public class ServerController {
             @RequestParam ObjectId messageId, @RequestBody String content) {
         User user = userService.getUser(principal);
         try {
-            ChannelMessage message = serverService.editMessage(user, serverId, messageId, content);
+            Message message = serverService.editMessage(user, serverId, messageId, content);
             return ResponseEntity.ok().body(new MessageView(message));
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

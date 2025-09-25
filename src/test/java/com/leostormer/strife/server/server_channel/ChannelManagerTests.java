@@ -1,4 +1,4 @@
-package com.leostormer.strife.server.channel;
+package com.leostormer.strife.server.server_channel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,7 +16,7 @@ import com.leostormer.strife.server.ServerServiceTestSetup;
 public class ChannelManagerTests extends ServerServiceTestSetup {
     @Test
     public void shouldGetChannels() {
-        List<Channel> channels = serverService.getChannels(owner, existingServerId);
+        List<ServerChannel> channels = serverService.getChannels(owner, existingServerId);
         assertEquals(3, channels.size());
         channels = serverService.getChannels(moderator, existingServerId);
         assertEquals(3, channels.size());
@@ -40,10 +40,10 @@ public class ChannelManagerTests extends ServerServiceTestSetup {
 
     @Test
     public void shouldAddChannel() {
-        Channel channel1 = serverService.addChannel(owner, existingServerId, "OwnerChannel", "Test", "Owners Channel",
+        ServerChannel channel1 = serverService.addChannel(owner, existingServerId, "OwnerChannel", "Test", "Owners Channel",
                 false);
         assertTrue(channelRepository.existsById(channel1.getId()));
-        Channel channel2 = serverService.addChannel(moderator, existingServerId, "ModeratorChannel", "Test",
+        ServerChannel channel2 = serverService.addChannel(moderator, existingServerId, "ModeratorChannel", "Test",
                 "Mod channel", false);
         assertTrue(channelRepository.existsById(channel2.getId()));
     }
@@ -111,9 +111,9 @@ public class ChannelManagerTests extends ServerServiceTestSetup {
         operation.setDescription(newDescription);
         operation.setCategory(newCategory);
 
-        Channel channel = channelRepository.findById(channel1Id).get();
+        ServerChannel channel = channelRepository.findServerChannelById(channel1Id).get();
         serverService.updateChannelSettings(moderator, existingServerId, channel1Id, operation);
-        Channel updatedChannel = channelRepository.findById(channel1Id).get();
+        ServerChannel updatedChannel = channelRepository.findServerChannelById(channel1Id).get();
         assertEquals(newName, updatedChannel.getName());
         assertEquals(newDescription, updatedChannel.getDescription());
         assertEquals(newCategory, updatedChannel.getCategory());
@@ -132,7 +132,7 @@ public class ChannelManagerTests extends ServerServiceTestSetup {
         operation.setDescription(newDescription);
         operation.setCategory(newCategory);
 
-        Channel channel = channelRepository.findById(channel1Id).get();
+        ServerChannel channel = channelRepository.findServerChannelById(channel1Id).get();
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.updateChannelSettings(basicMemberUser, existingServerId, channel1Id, operation);
         });
@@ -149,7 +149,7 @@ public class ChannelManagerTests extends ServerServiceTestSetup {
             serverService.updateChannelSettings(moderator, existingServerId, adminOnlyPrivateChannelId, operation);
         });
 
-        Channel updatedChannel = channelRepository.findById(channel1Id).get();
+        ServerChannel updatedChannel = channelRepository.findServerChannelById(channel1Id).get();
         assertEquals(channel.getName(), updatedChannel.getName());
         assertEquals(channel.getDescription(), updatedChannel.getDescription());
         assertEquals(channel.getCategory(), updatedChannel.getCategory());

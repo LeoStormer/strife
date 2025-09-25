@@ -1,12 +1,11 @@
-package com.leostormer.strife.server.channel;
+package com.leostormer.strife.server.server_channel;
 
 import java.util.Map;
 
 import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
+import com.leostormer.strife.channel.Channel;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.server.member.Member;
@@ -16,17 +15,15 @@ import com.leostormer.strife.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Document(collection = "channels")
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Channel {
-    @Id
-    private ObjectId id;
-
+public class ServerChannel extends Channel {
     @DocumentReference(collection = "servers", lazy = true)
     private Server server;
 

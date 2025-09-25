@@ -14,9 +14,10 @@ public class MessageView {
     private String content;
     private Date timestamp;
     private UserView sender;
+    private String channelId;
 
     public MessageView(Message message) {
         this(message.getId().toString(), message.getContent(), message.getTimestamp(),
-                new UserView(message.getSender()));
+                new UserView(message.getSender()), message.getChannel().getId().toHexString());
     }
 }

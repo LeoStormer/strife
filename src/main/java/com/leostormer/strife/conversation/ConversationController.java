@@ -152,7 +152,8 @@ public class ConversationController {
         User user = userService.getUser(principal);
         try {
             return ResponseEntity.ok()
-                    .body(new MessageView(conversationService.editMessage(user, conversationId, messageId, messageContent)));
+                    .body(new MessageView(
+                            conversationService.editMessage(user, conversationId, messageId, messageContent)));
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {

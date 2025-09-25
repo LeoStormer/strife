@@ -12,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.server.channel.Channel;
 import com.leostormer.strife.server.member.Member;
+import com.leostormer.strife.server.server_channel.ServerChannel;
 
 public class ServerServiceTests extends ServerServiceTestSetup {
     @Test
@@ -32,7 +32,7 @@ public class ServerServiceTests extends ServerServiceTestSetup {
     public void shouldDeleteServerIfOwner() {
         serverService.deleteServer(owner, existingServerId);
         assertFalse(serverRepository.existsById(existingServerId));
-        List<Channel> channels = channelRepository.findAllByServerId(existingServerId);
+        List<ServerChannel> channels = channelRepository.findAllByServerId(existingServerId);
         assertTrue(channels.size() == 0);
     }
 

@@ -1,4 +1,4 @@
-package com.leostormer.strife.server.channel;
+package com.leostormer.strife.server.server_channel;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,7 +30,7 @@ public class ChannelView {
                 .collect(Collectors.toMap(entry -> entry.getKey().toHexString(), Map.Entry::getValue));
     }
 
-    public ChannelView(Channel channel) {
+    public ChannelView(ServerChannel channel) {
         this.id = channel.getId().toHexString();
         this.serverId = channel.getServer().getId().toHexString();
         this.name = channel.getName();

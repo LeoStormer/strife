@@ -11,10 +11,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractIntegrationTest;
-import com.leostormer.strife.server.channel.Channel;
-import com.leostormer.strife.server.channel.ChannelRepository;
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.role.Role;
+import com.leostormer.strife.server.server_channel.ServerChannel;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 
@@ -124,9 +124,9 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
         existingServer = serverRepository.save(existingServer);
         existingServerId = existingServer.getId();
 
-        channel1Id = channelRepository.save(Channel.builder().server(existingServer).category("General")
+        channel1Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
                 .description("A general channel.").name("general").build()).getId();
-        channel2Id = channelRepository.save(Channel.builder().server(existingServer).category("General")
+        channel2Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
                 .description("An events channel.").name("events").build()).getId();
 
         Map<ObjectId, Long> rolePermissions = new HashMap<>();
@@ -134,7 +134,7 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
         rolePermissions.put(moderatorRoleId, Permissions.revokePermission(moderatorRole.getPermissions(),
                 PermissionType.ADMINISTRATOR, PermissionType.MANAGE_CHANNELS));
         adminOnlyPrivateChannelId = channelRepository
-                .save(Channel.builder().server(existingServer).category("Admin")
+                .save(ServerChannel.builder().server(existingServer).category("Admin")
                         .description("Admin only channel")
                         .name("admin-discussion").isPublic(false)
                         .rolePermissions(rolePermissions).build())

@@ -16,10 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.message.ChannelMessage;
+import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchOptions;
-import com.leostormer.strife.server.channel.Channel;
+import com.leostormer.strife.server.server_channel.ServerChannel;
 import com.leostormer.strife.user.User;
 
 public class ServerMessageTests extends ServerServiceTestSetup {
@@ -32,25 +32,25 @@ public class ServerMessageTests extends ServerServiceTestSetup {
 
     @BeforeEach
     private void createExistingMessages() {
-        Channel channel1 = channelRepository.findById(channel1Id).get();
-        ChannelMessage basicMemberMessage = new ChannelMessage();
+        ServerChannel channel1 = channelRepository.findServerChannelById(channel1Id).get();
+        Message basicMemberMessage = new Message();
         basicMemberMessage.setSender(basicMemberUser);
         basicMemberMessage.setChannel(channel1);
         basicMemberMessage.setContent("Any content");
         basicMemberMessageId = messageRepository.save(basicMemberMessage).getId();
 
-        Channel channel2 = channelRepository.findById(channel2Id).get();
+        ServerChannel channel2 = channelRepository.findServerChannelById(channel2Id).get();
         User[] usersTalking = new User[] { owner, moderator, basicMemberUser };
         for (int i = 0; i < NUM_MESSAGES_CHANNEL_2; i++) {
-            ChannelMessage message = new ChannelMessage();
+            Message message = new Message();
             message.setSender(usersTalking[i % usersTalking.length]);
             message.setChannel(channel2);
             message.setContent("Message number " + i);
             messageRepository.save(message);
         }
 
-        Channel adminOnlyChannel = channelRepository.findById(adminOnlyPrivateChannelId).get();
-        ChannelMessage adminOnlyMessage = new ChannelMessage();
+        ServerChannel adminOnlyChannel = channelRepository.findServerChannelById(adminOnlyPrivateChannelId).get();
+        Message adminOnlyMessage = new Message();
         adminOnlyMessage.setSender(moderator);
         adminOnlyMessage.setChannel(adminOnlyChannel);
         adminOnlyMessage.setContent("Admin only content");
@@ -66,17 +66,17 @@ public class ServerMessageTests extends ServerServiceTestSetup {
     public void shouldGetMessages() {
         MessageSearchOptions searchOptions = MessageSearchOptions.earliest();
 
-        List<ChannelMessage> adminOnlyMessages = serverService.getMessages(owner, existingServerId,
+        List<Message> adminOnlyMessages = serverService.getMessages(owner, existingServerId,
                 adminOnlyPrivateChannelId, searchOptions);
         assertEquals(1, adminOnlyMessages.size());
         assertEquals(moderator.getId(), adminOnlyMessages.get(0).getSender().getId());
 
-        List<ChannelMessage> channel1Messages = serverService.getMessages(moderator, existingServerId, channel1Id,
+        List<Message> channel1Messages = serverService.getMessages(moderator, existingServerId, channel1Id,
                 searchOptions);
         assertEquals(1, channel1Messages.size());
         assertEquals(basicMemberUser.getId(), channel1Messages.get(0).getSender().getId());
 
-        List<ChannelMessage> channel2Messages = serverService.getMessages(basicMemberUser, existingServerId, channel2Id,
+        List<Message> channel2Messages = serverService.getMessages(basicMemberUser, existingServerId, channel2Id,
                 searchOptions);
         assertEquals(NUM_MESSAGES_CHANNEL_2, channel2Messages.size());
         assertEquals(owner.getId(), channel2Messages.get(0).getSender().getId());
@@ -102,7 +102,7 @@ public class ServerMessageTests extends ServerServiceTestSetup {
     @Test
     public void shouldSendMessage() {
         String messageContent = "A new message";
-        ChannelMessage message = serverService.sendMessage(basicMemberUser, existingServerId, channel1Id,
+        Message message = serverService.sendMessage(basicMemberUser, existingServerId, channel1Id,
                 messageContent);
         assertTrue(messageRepository.existsById(message.getId()));
         assertEquals(basicMemberUser.getId(), message.getSender().getId());
@@ -134,9 +134,9 @@ public class ServerMessageTests extends ServerServiceTestSetup {
     @Test
     public void shouldEditMessageIfSender() {
         String newMessageContent = "new content";
-        ChannelMessage oldMessage = messageRepository.findChannelMessageById(basicMemberMessageId).get();
+        Message oldMessage = messageRepository.findById(basicMemberMessageId).get();
         serverService.editMessage(basicMemberUser, existingServerId, basicMemberMessageId, newMessageContent);
-        Optional<ChannelMessage> newMessage = messageRepository.findChannelMessageById(basicMemberMessageId);
+        Optional<Message> newMessage = messageRepository.findById(basicMemberMessageId);
         assertTrue(newMessage.isPresent());
         assertEquals(oldMessage.getId(), newMessage.get().getId());
         assertEquals(oldMessage.getSender().getId(), newMessage.get().getSender().getId());
@@ -147,14 +147,14 @@ public class ServerMessageTests extends ServerServiceTestSetup {
     @Test
     public void shouldNotEditMessageIfNotSender() {
         String newMessageContent = "new content";
-        ChannelMessage oldMessage = messageRepository.findChannelMessageById(basicMemberMessageId).get();
+        Message oldMessage = messageRepository.findById(basicMemberMessageId).get();
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.editMessage(owner, existingServerId, basicMemberMessageId, newMessageContent);
         });
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.editMessage(moderator, existingServerId, basicMemberMessageId, newMessageContent);
         });
-        Optional<ChannelMessage> newMessage = messageRepository.findChannelMessageById(basicMemberMessageId);
+        Optional<Message> newMessage = messageRepository.findById(basicMemberMessageId);
         assertTrue(newMessage.isPresent());
         assertEquals(oldMessage.getId(), newMessage.get().getId());
         assertEquals(oldMessage.getSender().getId(), newMessage.get().getSender().getId());

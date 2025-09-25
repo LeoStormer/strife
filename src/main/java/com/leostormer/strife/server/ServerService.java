@@ -10,21 +10,20 @@ import static com.leostormer.strife.server.ServerExceptionMessage.*;
 import java.util.List;
 import java.util.Map;
 
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.message.ChannelMessage;
 import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchOptions;
-import com.leostormer.strife.server.channel.Channel;
-import com.leostormer.strife.server.channel.ChannelManager;
-import com.leostormer.strife.server.channel.ChannelRepository;
 import com.leostormer.strife.server.invite.InviteManager;
 import com.leostormer.strife.server.invite.InviteRepository;
 import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.member.MemberManager;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.server.role.RoleManager;
+import com.leostormer.strife.server.server_channel.ChannelManager;
+import com.leostormer.strife.server.server_channel.ServerChannel;
 import com.leostormer.strife.user.User;
 import com.mongodb.lang.Nullable;
 
@@ -46,7 +45,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
     private final InviteRepository inviteRepository;
 
     @Override
-    public long getPermissions(Channel channel, Member member) {
+    public long getPermissions(ServerChannel channel, Member member) {
         return (channel.isPublic() || member.isOwner()) ? member.getPermissions() : channel.getPermissions(member);
     }
 
@@ -142,7 +141,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         serverRepository.deleteById(serverId);
     }
 
-    public List<ChannelMessage> getMessages(User user, ObjectId serverId, ObjectId channelId,
+    public List<Message> getMessages(User user, ObjectId serverId, ObjectId channelId,
             MessageSearchOptions searchOptions) {
         Member member = serverRepository.getMember(serverId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
@@ -150,17 +149,17 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         if (member.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
 
-        Channel channel = getChannelInServer(serverId, channelId);
+        ServerChannel channel = getChannelInServer(serverId, channelId);
 
         if (!Permissions.hasPermission(getPermissions(channel, member), PermissionType.VIEW_CHANNELS))
             throw new UnauthorizedActionException("User is not authorized to view messages in this channel");
 
-        List<ChannelMessage> messages = messageRepository.getChannelMessages(channelId, searchOptions);
+        List<Message> messages = messageRepository.getMessages(channelId, searchOptions);
         messages.sort(Message.sortByTimestampAscending);
         return messages;
     }
 
-    public ChannelMessage sendMessage(User user, ObjectId serverId, ObjectId channelId, String content) {
+    public Message sendMessage(User user, ObjectId serverId, ObjectId channelId, String content) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
@@ -171,7 +170,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
             throw new UnauthorizedActionException(USER_IS_BANNED);
         }
 
-        Channel channel = getChannelInServer(serverId, channelId);
+        ServerChannel channel = getChannelInServer(serverId, channelId);
         if (!Permissions.hasPermission(getPermissions(channel, member), PermissionType.SEND_MESSAGES)) {
             throw new UnauthorizedActionException("User is not authorized to send messages in this channel");
         }
@@ -179,7 +178,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         return messageRepository.insertMessage(user, channel, content);
     }
 
-    public ChannelMessage editMessage(User user, ObjectId serverId, ObjectId messageId, String newContent) {
+    public Message editMessage(User user, ObjectId serverId, ObjectId messageId, String newContent) {
         Member member = serverRepository.getMember(serverId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
@@ -187,14 +186,14 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
             throw new UnauthorizedActionException(USER_IS_BANNED);
         }
 
-        ChannelMessage message = messageRepository.findChannelMessageById(messageId)
+        Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(MESSAGE_NOT_FOUND));
 
         if (!message.getSender().getId().equals(user.getId())) {
             throw new UnauthorizedActionException("User is not authorized to edit this message");
         }
 
-        return messageRepository.updateChannelMessage(messageId, newContent);
+        return messageRepository.updateMessage(messageId, newContent);
     }
 
     public void deleteMessage(User user, ObjectId serverId, ObjectId channelId, ObjectId messageId) {
@@ -205,7 +204,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
             throw new UnauthorizedActionException(USER_IS_BANNED);
         }
 
-        ChannelMessage message = messageRepository.findChannelMessageById(messageId)
+        Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(MESSAGE_NOT_FOUND));
 
         if (!(message.getSender().getId().equals(user.getId())

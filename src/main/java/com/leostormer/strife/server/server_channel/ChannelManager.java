@@ -1,4 +1,4 @@
-package com.leostormer.strife.server.channel;
+package com.leostormer.strife.server.server_channel;
 
 import java.util.List;
 import java.util.Map;
@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.bson.types.ObjectId;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.message.MessageRepository;
@@ -25,10 +26,10 @@ public interface ChannelManager extends IUsesServerRepository {
     public ChannelRepository getChannelRepository();
     public MessageRepository getMessageRepository();
 
-    public long getPermissions(Channel channel, Member member);
+    public long getPermissions(ServerChannel channel, Member member);
 
-    default Channel createChannel(Server server, String name, String category, String description, boolean isPublic) {
-        Channel channel = new Channel();
+    default ServerChannel createChannel(Server server, String name, String category, String description, boolean isPublic) {
+        ServerChannel channel = new ServerChannel();
         channel.setServer(server);
         channel.setName(name);
         channel.setCategory(category);
@@ -37,8 +38,8 @@ public interface ChannelManager extends IUsesServerRepository {
         return getChannelRepository().save(channel);
     }
 
-    default Channel getChannelInServer(ObjectId serverId, ObjectId channelId) {
-        Channel channel = getChannelRepository().findById(channelId)
+    default ServerChannel getChannelInServer(ObjectId serverId, ObjectId channelId) {
+        ServerChannel channel = getChannelRepository().findServerChannelById(channelId)
                 .orElseThrow(() -> new ResourceNotFoundException(CHANNEL_NOT_FOUND));
 
         if (!channel.getServer().getId().equals(serverId))
@@ -47,7 +48,7 @@ public interface ChannelManager extends IUsesServerRepository {
         return channel;
     }
 
-    default List<Channel> getChannels(User user, ObjectId serverId) {
+    default List<ServerChannel> getChannels(User user, ObjectId serverId) {
         Member member = getServerRepository().getMember(serverId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
@@ -59,10 +60,10 @@ public interface ChannelManager extends IUsesServerRepository {
         if (!Permissions.hasPermission(member.getPermissions(), PermissionType.VIEW_CHANNELS))
             throw new UnauthorizedActionException("User is not authorized to view channels");
 
-        return channelRepository.getVisibleChannels(serverId, member);
+        return channelRepository.getVisibleServerChannels(serverId, member);
     }
 
-    default Channel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
+    default ServerChannel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
             String channelDescription, boolean isPublic) {
         Server server = getServerRepository().findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -92,7 +93,7 @@ public interface ChannelManager extends IUsesServerRepository {
         if (member.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
 
-        Channel channel = getChannelInServer(serverId, channelId);
+        ServerChannel channel = getChannelInServer(serverId, channelId);
 
         if (!Permissions.hasAllPermissions(getPermissions(channel, member), PermissionType.VIEW_CHANNELS,
                 PermissionType.MANAGE_CHANNELS)) {
@@ -110,7 +111,7 @@ public interface ChannelManager extends IUsesServerRepository {
                 && userPermissions.keySet().stream().anyMatch(userId -> !serverRepository.isMember(serverId, userId)))
             throw new ResourceNotFoundException(USER_NOT_MEMBER);
 
-        channelRepository.updateChannelSettings(channelId, operation);
+        channelRepository.updateServerChannelSettings(channelId, operation);
     }
 
     @Transactional
@@ -123,7 +124,7 @@ public interface ChannelManager extends IUsesServerRepository {
         }
 
         Stream.of(channelIds).forEach(id -> {
-            Channel channel = getChannelInServer(serverId, id);
+            ServerChannel channel = getChannelInServer(serverId, id);
             if (!Permissions.hasAllPermissions(getPermissions(channel, member), PermissionType.VIEW_CHANNELS,
                     PermissionType.MANAGE_CHANNELS)) {
                 throw new UnauthorizedActionException("User is not authorized to remove this channel");

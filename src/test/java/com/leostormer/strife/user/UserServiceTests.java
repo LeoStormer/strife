@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.conversation.Conversation;
-import com.leostormer.strife.conversation.ConversationRepository;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestRepository;
@@ -34,7 +34,7 @@ public class UserServiceTests extends AbstractIntegrationTest {
     FriendRequestService friendRequestService;
 
     @Autowired
-    ConversationRepository conversationRepository;
+    ChannelRepository conversationRepository;
 
     @Autowired
     UserService userService;
@@ -174,10 +174,10 @@ public class UserServiceTests extends AbstractIntegrationTest {
     @Transactional
     void shouldBlockUser() {
         userService.blockUser(user1, user2.getId());
-        assertTrue(conversationRepository.existsByUserIds(user1.getId(), user2.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user1.getId(), user2.getId()));
         Optional<FriendRequest> friendResult = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId());
         assertTrue(friendResult.isPresent() && friendResult.get().hasSentBlockRequest(user1));
-        Optional<Conversation> conversationResult = conversationRepository.findByUserIds(user1.getId(), user2.getId());
+        Optional<Conversation> conversationResult = conversationRepository.findConversationByUserIds(user1.getId(), user2.getId());
         assertTrue(conversationResult.isPresent() && conversationResult.get().isLocked());
     }
 
@@ -197,7 +197,7 @@ public class UserServiceTests extends AbstractIntegrationTest {
         Optional<FriendRequest> friendResult = friendRequestRepository.findOneByUserIds(user1.getId(), user3.getId());
         assertTrue(friendResult.isEmpty()
                 || (friendResult.get().hasBeenBlocked(user1) && !friendResult.get().hasSentBlockRequest(user1)));
-        Optional<Conversation> conversationResult = conversationRepository.findByUserIds(user1.getId(), user3.getId());
+        Optional<Conversation> conversationResult = conversationRepository.findConversationByUserIds(user1.getId(), user3.getId());
         boolean conversationIsLocked = conversationResult.isPresent() && conversationResult.get().isLocked();
         assertTrue((friendResult.isEmpty() && !conversationIsLocked)
                 || (friendResult.get().hasBeenBlocked(user1) && conversationIsLocked));

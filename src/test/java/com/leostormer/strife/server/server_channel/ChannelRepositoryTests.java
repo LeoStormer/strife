@@ -1,4 +1,4 @@
-package com.leostormer.strife.server.channel;
+package com.leostormer.strife.server.server_channel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractRepositoryTest;
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
@@ -91,19 +92,19 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
     @BeforeEach
     public void setupChannels() {
         for (int i = 0; i < NUM_PUBLIC_CHANNELS; i++) {
-            Channel channel = Channel.builder().server(server).name("public-channel-" + i)
+            ServerChannel channel = ServerChannel.builder().server(server).name("public-channel-" + i)
                     .description("A public channel for testing").isPublic(true).build();
             channelRepository.save(channel);
         }
 
-        Channel adminOnlyChannel = Channel.builder().server(server).name("admin-only")
+        ServerChannel adminOnlyChannel = ServerChannel.builder().server(server).name("admin-only")
                 .description("The admin only channel").isPublic(false)
                 .rolePermissions(Map.of(moderatorRole.getId(),
                         Permissions.getPermissions(PermissionType.VIEW_CHANNELS, PermissionType.SEND_MESSAGES)))
                 .build();
         channelRepository.save(adminOnlyChannel);
 
-        Channel specialChannel = Channel.builder().server(server).name("special-channel")
+        ServerChannel specialChannel = ServerChannel.builder().server(server).name("special-channel")
                 .description("A special channel for testing").isPublic(false)
                 .userPermissions(Map.of(specialMemberUser.getId(), Permissions.ALL)).build();
         specialChannelId = channelRepository.save(specialChannel).getId();
@@ -117,20 +118,20 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
 
     @Test
     public void shouldFindAllByServerId() {
-        List<Channel> channels = channelRepository.findAllByServerId(server.getId());
+        List<ServerChannel> channels = channelRepository.findAllByServerId(server.getId());
         assertTrue(channels.size() == 5);
     }
 
     @Test
     public void shouldDeleteAllByServer() {
         channelRepository.deleteAllByServer(server.getId());
-        List<Channel> channels = channelRepository.findAllByServerId(server.getId());
+        List<ServerChannel> channels = channelRepository.findAllByServerId(server.getId());
         assertTrue(channels.size() == 0);
     }
 
     @Test
     public void shouldUpdateChannelSettings() {
-        Channel specialChannel = channelRepository.findById(specialChannelId).get();
+        ServerChannel specialChannel = channelRepository.findServerChannelById(specialChannelId).get();
         String newDescription = "Special channel now for the public";
 
         ChannelUpdateOperation operation = new ChannelUpdateOperation();
@@ -138,8 +139,8 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
         operation.setIsPublic(true);
         operation.setUserPermissions(Map.of());
 
-        channelRepository.updateChannelSettings(specialChannelId, operation);
-        Channel updatedChannel = channelRepository.findById(specialChannelId).get();
+        channelRepository.updateServerChannelSettings(specialChannelId, operation);
+        ServerChannel updatedChannel = channelRepository.findServerChannelById(specialChannelId).get();
         assertEquals(specialChannel.getName(), updatedChannel.getName());
         assertEquals(specialChannel.getCategory(), updatedChannel.getCategory());
         assertEquals(specialChannel.getRolePermissions(), updatedChannel.getRolePermissions());
@@ -153,19 +154,19 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
     public void shouldGetVisibleChannels() {
         ObjectId serverId = server.getId();
         Member ownerMember = server.getMember(owner).get();
-        List<Channel> ownerView = channelRepository.getVisibleChannels(serverId, ownerMember);
+        List<ServerChannel> ownerView = channelRepository.getVisibleServerChannels(serverId, ownerMember);
         assertTrue(ownerView.size() == 5);
 
         Member moderatorMember = server.getMember(moderator).get();
-        List<Channel> moderatorView = channelRepository.getVisibleChannels(serverId, moderatorMember);
+        List<ServerChannel> moderatorView = channelRepository.getVisibleServerChannels(serverId, moderatorMember);
         assertTrue(moderatorView.size() == 4);
 
         Member basicMember = server.getMember(basicMemberUser).get();
-        List<Channel> basicMemberView = channelRepository.getVisibleChannels(serverId, basicMember);
+        List<ServerChannel> basicMemberView = channelRepository.getVisibleServerChannels(serverId, basicMember);
         assertTrue(basicMemberView.size() == NUM_PUBLIC_CHANNELS);
 
         Member specialMember = server.getMember(specialMemberUser).get();
-        List<Channel> specialMemberView = channelRepository.getVisibleChannels(serverId, specialMember);
+        List<ServerChannel> specialMemberView = channelRepository.getVisibleServerChannels(serverId, specialMember);
         assertTrue(specialMemberView.size() == 4);
         assertTrue(specialMemberView.stream().noneMatch(c -> c.getName().equals("admin-only")));
     }

@@ -17,11 +17,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestRepository;
 import com.leostormer.strife.friends.FriendRequestResponse;
-import com.leostormer.strife.message.DirectMessage;
+import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchDirection;
 import com.leostormer.strife.message.MessageSearchOptions;
@@ -39,7 +40,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
     FriendRequestRepository friendRequestRepository;
 
     @Autowired
-    ConversationRepository conversationRepository;
+    ChannelRepository conversationRepository;
 
     @Autowired
     MessageRepository messageRepository;
@@ -94,7 +95,8 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
                 FriendRequestResponse.ACCEPTED);
         FriendRequest user3BlockedUser1 = new FriendRequest(null, user3, user1, FriendRequestResponse.BLOCKED,
                 FriendRequestResponse.PENDING);
-        Conversation user3AndUser1ConversationBlocked = new Conversation(true, List.of(user3, user1), List.of(false, false));
+        Conversation user3AndUser1ConversationBlocked = new Conversation(true, List.of(user3, user1),
+                List.of(false, false));
         FriendRequest user1AndUser4AreFriends = new FriendRequest(null, user1, user4, FriendRequestResponse.ACCEPTED,
                 FriendRequestResponse.ACCEPTED);
         friendRequestRepository.saveAll(List.of(user1AndUser2AreFriends, user3BlockedUser1, user1AndUser4AreFriends));
@@ -111,26 +113,26 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
         messageRepository.deleteAll();
     }
 
-    private DirectMessage[][] initializeMessages() {
-        DirectMessage[] convo1Messages = new DirectMessage[NUM_MESSAGES];
+    private Message[][] initializeMessages() {
+        Message[] convo1Messages = new Message[NUM_MESSAGES];
         for (int i = 0; i < NUM_MESSAGES; i++) {
-            DirectMessage message = new DirectMessage();
+            Message message = new Message();
             message.setSender(i % 2 == 0 ? user1 : user2);
-            message.setConversation(conversation1);
+            message.setChannel(conversation1);
             message.setContent("This is a message in conversation 1 " + i);
             convo1Messages[i] = messageRepository.save(message);
         }
 
-        DirectMessage[] convo2Messages = new DirectMessage[NUM_MESSAGES];
+        Message[] convo2Messages = new Message[NUM_MESSAGES];
         for (int i = 0; i < NUM_MESSAGES; i++) {
-            DirectMessage message = new DirectMessage();
+            Message message = new Message();
             message.setSender(i % 2 == 0 ? user2 : user3);
-            message.setConversation(conversation2);
+            message.setChannel(conversation2);
             message.setContent("This is a message in conversation 2 " + i);
             convo2Messages[i] = messageRepository.save(message);
         }
 
-        return new DirectMessage[][] { convo1Messages, convo2Messages };
+        return new Message[][] { convo1Messages, convo2Messages };
     }
 
     @Test
@@ -190,7 +192,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
         userService.blockUser(user2, user1.getId());
         assertTrue(conversationRepository.existsById(conversation1.getId()));
         conversationService.leaveConversation(user1, conversation1.getId());
-        Optional<Conversation> updatedConversation = conversationRepository.findById(conversation1.getId());
+        Optional<Conversation> updatedConversation = conversationRepository.findConversationById(conversation1.getId());
         assertTrue(updatedConversation.isPresent());
         assertFalse(updatedConversation.get().isPresent(user2));
         assertFalse(updatedConversation.get().isPresent(user1));
@@ -205,13 +207,13 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
 
     @Test
     void shouldGetMessagesAfterTimestamp() {
-        DirectMessage[][] conversationMessages = initializeMessages();
+        Message[][] conversationMessages = initializeMessages();
         int conversationIndex = 0;
         int messageIndex = (NUM_MESSAGES - 1) - 10;
         Date timestamp = conversationMessages[conversationIndex][messageIndex].getTimestamp();
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().timestamp(timestamp)
                 .searchDirection(MessageSearchDirection.ASCENDING).build();
-        List<DirectMessage> messages = conversationService.getMessages(user1, conversation1.getId(), searchOptions);
+        List<Message> messages = conversationService.getMessages(user1, conversation1.getId(), searchOptions);
 
         assertTrue(messages.size() <= searchOptions.getLimit());
         assertTrue(messages.get(0).getTimestamp().compareTo(timestamp) >= 0);
@@ -219,13 +221,13 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
 
     @Test
     void shouldGetMessagesBeforeTimestamp() {
-        DirectMessage[][] conversationMessages = initializeMessages();
+        Message[][] conversationMessages = initializeMessages();
         int conversationIndex = 0;
         int messageIndex = (NUM_MESSAGES - 1) - 10;
         Date timestamp = conversationMessages[conversationIndex][messageIndex].getTimestamp();
         MessageSearchOptions searchOptions = MessageSearchOptions.builder().timestamp(timestamp)
                 .searchDirection(MessageSearchDirection.DESCENDING).build();
-        List<DirectMessage> messages = conversationService.getMessages(user1, conversation1.getId(), searchOptions);
+        List<Message> messages = conversationService.getMessages(user1, conversation1.getId(), searchOptions);
 
         assertTrue(messages.size() <= searchOptions.getLimit());
         assertTrue(messages.get(messages.size() - 1).getTimestamp().compareTo(timestamp) <= 0);
@@ -243,7 +245,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
 
     @Test
     void shouldSendMessage() {
-        DirectMessage message = conversationService.sendMessage(user2, conversation1.getId(), "Hello");
+        Message message = conversationService.sendMessage(user2, conversation1.getId(), "Hello");
         assertTrue(messageRepository.existsById(message.getId()));
     }
 
@@ -279,18 +281,18 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
     @Test
     void shouldEditMessageIfUserisSender() {
         initializeMessages();
-        DirectMessage origianlMessage = messageRepository
-                .getDirectMessages(conversation1.getId(), MessageSearchOptions.earliest())
+        Message originalMessage = messageRepository
+                .getMessages(conversation1.getId(), MessageSearchOptions.earliest())
                 .get(0);
         String messageContent = "I can be anything";
-        conversationService.editMessage(user1, conversation1.getId(), origianlMessage.getId(), messageContent);
-        DirectMessage message = messageRepository.findDirectMessageById(origianlMessage.getId()).get();
+        conversationService.editMessage(user1, conversation1.getId(), originalMessage.getId(), messageContent);
+        Message message = messageRepository.findById(originalMessage.getId()).get();
 
         assertTrue(message.getContent().equals(messageContent));
-        assertTrue(message.getConversation().getId().equals(conversation1.getId()));
-        assertTrue(message.getId().equals(origianlMessage.getId()));
-        assertTrue(message.getSender().getId().equals(origianlMessage.getSender().getId()));
-        assertFalse(message.getContent().equals(origianlMessage.getContent()));
+        assertTrue(message.getChannel().getId().equals(conversation1.getId()));
+        assertTrue(message.getId().equals(originalMessage.getId()));
+        assertTrue(message.getSender().getId().equals(originalMessage.getSender().getId()));
+        assertFalse(message.getContent().equals(originalMessage.getContent()));
     }
 
     @Test

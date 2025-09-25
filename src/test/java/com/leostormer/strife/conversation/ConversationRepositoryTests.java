@@ -11,12 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractRepositoryTest;
+import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 
 public class ConversationRepositoryTests extends AbstractRepositoryTest {
     @Autowired
-    public ConversationRepository conversationRepository;
+    public ChannelRepository conversationRepository;
 
     @Autowired
     public UserRepository userRepository;
@@ -77,8 +78,9 @@ public class ConversationRepositoryTests extends AbstractRepositoryTest {
 
     @Test
     void shouldFindConversationsByUserIds() {
-        Optional<Conversation> request = conversationRepository.findByUserIds(user1.getId(), user2.getId());
-        Optional<Conversation> request2 = conversationRepository.findByUserIds(user2.getId(), user1.getId());
+        Optional<Conversation> request = conversationRepository.findConversationByUserIds(user1.getId(), user2.getId());
+        Optional<Conversation> request2 = conversationRepository.findConversationByUserIds(user2.getId(),
+                user1.getId());
         assertTrue(request.isPresent());
         assertTrue(request2.isPresent());
         assertTrue(request.get().getId().equals(request2.get().getId()));
@@ -86,11 +88,11 @@ public class ConversationRepositoryTests extends AbstractRepositoryTest {
 
     @Test
     void shouldExistByUserIdsWithoutCaringAboutOrder() {
-        assertTrue(conversationRepository.existsByUserIds(user1.getId(), user2.getId()));
-        assertTrue(conversationRepository.existsByUserIds(user2.getId(), user1.getId()));
-        assertTrue(conversationRepository.existsByUserIds(user1.getId(), user3.getId()));
-        assertTrue(conversationRepository.existsByUserIds(user3.getId(), user1.getId()));
-        assertTrue(conversationRepository.existsByUserIds(user2.getId(), user3.getId()));
-        assertTrue(conversationRepository.existsByUserIds(user3.getId(), user2.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user1.getId(), user2.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user2.getId(), user1.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user1.getId(), user3.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user3.getId(), user1.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user2.getId(), user3.getId()));
+        assertTrue(conversationRepository.conversationExistsByUserIds(user3.getId(), user2.getId()));
     }
 }
