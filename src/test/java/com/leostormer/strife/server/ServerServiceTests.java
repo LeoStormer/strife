@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
@@ -27,6 +28,7 @@ public class ServerServiceTests extends ServerServiceTestSetup {
     }
 
     @Test
+    @Transactional
     public void shouldDeleteServerIfOwner() {
         serverService.deleteServer(owner, existingServerId);
         assertFalse(serverRepository.existsById(existingServerId));
@@ -35,6 +37,7 @@ public class ServerServiceTests extends ServerServiceTestSetup {
     }
 
     @Test
+    @Transactional
     public void shouldNotDeleteServerIfNotOwner() {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.deleteServer(moderator, existingServerId);

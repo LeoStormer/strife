@@ -2,11 +2,14 @@ package com.leostormer.strife.server.channel;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.server.IUsesServerRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
@@ -20,6 +23,7 @@ import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
 public interface ChannelManager extends IUsesServerRepository {
     public ChannelRepository getChannelRepository();
+    public MessageRepository getMessageRepository();
 
     public long getPermissions(Channel channel, Member member);
 
@@ -109,7 +113,8 @@ public interface ChannelManager extends IUsesServerRepository {
         channelRepository.updateChannelSettings(channelId, operation);
     }
 
-    default void removeChannel(User user, ObjectId serverId, ObjectId channelId) {
+    @Transactional
+    default void removeChannel(User user, ObjectId serverId, ObjectId... channelIds) {
         Member member = getServerRepository().getMember(serverId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
@@ -117,12 +122,15 @@ public interface ChannelManager extends IUsesServerRepository {
             throw new UnauthorizedActionException(USER_IS_BANNED);
         }
 
-        Channel channel = getChannelInServer(serverId, channelId);
-        if (!Permissions.hasAllPermissions(getPermissions(channel, member), PermissionType.VIEW_CHANNELS,
-                PermissionType.MANAGE_CHANNELS)) {
-            throw new UnauthorizedActionException("User is not authorized to remove this channel");
-        }
+        Stream.of(channelIds).forEach(id -> {
+            Channel channel = getChannelInServer(serverId, id);
+            if (!Permissions.hasAllPermissions(getPermissions(channel, member), PermissionType.VIEW_CHANNELS,
+                    PermissionType.MANAGE_CHANNELS)) {
+                throw new UnauthorizedActionException("User is not authorized to remove this channel");
+            }
+        });
 
-        getChannelRepository().deleteById(channelId);
+        getMessageRepository().deleteAllByChannel(channelIds);
+        getChannelRepository().deleteAllById(Stream.of(channelIds).toList());;
     }
 }

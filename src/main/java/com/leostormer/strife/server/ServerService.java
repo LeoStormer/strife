@@ -3,6 +3,7 @@ package com.leostormer.strife.server;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
@@ -49,6 +50,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         return (channel.isPublic() || member.isOwner()) ? member.getPermissions() : channel.getPermissions(member);
     }
 
+    @Transactional
     public Server createServer(User owner, String serverName, String serverDescription) {
         Server server = new Server();
         server.setName(serverName);
@@ -125,6 +127,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         serverRepository.save(server);
     }
 
+    @Transactional
     public void deleteServer(User owner, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -133,8 +136,10 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
             throw new UnauthorizedActionException("User is not authorized to delete this server");
         }
 
+        ObjectId[] channelIds = channelRepository.findAllByServerId(serverId).stream().map(c -> c.getId())
+                .toArray(ObjectId[]::new);
+        removeChannel(owner, serverId, channelIds);
         serverRepository.deleteById(serverId);
-        channelRepository.deleteAllByServer(serverId);
     }
 
     public List<ChannelMessage> getMessages(User user, ObjectId serverId, ObjectId channelId,
@@ -224,5 +229,10 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
     @Override
     public InviteRepository getInviteRepository() {
         return inviteRepository;
+    }
+
+    @Override
+    public MessageRepository getMessageRepository() {
+        return messageRepository;
     }
 }
