@@ -1,7 +1,6 @@
 package com.leostormer.strife.conversation;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -95,7 +94,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
                 FriendRequestResponse.ACCEPTED);
         FriendRequest user3BlockedUser1 = new FriendRequest(null, user3, user1, FriendRequestResponse.BLOCKED,
                 FriendRequestResponse.PENDING);
-        Conversation user3AndUser1ConversationBlocked = new Conversation(user3, user1, false, false, true);
+        Conversation user3AndUser1ConversationBlocked = new Conversation(true, List.of(user3, user1), List.of(false, false));
         FriendRequest user1AndUser4AreFriends = new FriendRequest(null, user1, user4, FriendRequestResponse.ACCEPTED,
                 FriendRequestResponse.ACCEPTED);
         friendRequestRepository.saveAll(List.of(user1AndUser2AreFriends, user3BlockedUser1, user1AndUser4AreFriends));
@@ -145,30 +144,29 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
     void shouldStartConversationBetweenFriends() {
         User sender = user1;
         User receiver = user4;
-        Conversation conversation = conversationService.startNewConversation(sender, receiver);
-        assertNotNull(conversation);
-        assertNotNull(conversation.getId());
-        assertTrue(sender.getId().equals(conversation.getUser1().getId()));
-        assertTrue(receiver.getId().equals(conversation.getUser2().getId()));
+        Conversation conversation = conversationService.startNewConversation(sender, List.of(receiver));
+        assertTrue(conversationRepository.existsById(conversation.getId()));
+        assertTrue(conversation.isPresent(sender));
+        assertTrue(conversation.isPresent(receiver));
     }
 
     @Test
     void shouldStartConversationBetweenStrangers() {
         User sender = user2;
         User receiver = user4;
-        Conversation conversation = conversationService.startNewConversation(sender, receiver);
+        Conversation conversation = conversationService.startNewConversation(sender, List.of(receiver));
         assertTrue(conversationRepository.existsById(conversation.getId()));
-        assertTrue(sender.getId().equals(conversation.getUser1().getId()));
-        assertTrue(receiver.getId().equals(conversation.getUser2().getId()));
+        assertTrue(conversation.isPresent(sender));
+        assertTrue(conversation.isPresent(receiver));
     }
 
     @Test
     void shouldNotStartConversationBetweenBlockedUsers() {
         assertThrows(UnauthorizedActionException.class, () -> {
-            conversationService.startNewConversation(user1, user3);
+            conversationService.startNewConversation(user3, List.of(user1));
         });
         assertThrows(UnauthorizedActionException.class, () -> {
-            conversationService.startNewConversation(user3, user1);
+            conversationService.startNewConversation(user1, List.of(user3));
         });
     }
 
@@ -176,7 +174,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
     void shouldLeaveConversation() {
         conversationService.leaveConversation(user2, conversation1.getId());
         Conversation updatedConversation = conversationService.getConversationById(conversation1.getId()).get();
-        assertFalse(updatedConversation.isUser2Participating());
+        assertFalse(updatedConversation.isPresent(user2));
     }
 
     @Test
@@ -190,11 +188,12 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
     void shouldLeaveConversationAndKeepIfLocked() {
         conversationService.leaveConversation(user2, conversation1.getId());
         userService.blockUser(user2, user1.getId());
+        assertTrue(conversationRepository.existsById(conversation1.getId()));
         conversationService.leaveConversation(user1, conversation1.getId());
         Optional<Conversation> updatedConversation = conversationRepository.findById(conversation1.getId());
         assertTrue(updatedConversation.isPresent());
-        assertFalse(updatedConversation.get().isUser1Participating());
-        assertFalse(updatedConversation.get().isUser2Participating());
+        assertFalse(updatedConversation.get().isPresent(user2));
+        assertFalse(updatedConversation.get().isPresent(user1));
     }
 
     @Test

@@ -25,6 +25,7 @@ public class FriendRequestService {
 
     /**
      * Gets a friend request by its Id.
+     * 
      * @param id
      * @return the friend request with the given id
      */
@@ -93,7 +94,7 @@ public class FriendRequestService {
      * @param sender   the <code>User</code> that is sending the request
      * @param receiver the <code>User</code> that is receiving the request
      * @throws UnauthorizedActionException if a friend request between these two
-     *                                         users already exists
+     *                                     users already exists
      * @return the {@link FriendRequest}
      */
     public FriendRequest sendFriendRequest(User sender, User receiver) {
@@ -112,11 +113,11 @@ public class FriendRequestService {
      *                  request
      * @param requestId the id of the {@link FriendRequest}
      * @return the saved <code>FriendRequest</code>
-     * @throws ResourceNotFoundException           if no such friend request
-     *                                                  with the given id exists
+     * @throws ResourceNotFoundException   if no such friend request
+     *                                     with the given id exists
      * @throws UnauthorizedActionException if the request was not sent
-     *                                                  to reciever or receiver has
-     *                                                  been blocked
+     *                                     to reciever or receiver has
+     *                                     been blocked
      */
     public FriendRequest acceptFriendRequest(User receiver, ObjectId requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
@@ -138,13 +139,13 @@ public class FriendRequestService {
      * 
      * @param user      the user requesting deletion
      * @param requestId the id of the <code>FriendRequest</code>
-     * @throws ResourceNotFoundException           if no friend request exists
-     *                                                  with the given id
+     * @throws ResourceNotFoundException   if no friend request exists
+     *                                     with the given id
      * @throws UnauthorizedActionException if the user is not part of
-     *                                                  friend request or if the
-     *                                                  user requesting removal was
-     *                                                  blocked by the other user in
-     *                                                  the request
+     *                                     friend request or if the
+     *                                     user requesting removal was
+     *                                     blocked by the other user in
+     *                                     the request
      */
     public void removeFriendRequest(User user, ObjectId requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
@@ -178,7 +179,7 @@ public class FriendRequestService {
      * @param sender
      * @param receiver
      * @throws UnauthorizedActionException if sender has not blocked
-     *                                                  receiver
+     *                                     receiver
      */
     public void unblockUser(User sender, User receiver) {
         Optional<FriendRequest> friendRequestOptional = friendRequestRepository.findOneByUserIds(sender.getId(),

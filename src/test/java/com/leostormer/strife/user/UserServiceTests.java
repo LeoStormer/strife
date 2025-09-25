@@ -1,18 +1,23 @@
 package com.leostormer.strife.user;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.conversation.Conversation;
+import com.leostormer.strife.conversation.ConversationRepository;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.friends.FriendRequest;
 import com.leostormer.strife.friends.FriendRequestRepository;
@@ -27,6 +32,9 @@ public class UserServiceTests extends AbstractIntegrationTest {
 
     @Autowired
     FriendRequestService friendRequestService;
+
+    @Autowired
+    ConversationRepository conversationRepository;
 
     @Autowired
     UserService userService;
@@ -163,16 +171,44 @@ public class UserServiceTests extends AbstractIntegrationTest {
     }
 
     @Test
+    @Transactional
+    void shouldBlockUser() {
+        userService.blockUser(user1, user2.getId());
+        assertTrue(conversationRepository.existsByUserIds(user1.getId(), user2.getId()));
+        Optional<FriendRequest> friendResult = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId());
+        assertTrue(friendResult.isPresent() && friendResult.get().hasSentBlockRequest(user1));
+        Optional<Conversation> conversationResult = conversationRepository.findByUserIds(user1.getId(), user2.getId());
+        assertTrue(conversationResult.isPresent() && conversationResult.get().isLocked());
+    }
+
+    @Test
+    @Transactional
     void shouldNotBlockSelf() {
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.blockUser(user1, user1.getId());
         });
+        assertFalse(friendRequestRepository.existsByUserIds(user1.getId(), user1.getId()));
     }
 
     @Test
+    @Transactional
+    void shouldUnblockUser() {
+        userService.unblockUser(user1, user3.getId());
+        Optional<FriendRequest> friendResult = friendRequestRepository.findOneByUserIds(user1.getId(), user3.getId());
+        assertTrue(friendResult.isEmpty()
+                || (friendResult.get().hasBeenBlocked(user1) && !friendResult.get().hasSentBlockRequest(user1)));
+        Optional<Conversation> conversationResult = conversationRepository.findByUserIds(user1.getId(), user3.getId());
+        boolean conversationIsLocked = conversationResult.isPresent() && conversationResult.get().isLocked();
+        assertTrue((friendResult.isEmpty() && !conversationIsLocked)
+                || (friendResult.get().hasBeenBlocked(user1) && conversationIsLocked));
+    }
+
+    @Test
+    @Transactional
     void shouldNotUnblockSelf() {
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.unblockUser(user1, user1.getId());
         });
+        assertFalse(friendRequestRepository.existsByUserIds(user1.getId(), user1.getId()));
     }
 }

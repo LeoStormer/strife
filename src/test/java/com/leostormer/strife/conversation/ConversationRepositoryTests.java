@@ -21,29 +21,36 @@ public class ConversationRepositoryTests extends AbstractRepositoryTest {
     @Autowired
     public UserRepository userRepository;
 
+    private User user1;
+    private User user2;
+    private User user3;
+    private User user4;
+
+    private User createUser(String username, String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        return userRepository.save(user);
+    }
+
     @BeforeEach
     void setup() {
-        User user1 = new User();
-        user1.setUsername("User1");
-        user1.setPassword("password123");
-        user1 = userRepository.save(user1);
-        User user2 = new User();
-        user2.setUsername("User2");
-        user2.setPassword("password1234");
-        user2 = userRepository.save(user2);
-        User user3 = new User();
-        user3.setUsername("User3");
-        user3.setPassword("password12345");
-        user3 = userRepository.save(user3);
-        User user4 = new User();
-        user4.setUsername("User4");
-        user4.setPassword("password123456");
-        user4 = userRepository.save(user4);
+        user1 = createUser("User1", "password123");
+        user2 = createUser("User2", "password1234");
+        user3 = createUser("User3", "password12345");
+        user4 = createUser("User4", "password123456");
 
+        Conversation user1AndUser2ArePresent = new Conversation(user1, user2);
+        Conversation user1AndUser3ArePresent = new Conversation(user1, user3);
+        Conversation user2AndUser3ArePresent = new Conversation(user2, user3);
+        Conversation user4IsPresentUser1Left = new Conversation(user4, user1, true, false);
+        Conversation user4IsPresentUser2Left = new Conversation(user4, user2, true, false);
+        Conversation user3BlockedUser4 = new Conversation(true, List.of(user3, user4), List.of(false, true));
+        Conversation groupChat = new Conversation(user1, user2, user3);
+        Conversation groupChat2 = new Conversation(false, List.of(user1, user2, user4), List.of(true, false, false));
         conversationRepository
-                .saveAll(List.of(new Conversation(user1, user2), new Conversation(user1, user3),
-                        new Conversation(user2, user3), new Conversation(user4, user1, true, false),
-                        new Conversation(user4, user2, true, false), new Conversation(user4, user3, true, false)));
+                .saveAll(List.of(user1AndUser2ArePresent, user1AndUser3ArePresent, user2AndUser3ArePresent,
+                        user4IsPresentUser1Left, user4IsPresentUser2Left, user3BlockedUser4, groupChat, groupChat2));
     }
 
     @AfterEach
@@ -54,22 +61,22 @@ public class ConversationRepositoryTests extends AbstractRepositoryTest {
 
     @Test
     void shouldGetAllUserConversations() {
-        User[] users = new User[4];
-        for (int i = 0; i < users.length; i++) {
-            users[i] = userRepository.findOneByUsername("User" + (i + 1)).get();
-        }
+        assertTrue(conversationRepository.getAllUserConversations(user1.getId()).size() == 5);
+        assertTrue(conversationRepository.getAllUserConversations(user2.getId()).size() == 5);
+        assertTrue(conversationRepository.getAllUserConversations(user3.getId()).size() == 4);
+        assertTrue(conversationRepository.getAllUserConversations(user4.getId()).size() == 4);
+    }
 
-        assertTrue(conversationRepository.getAllUserConversations(users[0].getId()).size() == 2);
-        assertTrue(conversationRepository.getAllUserConversations(users[1].getId()).size() == 2);
-        assertTrue(conversationRepository.getAllUserConversations(users[2].getId()).size() == 2);
-        assertTrue(conversationRepository.getAllUserConversations(users[3].getId()).size() == 3);
+    @Test
+    void shouldGetAllConversationsWhereUserIsPresent() {
+        assertTrue(conversationRepository.getAllConversationsWhereUserIsPresent(user1.getId()).size() == 4);
+        assertTrue(conversationRepository.getAllConversationsWhereUserIsPresent(user2.getId()).size() == 3);
+        assertTrue(conversationRepository.getAllConversationsWhereUserIsPresent(user3.getId()).size() == 3);
+        assertTrue(conversationRepository.getAllConversationsWhereUserIsPresent(user4.getId()).size() == 3);
     }
 
     @Test
     void shouldFindConversationsByUserIds() {
-        User user1 = userRepository.findOneByUsername("User1").get();
-        User user2 = userRepository.findOneByUsername("User2").get();
-
         Optional<Conversation> request = conversationRepository.findByUserIds(user1.getId(), user2.getId());
         Optional<Conversation> request2 = conversationRepository.findByUserIds(user2.getId(), user1.getId());
         assertTrue(request.isPresent());
@@ -79,16 +86,11 @@ public class ConversationRepositoryTests extends AbstractRepositoryTest {
 
     @Test
     void shouldExistByUserIdsWithoutCaringAboutOrder() {
-        User[] users = new User[3];
-        for (int i = 0; i < users.length; i++) {
-            users[i] = userRepository.findOneByUsername("User" + (i + 1)).get();
-        }
-
-        assertTrue(conversationRepository.existsByUserIds(users[0].getId(), users[1].getId()));
-        assertTrue(conversationRepository.existsByUserIds(users[1].getId(), users[0].getId()));
-        assertTrue(conversationRepository.existsByUserIds(users[0].getId(), users[2].getId()));
-        assertTrue(conversationRepository.existsByUserIds(users[2].getId(), users[0].getId()));
-        assertTrue(conversationRepository.existsByUserIds(users[1].getId(), users[2].getId()));
-        assertTrue(conversationRepository.existsByUserIds(users[2].getId(), users[1].getId()));
+        assertTrue(conversationRepository.existsByUserIds(user1.getId(), user2.getId()));
+        assertTrue(conversationRepository.existsByUserIds(user2.getId(), user1.getId()));
+        assertTrue(conversationRepository.existsByUserIds(user1.getId(), user3.getId()));
+        assertTrue(conversationRepository.existsByUserIds(user3.getId(), user1.getId()));
+        assertTrue(conversationRepository.existsByUserIds(user2.getId(), user3.getId()));
+        assertTrue(conversationRepository.existsByUserIds(user3.getId(), user2.getId()));
     }
 }

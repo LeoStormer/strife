@@ -14,7 +14,6 @@ import com.leostormer.strife.user.UserService;
 import java.security.Principal;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,15 +51,15 @@ public class ConversationController {
     // Start a new conversation.
     @PostMapping("")
     public ResponseEntity<ConversationView> startNewConversation(Principal principal,
-            @RequestParam ObjectId otherUserId) {
+            @RequestParam List<ObjectId> otherUserIds) {
         User user = userService.getUser(principal);
-        Optional<User> otherUser = userService.getUserById(otherUserId);
-        if (otherUser.isEmpty())
+        List<User> otherUsers = userService.getUsersById(otherUserIds);
+        if (otherUsers.size() < otherUserIds.size())
             return ResponseEntity.notFound().build();
 
         try {
             return ResponseEntity.ok()
-                    .body(new ConversationView(conversationService.startNewConversation(user, otherUser.get())));
+                    .body(new ConversationView(conversationService.startNewConversation(user, otherUsers)));
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {

@@ -1,6 +1,8 @@
 package com.leostormer.strife.conversation;
 
-import com.leostormer.strife.user.UserView;
+import java.util.List;
+
+import org.bson.types.ObjectId;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,12 +11,12 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ConversationView {
     private String id;
-    private UserView user1;
-    private UserView user2;
+    List<String> userids;
     private boolean locked;
 
     public ConversationView(Conversation conversation) {
-        this(conversation.getId().toString(), new UserView(conversation.getUser1()),
-                new UserView(conversation.getUser2()), conversation.isLocked());
+        this(conversation.getId().toString(),
+                conversation.getUserPresenceMap().keySet().stream().map(ObjectId::toHexString).toList(),
+                conversation.isLocked());
     }
 }

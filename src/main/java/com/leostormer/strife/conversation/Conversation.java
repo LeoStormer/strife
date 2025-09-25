@@ -1,9 +1,12 @@
 package com.leostormer.strife.conversation;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import com.leostormer.strife.user.User;
 
@@ -16,61 +19,57 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Conversation {
-    private static final String errorString = "User is not a valid member of this conversation";
-
     @Id
     private ObjectId id;
 
-    @DocumentReference(collection = "users", lazy = true)
-    private User user1;
-
-    @DocumentReference(collection = "users", lazy = true)
-    private User user2;
-
-    private boolean user1Participating;
-
-    private boolean user2Participating;
-
     private boolean locked;
 
-    public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating,
-            boolean locked) {
-        this.user1 = user1;
-        this.user2 = user2;
-        this.user1Participating = user1Participating;
-        this.user2Participating = user2Participating;
+    private int numUsers;
+
+    private Map<ObjectId, Boolean> userPresenceMap;
+
+    public Conversation(boolean locked, User... users) {
         this.locked = locked;
+        this.numUsers = users.length;
+        this.userPresenceMap = new HashMap<>();
+        for (User user : users) {
+            this.userPresenceMap.put(user.getId(), true);
+        }
     }
 
-    public Conversation(User user1, User user2, boolean user1Participating, boolean user2Participating) {
-        this(user1, user2, user1Participating, user2Participating, false);
+    public Conversation(boolean locked, List<User> users, List<Boolean> usersPresent) {
+        this.locked = locked;
+        this.numUsers = users.size();
+        this.userPresenceMap = new HashMap<>();
+        for (int i = 0; i < users.size(); i++) {
+            User user = users.get(i);
+            Boolean userParticipating = i < usersPresent.size() ? usersPresent.get(i) : true;
+            this.userPresenceMap.put(user.getId(), userParticipating);
+        }
     }
 
-    public Conversation(User user1, User user2) {
-        this(user1, user2, true, true, false);
+    public Conversation(User user1, User user2, boolean user1IsPresent, boolean user2IsPresent) {
+        // Locked if and only if neither user is present
+        this(!(user1IsPresent || user2IsPresent), List.of(user1, user2), List.of(user1IsPresent, user2IsPresent));
+    }
+
+    public Conversation(User... users) {
+        this(false, users);
     }
 
     public boolean isValidUser(User user) {
-        return user1.getId().equals(user.getId()) || user2.getId().equals(user.getId());
+        return this.userPresenceMap.containsKey(user.getId());
     }
 
-    public boolean isUserParticipating(User user) {
-        if (user1.getId().equals(user.getId())) {
-            return user1Participating == true;
-        } else if (user2.getId().equals(user.getId())) {
-            return user2Participating == true;
-        } else {
-            throw new IllegalArgumentException(errorString);
-        }
+    public boolean isPresent(User user) {
+        return this.userPresenceMap.getOrDefault(user.getId(), false);
     }
 
-    public void setUserParticipating(User user, boolean participating) {
-        if (user1.getId().equals(user.getId())) {
-            user1Participating = participating;
-        } else if (user2.getId().equals(user.getId())) {
-            user2Participating = participating;
-        } else {
-            throw new IllegalArgumentException(errorString);
-        }
+    public void setIsPresent(User user, boolean isPresent) {
+        this.userPresenceMap.replace(user.getId(), isPresent);
+    }
+
+    public boolean isAnyUserPresent() {
+        return this.userPresenceMap.values().stream().anyMatch(isPresent -> isPresent.booleanValue() == true);
     }
 }

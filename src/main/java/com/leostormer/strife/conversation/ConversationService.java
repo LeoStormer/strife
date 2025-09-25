@@ -2,10 +2,12 @@ package com.leostormer.strife.conversation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
@@ -40,18 +42,14 @@ public class ConversationService {
     }
 
     public List<Conversation> getConversations(User user) {
-        return conversationRepository.getAllUserConversations(user.getId());
-    }
-
-    public void lockConversation(Conversation conversation) {
-        conversation.setLocked(true);
-        conversationRepository.save(conversation);
+        return conversationRepository.getAllConversationsWhereUserIsPresent(user.getId());
     }
 
     public void lockConversation(User user1, User user2) {
         Conversation conversation = getConversationByUsers(user1, user2)
-                .orElse(new Conversation(user1, user2, false, false));
-        lockConversation(conversation);
+                .orElse(new Conversation(true, List.of(user1, user2), List.of(false, false)));
+        conversation.setLocked(true);
+        conversationRepository.save(conversation);
     }
 
     public void unlockConversation(Conversation conversation) {
@@ -65,27 +63,29 @@ public class ConversationService {
             unlockConversation(optional.get());
     }
 
-    public Conversation startNewConversation(User user1, User user2) {
-        if (user1.getId().equals(user2.getId()))
+    public Conversation startNewConversation(User user1, List<User> otherUsers) {
+        if (otherUsers.stream().anyMatch(u -> u.getId().equals(user1.getId())))
             throw new UnauthorizedActionException("You cannot start a conversation with yourself");
 
-        Optional<Conversation> result = conversationRepository.findByUserIds(user1.getId(), user2.getId());
+        User[] usersInConversation = Stream.concat(otherUsers.stream(), Stream.of(user1)).toArray(User[]::new);
+        Optional<Conversation> result = conversationRepository.findByUserIds(Stream.of(usersInConversation).map(u -> u.getId()).toArray(ObjectId[]::new));
         if (result.isEmpty())
-            return conversationRepository.save(new Conversation(user1, user2, true, true));
+            return conversationRepository.save(new Conversation(usersInConversation));
 
         Conversation conversation = result.get();
         if (conversation.isLocked())
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
-        if (conversation.isUserParticipating(user1))
+        if (conversation.isPresent(user1))
             throw new UnauthorizedActionException(
                     "You cannot start a conversation you're already participating in");
 
-        conversation.setUserParticipating(user1, true);
+        conversation.setIsPresent(user1, true);
         return conversationRepository.save(conversation);
     }
 
-    private void delete(ObjectId conversationId) {
+    @Transactional
+    public void deleteConversation(ObjectId conversationId) {
         messageRepository.deleteAllByConversation(conversationId);
         conversationRepository.deleteById(conversationId);
     }
@@ -97,16 +97,16 @@ public class ConversationService {
         if (!conversation.isValidUser(user))
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
-        if (!conversation.isUserParticipating(user))
+        if (!conversation.isPresent(user))
             return;
 
         // make user leave conversation
-        conversation.setUserParticipating(user, false);
+        conversation.setIsPresent(user, false);
 
-        if (conversation.isLocked() || conversation.isUser1Participating() || conversation.isUser2Participating()) {
+        if (conversation.isLocked() || conversation.isAnyUserPresent()) {
             conversationRepository.save(conversation);
         } else {
-            delete(conversation.getId());
+            deleteConversation(conversation.getId());
         }
     }
 
@@ -126,7 +126,7 @@ public class ConversationService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
 
-        if (conversation.isLocked() || !conversation.isValidUser(sender) || !conversation.isUserParticipating(sender))
+        if (conversation.isLocked() || !conversation.isValidUser(sender) || !conversation.isPresent(sender))
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
         return messageRepository.insertMessage(sender, conversation, messageContent);

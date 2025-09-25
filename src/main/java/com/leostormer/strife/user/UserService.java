@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.conversation.ConversationService;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
@@ -44,6 +45,9 @@ public class UserService implements UserDetailsService {
         return userRepository.findById(userId);
     }
 
+    public List<User> getUsersById(List<ObjectId> userIds) {
+        return userRepository.findAllById(userIds);
+    }
     public boolean doesUserExist(ObjectId userId) {
         return userRepository.existsById(userId);
     }
@@ -92,6 +96,7 @@ public class UserService implements UserDetailsService {
         friendRequestService.removeFriendRequest(user, requestId);
     }
 
+    @Transactional
     public void blockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot block yourself");
@@ -104,6 +109,7 @@ public class UserService implements UserDetailsService {
         conversationService.lockConversation(sender, receiver);
     }
 
+    @Transactional
     public void unblockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot unblock yourself");
