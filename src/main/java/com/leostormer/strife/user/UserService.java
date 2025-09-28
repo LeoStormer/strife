@@ -90,8 +90,7 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void removeFriendRequest(User user, ObjectId requestId) {
-        FriendRequest friendRequest = friendRequestService.removeFriendRequest(user, requestId);
-        User otherUser = friendRequest.getOtherUser(user);
+        User otherUser = friendRequestService.removeFriendRequest(user, requestId);
         otherUser.getFriends().remove(user.getId());
         user.getFriends().remove(otherUser.getId());
         userRepository.saveAll(List.of(user, otherUser));
