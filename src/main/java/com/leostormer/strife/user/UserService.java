@@ -96,6 +96,7 @@ public class UserService implements UserDetailsService {
         userRepository.saveAll(List.of(user, otherUser));
     }
 
+
     @Transactional
     public void blockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
@@ -103,6 +104,12 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+
+        if (sender.isFriend(receiverId)) {
+            sender.getFriends().remove(receiver.getId());
+            receiver.getFriends().remove(sender.getId());
+            friendRequestService.removeFriendRequest(sender.getId(), receiverId);
+        }
 
         conversationService.lockConversation(sender, receiver);
         sender.getBlockedUsers().add(receiverId);

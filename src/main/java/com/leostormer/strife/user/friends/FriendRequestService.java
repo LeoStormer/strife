@@ -114,4 +114,16 @@ public class FriendRequestService {
         friendRequestRepository.deleteById(requestId);
         return request.getOtherUser(user);
     }
+
+    /**
+     * Deletes a friend request between two given users.
+     * 
+     * @param user1Id the id of one user
+     * @param user2Id the id of the other user
+     */
+    public void removeFriendRequest(ObjectId user1Id, ObjectId user2Id) {
+        friendRequestRepository.findOneByUserIds(user1Id, user2Id).ifPresent(fr -> {
+            friendRequestRepository.deleteById(fr.getId());
+        });
+    }
 }
