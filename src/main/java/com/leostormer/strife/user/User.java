@@ -1,6 +1,8 @@
 package com.leostormer.strife.user;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.CreatedDate;
@@ -14,6 +16,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Document(collection = "users")
 @Data
@@ -31,11 +34,33 @@ public class User {
     @Size(min = 8)
     private String password;
 
-    @Email()
+    @Email
     private String email;
 
     private String profilePic;
 
     @CreatedDate
     private Date createdDate;
+
+    @NonNull
+    private Set<ObjectId> blockedUsers = new HashSet<>();
+
+    @NonNull
+    private Set<ObjectId> friends = new HashSet<>();
+
+    public boolean hasBlocked(User user) {
+        return blockedUsers.contains(user.getId());
+    }
+
+    public boolean hasBlocked(ObjectId userId) {
+        return blockedUsers.contains(userId);
+    }
+
+    public boolean isFriend(User user) {
+        return friends.contains(user.getId());
+    }
+
+    public boolean isFriend(ObjectId userId) {
+        return friends.contains(userId);
+    }
 }

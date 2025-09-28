@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,9 @@ import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.conversation.Conversation;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.friends.FriendRequest;
-import com.leostormer.strife.friends.FriendRequestRepository;
-import com.leostormer.strife.friends.FriendRequestService;
+import com.leostormer.strife.user.friends.FriendRequest;
+import com.leostormer.strife.user.friends.FriendRequestRepository;
+import com.leostormer.strife.user.friends.FriendRequestService;
 
 public class UserServiceTests extends AbstractIntegrationTest {
     @Autowired
@@ -39,48 +40,73 @@ public class UserServiceTests extends AbstractIntegrationTest {
     @Autowired
     UserService userService;
 
-    private User user1;
-    private User user2;
-    private User user3;
-    private User user4;
+    private ObjectId user1Id;
+    private ObjectId user2Id;
+    private ObjectId user3Id;
+    private ObjectId user4Id;
+
+    private void createPendingFriendship(User sender, User receiver) {
+        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).build();
+        friendRequestRepository.save(friendRequest);
+    }
+
+    private void createAcceptedFriendship(User sender, User receiver) {
+        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver)
+                .accepted(true).build();
+        friendRequestRepository.save(friendRequest);
+        sender.getFriends().add(receiver.getId());
+        receiver.getFriends().add(sender.getId());
+        userRepository.saveAll(List.of(sender, receiver));
+    }
+
+    private void createBlockedRelationship(User sender, User receiver) {
+        Optional<Conversation> result = conversationRepository.findConversationByUserIds(sender.getId(), receiver.getId());
+        if (result.isPresent() && !result.get().isLocked()) {
+            Conversation conversation = result.get();
+            conversation.setLocked(true);
+            conversationRepository.save(conversation);
+        }
+        sender.getBlockedUsers().add(receiver.getId());
+        userRepository.save(sender);
+    }
 
     @BeforeEach
     void setUp() {
-        user1 = new User();
+        User user1 = new User();
         user1.setUsername("user1");
         user1.setPassword("password123");
         user1 = userRepository.save(user1);
 
-        user2 = new User();
+        User user2 = new User();
         user2.setUsername("user2");
         user2.setPassword("password456");
         user2 = userRepository.save(user2);
 
-        user3 = new User();
+        User user3 = new User();
         user3.setUsername("user3");
         user3.setPassword("password789");
         user3 = userRepository.save(user3);
 
-        user4 = new User();
+        User user4 = new User();
         user4.setUsername("user4");
         user4.setPassword("password101112");
         user4 = userRepository.save(user4);
+        
+        user1Id = user1.getId();
+        user2Id = user2.getId();
+        user3Id = user3.getId();
+        user4Id = user4.getId();
 
-        // Accepted
-        FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
-        friendRequestService.acceptFriendRequest(user2, friendRequest.getId());
-
-        FriendRequest friendRequest2 = friendRequestService.sendFriendRequest(user2, user3);
-        friendRequestService.acceptFriendRequest(user3, friendRequest2.getId());
+        createAcceptedFriendship(user1, user2);
+        createAcceptedFriendship(user2, user3);
 
         // Pending
-        friendRequestService.sendFriendRequest(user2, user4);
+        createPendingFriendship(user2, user4);
 
         // Blocked
-        friendRequestService.sendFriendRequest(user1, user4);
-        friendRequestService.blockUser(user4, user1);
-        friendRequestService.blockUser(user1, user3);
-        friendRequestService.blockUser(user3, user4);
+        createBlockedRelationship(user4, user1);
+        createBlockedRelationship(user1, user3);
+        createBlockedRelationship(user3, user4);
     }
 
     @AfterEach
@@ -99,15 +125,17 @@ public class UserServiceTests extends AbstractIntegrationTest {
 
     @Test
     void shouldNotRegisterUserWithExistingUsername() {
-        user1.setUsername("user1");
-        user1.setPassword("password123");
+        User newUser = new User();
+        newUser.setUsername("user1");
+        newUser.setPassword("password123");
         assertThrows(UsernameTakenException.class, () -> {
-            userService.registerUser(user1);
+            userService.registerUser(newUser);
         });
     }
 
     @Test
     void shouldUpdateUserDetails() {
+        User user1 = userRepository.findById(user1Id).get();
         UserUpdate userUpdate = new UserUpdate();
         userUpdate.setPassword("SecurePassword!@#ASD");
         userService.updateUserDetails(user1, userUpdate);
@@ -120,6 +148,8 @@ public class UserServiceTests extends AbstractIntegrationTest {
 
     @Test
     public void shouldNotUpdateUserDetailsWithExistingUsername() {
+        User user1 = userRepository.findById(user1Id).get();
+        User user2 = userRepository.findById(user2Id).get();
         UserUpdate updatedUser = new UserUpdate();
         updatedUser.setUsername(user2.getUsername());
         assertThrows(UsernameTakenException.class, () -> {
@@ -129,6 +159,10 @@ public class UserServiceTests extends AbstractIntegrationTest {
 
     @Test
     void shouldGetAllAcceptedFriends() {
+        User user1 = userRepository.findById(user1Id).get();
+        User user2 = userRepository.findById(user2Id).get();
+        User user3 = userRepository.findById(user3Id).get();
+        User user4 = userRepository.findById(user4Id).get();
         List<User> friends = userService.getFriends(user1);
         assertTrue(friends.size() == 1);
         friends = userService.getFriends(user2);
@@ -140,19 +174,27 @@ public class UserServiceTests extends AbstractIntegrationTest {
     }
 
     @Test
-    void shouldGetAllPendingFriends() {
-        List<User> pendingFriends = userService.getPendingFriends(user1);
-        assertTrue(pendingFriends.size() == 0);
-        pendingFriends = userService.getPendingFriends(user2);
-        assertTrue(pendingFriends.size() == 1);
-        pendingFriends = userService.getPendingFriends(user3);
-        assertTrue(pendingFriends.size() == 0);
-        pendingFriends = userService.getPendingFriends(user4);
-        assertTrue(pendingFriends.size() == 1);
+    void shouldGetAllPendingFriendRequests() {
+        User user1 = userRepository.findById(user1Id).get();
+        User user2 = userRepository.findById(user2Id).get();
+        User user3 = userRepository.findById(user3Id).get();
+        User user4 = userRepository.findById(user4Id).get();
+        List<FriendRequest> pendingFriends = userService.getPendingFriendRequests(user1);
+        assertEquals(0, pendingFriends.size());
+        pendingFriends = userService.getPendingFriendRequests(user2);
+        assertEquals(1, pendingFriends.size());
+        pendingFriends = userService.getPendingFriendRequests(user3);
+        assertEquals(0, pendingFriends.size());
+        pendingFriends = userService.getPendingFriendRequests(user4);
+        assertEquals(1, pendingFriends.size());
     }
 
     @Test
     void shouldGetAllBlockedUsers() {
+        User user1 = userRepository.findById(user1Id).get();
+        User user2 = userRepository.findById(user2Id).get();
+        User user3 = userRepository.findById(user3Id).get();
+        User user4 = userRepository.findById(user4Id).get();
         List<User> blockedUsers = userService.getBlockedUsers(user1);
         assertTrue(blockedUsers.size() == 1);
         blockedUsers = userService.getBlockedUsers(user2);
@@ -165,6 +207,7 @@ public class UserServiceTests extends AbstractIntegrationTest {
 
     @Test
     void shouldNotSendFriendRequestToSelf() {
+        User user1 = userRepository.findById(user1Id).get();
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.sendFriendRequest(user1, user1.getId());
         });
@@ -173,42 +216,47 @@ public class UserServiceTests extends AbstractIntegrationTest {
     @Test
     @Transactional
     void shouldBlockUser() {
-        userService.blockUser(user1, user2.getId());
-        assertTrue(conversationRepository.conversationExistsByUserIds(user1.getId(), user2.getId()));
-        Optional<FriendRequest> friendResult = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId());
-        assertTrue(friendResult.isPresent() && friendResult.get().hasSentBlockRequest(user1));
-        Optional<Conversation> conversationResult = conversationRepository.findConversationByUserIds(user1.getId(), user2.getId());
+        User user1 = userRepository.findById(user1Id).get();
+        userService.blockUser(user1, user2Id);
+        User updatedUser1 = userRepository.findById(user1Id).get();
+        assertTrue(updatedUser1.hasBlocked(user2Id));
+        Optional<Conversation> conversationResult = conversationRepository.findConversationByUserIds(user1Id, user2Id);
         assertTrue(conversationResult.isPresent() && conversationResult.get().isLocked());
     }
 
     @Test
     @Transactional
     void shouldNotBlockSelf() {
+        User user1 = userRepository.findById(user1Id).get();
         assertThrows(UnauthorizedActionException.class, () -> {
-            userService.blockUser(user1, user1.getId());
+            userService.blockUser(user1, user1Id);
         });
-        assertFalse(friendRequestRepository.existsByUserIds(user1.getId(), user1.getId()));
+        assertFalse(userRepository.findById(user1Id).get().hasBlocked(user1Id));
     }
 
     @Test
     @Transactional
     void shouldUnblockUser() {
-        userService.unblockUser(user1, user3.getId());
-        Optional<FriendRequest> friendResult = friendRequestRepository.findOneByUserIds(user1.getId(), user3.getId());
-        assertTrue(friendResult.isEmpty()
-                || (friendResult.get().hasBeenBlocked(user1) && !friendResult.get().hasSentBlockRequest(user1)));
-        Optional<Conversation> conversationResult = conversationRepository.findConversationByUserIds(user1.getId(), user3.getId());
+        User user1 = userRepository.findById(user1Id).get();
+        userService.unblockUser(user1, user3Id);
+        Optional<User> updatedUser1 = userRepository.findById(user1Id);
+        Optional<User> updatedUser3 = userRepository.findById(user3Id);
+        assertTrue(updatedUser1.isPresent() && updatedUser3.isPresent());
+        assertFalse(updatedUser1.get().hasBlocked(user3Id));
+        Optional<Conversation> conversationResult = conversationRepository.findConversationByUserIds(user1Id, user3Id);
         boolean conversationIsLocked = conversationResult.isPresent() && conversationResult.get().isLocked();
-        assertTrue((friendResult.isEmpty() && !conversationIsLocked)
-                || (friendResult.get().hasBeenBlocked(user1) && conversationIsLocked));
+        assertTrue(updatedUser3.get().hasBlocked(user1Id) == conversationIsLocked);
     }
 
     @Test
     @Transactional
     void shouldNotUnblockSelf() {
+        User user1 = userRepository.findById(user1Id).get();
         assertThrows(UnauthorizedActionException.class, () -> {
-            userService.unblockUser(user1, user1.getId());
+            userService.unblockUser(user1, user1Id);
         });
-        assertFalse(friendRequestRepository.existsByUserIds(user1.getId(), user1.getId()));
+        Optional<User> updatedUser1 = userRepository.findById(user1Id);
+        assertTrue(updatedUser1.isPresent());
+        assertFalse(updatedUser1.get().hasBlocked(user1Id));
     }
 }

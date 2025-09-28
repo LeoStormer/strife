@@ -68,8 +68,7 @@ public class ConversationService {
         if (otherUsers.stream().anyMatch(u -> u.getId().equals(user1.getId())))
             throw new UnauthorizedActionException("You cannot start a conversation with yourself");
 
-        if (otherUsers.stream().map(u -> conversationRepository.findConversationByUserIds(user1.getId(), u.getId()))
-                .anyMatch(c -> c.isPresent() && c.get().isLocked()))
+        if (otherUsers.stream().anyMatch(u -> u.hasBlocked(user1) || user1.hasBlocked(u)))
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
         User[] usersInConversation = Stream.concat(otherUsers.stream(), Stream.of(user1)).toArray(User[]::new);
@@ -129,7 +128,7 @@ public class ConversationService {
         Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
 
-        if (conversation.isLocked() || !conversation.isValidUser(sender) || !conversation.isPresent(sender))
+        if (conversation.isLocked() || !conversation.isPresent(sender))
             throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
 
         return messageRepository.insertMessage(sender, conversation, messageContent);
@@ -151,7 +150,13 @@ public class ConversationService {
         return messageRepository.updateMessage(messageId, messageContent);
     }
 
-    public void deleteMessage(User sender, ObjectId messageId) {
+    public void deleteMessage(User sender, ObjectId conversationId, ObjectId messageId) {
+        Conversation conversation = conversationRepository.findConversationById(conversationId)
+                .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
+
+        if (conversation.isLocked())
+            throw new UnauthorizedActionException(DEFAULT_UNAUTHORIZED_MESSAGE);
+
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new ResourceNotFoundException(MESSAGE_NOT_FOUND));
 

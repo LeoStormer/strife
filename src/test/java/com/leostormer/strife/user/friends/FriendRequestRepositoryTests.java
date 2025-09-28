@@ -1,4 +1,4 @@
-package com.leostormer.strife.friends;
+package com.leostormer.strife.user.friends;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,40 +53,20 @@ public class FriendRequestRepositoryTests extends AbstractRepositoryTest {
         User user2 = userRepository.findOneByUsername("user2").get();
         User user3 = userRepository.findOneByUsername("user3").get();
         User user4 = userRepository.findOneByUsername("user4").get();
-        User user5 = userRepository.findOneByUsername("user5").get();
 
         friendRequestRepository.saveAll(List.of(
                 FriendRequest.builder()
-                        .user1(user1)
-                        .user2(user2)
+                        .sender(user1)
+                        .receiver(user2)
                         .build(),
                 FriendRequest.builder()
-                        .user1(user1)
-                        .user2(user3)
-                        .user1Response(FriendRequestResponse.ACCEPTED)
-                        .user2Response(FriendRequestResponse.ACCEPTED)
+                        .sender(user1)
+                        .receiver(user3)
+                        .accepted(true)
                         .build(),
                 FriendRequest.builder()
-                        .user1(user4)
-                        .user2(user3)
-                        .user1Response(FriendRequestResponse.BLOCKED)
-                        .user2Response(FriendRequestResponse.BLOCKED)
-                        .build(),
-                FriendRequest.builder()
-                        .user1(user4)
-                        .user2(user1)
-                        .build(),
-                FriendRequest.builder()
-                        .user1(user2)
-                        .user2(user3)
-                        .user1Response(FriendRequestResponse.ACCEPTED)
-                        .user2Response(FriendRequestResponse.BLOCKED)
-                        .build(),
-                FriendRequest.builder()
-                        .user1(user4)
-                        .user2(user5)
-                        .user1Response(FriendRequestResponse.BLOCKED)
-                        .user2Response(FriendRequestResponse.PENDING)
+                        .sender(user4)
+                        .receiver(user1)
                         .build()));
     }
 
@@ -109,22 +89,6 @@ public class FriendRequestRepositoryTests extends AbstractRepositoryTest {
     }
 
     @Test
-    void shouldFindRequestByUser1_Id() {
-        User user1 = userRepository.findOneByUsername("user1").get();
-
-        List<FriendRequest> request = friendRequestRepository.findByUser1_Id(user1.getId());
-
-        assertTrue(request.size() == 2);
-    }
-
-    @Test
-    void shouldFindRequestByUser2_Id() {
-        User user3 = userRepository.findOneByUsername("user3").get();
-        List<FriendRequest> request = friendRequestRepository.findByUser2_Id(user3.getId());
-        assertTrue(request.size() == 3);
-    }
-
-    @Test
     void shouldFindRequestByUserIdsWithoutCaringAboutOrder() {
         User user1 = userRepository.findOneByUsername("user1").get();
         User user2 = userRepository.findOneByUsername("user2").get();
@@ -134,30 +98,6 @@ public class FriendRequestRepositoryTests extends AbstractRepositoryTest {
         assertTrue(request.isPresent());
         assertTrue(request2.isPresent());
         assertTrue(request.get().getId().equals(request2.get().getId()));
-    }
-
-    @Test
-    void shouldFindAllUserBlockedRequests() {
-        User user1 = userRepository.findOneByUsername("user1").get();
-        User user2 = userRepository.findOneByUsername("user2").get();
-        User user3 = userRepository.findOneByUsername("user3").get();
-        User user4 = userRepository.findOneByUsername("user4").get();
-        User user5 = userRepository.findOneByUsername("user5").get();
-
-        List<FriendRequest> requests = friendRequestRepository.findAllUserBlockedRequests(user1.getId());
-        assertTrue(requests.size() == 0);
-
-        requests = friendRequestRepository.findAllUserBlockedRequests(user2.getId());
-        assertTrue(requests.size() == 1);
-
-        requests = friendRequestRepository.findAllUserBlockedRequests(user3.getId());
-        assertTrue(requests.size() == 2);
-
-        requests = friendRequestRepository.findAllUserBlockedRequests(user4.getId());
-        assertTrue(requests.size() == 2);
-
-        requests = friendRequestRepository.findAllUserBlockedRequests(user5.getId());
-        assertTrue(requests.size() == 1);
     }
 
     @Test

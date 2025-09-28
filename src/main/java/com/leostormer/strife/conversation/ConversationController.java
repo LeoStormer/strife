@@ -168,7 +168,7 @@ public class ConversationController {
         User user = userService.getUser(principal);
 
         try {
-            conversationService.deleteMessage(user, messageId);
+            conversationService.deleteMessage(user, conversationId, messageId);
             return ResponseEntity.ok().body("Message successfully deleted");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());

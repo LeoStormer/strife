@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.friends.FriendRequestView;
+import com.leostormer.strife.user.friends.FriendRequestView;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -54,6 +54,16 @@ public class UserController {
         return ResponseEntity.ok(userService.getFriends(user).stream().map(UserView::new).toList());
     }
 
+    @GetMapping("/friends/friend-request")
+    public ResponseEntity<List<FriendRequestView>> getPendingFriendRequests(Principal principal) {
+        User user = userService.getUser(principal);
+        try {
+            return ResponseEntity.ok(userService.getPendingFriendRequests(user).stream().map(FriendRequestView::new).toList());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
     @PostMapping("/friends/friend-request")
     public ResponseEntity<FriendRequestView> sendFriendRequest(Principal principal, @RequestParam ObjectId receiverId) {
         User sender = userService.getUser(principal);

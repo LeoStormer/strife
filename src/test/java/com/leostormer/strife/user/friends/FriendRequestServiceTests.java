@@ -1,8 +1,7 @@
-package com.leostormer.strife.friends;
+package com.leostormer.strife.user.friends;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,8 +64,7 @@ public class FriendRequestServiceTests extends AbstractIntegrationTest {
     void shouldSendFriendRequest() {
         FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
         assertTrue(friendRequestRepository.existsById(friendRequest.getId()));
-        assertTrue(friendRequest.getUser1Response() == FriendRequestResponse.ACCEPTED);
-        assertTrue(friendRequest.getUser2Response() == FriendRequestResponse.PENDING);
+        assertFalse(friendRequest.isAccepted());
     }
 
     @Test
@@ -94,8 +92,7 @@ public class FriendRequestServiceTests extends AbstractIntegrationTest {
 
         friendRequest = friendRequestRepository.findById(friendRequest.getId()).orElse(null);
         assertNotNull(friendRequest);
-        assertTrue(friendRequest.getUser1Response() == FriendRequestResponse.ACCEPTED);
-        assertTrue(friendRequest.getUser2Response() == FriendRequestResponse.ACCEPTED);
+        assertTrue(friendRequest.isAccepted());
     }
 
     @Test
@@ -112,76 +109,5 @@ public class FriendRequestServiceTests extends AbstractIntegrationTest {
         friendRequestService.removeFriendRequest(user2, friendRequest.getId());
 
         assertFalse(friendRequestRepository.existsById(friendRequest.getId()));
-    }
-
-    @Test
-    void shouldBlockUser() {
-        friendRequestService.blockUser(user1, user2);
-        FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId())
-                .orElse(null);
-
-        assertNotNull(friendRequest);
-        assertTrue(friendRequest.getUser1Response() == FriendRequestResponse.BLOCKED);
-    }
-
-    @Test
-    void shouldAllowBothUsersToBlockEachOther() {
-        friendRequestService.blockUser(user1, user2);
-        friendRequestService.blockUser(user2, user1);
-
-        FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId())
-                .orElse(null);
-
-        assertNotNull(friendRequest);
-        assertTrue(friendRequest.hasBeenBlocked(user1));
-        assertTrue(friendRequest.hasBeenBlocked(user2));
-    }
-
-    @Test
-    void blockedUserShouldNotRemoveBlockedFriendRequest() {
-        friendRequestService.blockUser(user1, user2);
-        FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId())
-                .orElse(null);
-
-        assertNotNull(friendRequest);
-        assertTrue(friendRequest.hasBeenBlocked(user2));
-        assertTrue(friendRequest.hasSentBlockRequest(user1));
-
-        // Attempt to remove the blocked request
-        assertThrows(UnauthorizedActionException.class, () -> {
-            friendRequestService.removeFriendRequest(user2, friendRequest.getId());
-        });
-    }
-
-    @Test
-    void blockedUserShouldNotAcceptFriendRequest() {
-        FriendRequest friendRequest = friendRequestService.sendFriendRequest(user1, user2);
-        friendRequestService.blockUser(user1, user2);
-
-        // attempt to accept the friend request after blocking
-        assertThrows(UnauthorizedActionException.class, () -> {
-            friendRequestService.acceptFriendRequest(user2, friendRequest.getId());
-        });
-    }
-
-    @Test
-    void shouldUnblockUserAndDeleteRequestIfNotBlocked() {
-        friendRequestService.blockUser(user1, user2);
-        friendRequestService.unblockUser(user1, user2);
-        FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId()).orElse(null);
-
-        assertNull(friendRequest);
-    }
-
-    @Test
-    void shouldUnblockUserAndKeepRequestIfBlocked() {
-        friendRequestService.blockUser(user1, user2);
-        friendRequestService.blockUser(user2, user1);
-
-        friendRequestService.unblockUser(user1, user2);
-        FriendRequest friendRequest = friendRequestRepository.findOneByUserIds(user1.getId(), user2.getId()).orElse(null);
-
-        assertNotNull(friendRequest);
-        assertFalse(friendRequest.hasSentBlockRequest(user1));
     }
 }

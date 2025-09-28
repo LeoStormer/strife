@@ -9,9 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.bson.types.ObjectId;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.friends.FriendRequest;
-import com.leostormer.strife.friends.FriendRequestRepository;
-import com.leostormer.strife.friends.FriendRequestResponse;
 import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchDirection;
@@ -29,6 +24,8 @@ import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 import com.leostormer.strife.user.UserService;
+import com.leostormer.strife.user.friends.FriendRequest;
+import com.leostormer.strife.user.friends.FriendRequestRepository;
 
 public class ConversationServiceTests extends AbstractIntegrationTest {
     public static final int NUM_MESSAGES = 20;
@@ -51,20 +48,20 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
     @Autowired
     UserService userService;
 
-    static User user1;
+    User user1;
 
-    static User user2;
+    User user2;
 
-    static User user3;
+    User user3;
 
-    static User user4;
+    User user4;
 
     Conversation conversation1;
 
     Conversation conversation2;
 
-    @BeforeAll
-    static void setupUsers(@Autowired UserService userService) {
+    @BeforeEach
+    void setupRequests() {
         user1 = new User();
         user1.setUsername("User1");
         user1.setPassword("password123");
@@ -78,28 +75,27 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
         user4.setUsername("User4");
         user4.setPassword("password1234");
 
-        user1 = userService.registerUser(user1);
-        user2 = userService.registerUser(user2);
-        user3 = userService.registerUser(user3);
-        user4 = userService.registerUser(user4);
-    }
+        user1 = userRepository.save(user1);
+        user2 = userRepository.save(user2);
+        user3 = userRepository.save(user3);
+        user4 = userRepository.save(user4);
 
-    @AfterAll
-    static void clearUsers(@Autowired UserRepository userRepository) {
-        userRepository.deleteAll();
-    }
+        FriendRequest user1AndUser2AreFriends = FriendRequest.builder().sender(user1).receiver(user2).accepted(true)
+                .build();
+        user1.getFriends().add(user2.getId());
+        user2.getFriends().add(user1.getId());
 
-    @BeforeEach
-    void setupRequests() {
-        FriendRequest user1AndUser2AreFriends = new FriendRequest(null, user1, user2, FriendRequestResponse.ACCEPTED,
-                FriendRequestResponse.ACCEPTED);
-        FriendRequest user3BlockedUser1 = new FriendRequest(null, user3, user1, FriendRequestResponse.BLOCKED,
-                FriendRequestResponse.PENDING);
         Conversation user3AndUser1ConversationBlocked = new Conversation(true, List.of(user3, user1),
                 List.of(false, false));
-        FriendRequest user1AndUser4AreFriends = new FriendRequest(null, user1, user4, FriendRequestResponse.ACCEPTED,
-                FriendRequestResponse.ACCEPTED);
-        friendRequestRepository.saveAll(List.of(user1AndUser2AreFriends, user3BlockedUser1, user1AndUser4AreFriends));
+        user3.getBlockedUsers().add(user1.getId());
+
+        FriendRequest user1AndUser4AreFriends = FriendRequest.builder().sender(user1).receiver(user4).accepted(true)
+                .build();
+        user1.getFriends().add(user4.getId());
+        user4.getFriends().add(user1.getId());
+        userRepository.saveAll(List.of(user1, user2, user3, user4));
+
+        friendRequestRepository.saveAll(List.of(user1AndUser2AreFriends, user1AndUser4AreFriends));
 
         conversationRepository.save(user3AndUser1ConversationBlocked);
         conversation1 = conversationRepository.save(new Conversation(user1, user2));
@@ -108,6 +104,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
 
     @AfterEach
     void clearUsersAndRelationships() {
+        userRepository.deleteAll();
         friendRequestRepository.deleteAll();
         conversationRepository.deleteAll();
         messageRepository.deleteAll();
@@ -325,7 +322,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
         initializeMessages();
         ObjectId messageId = conversationService
                 .getMessages(user1, conversation1.getId(), MessageSearchOptions.earliest()).get(0).getId();
-        conversationService.deleteMessage(user1, messageId);
+        conversationService.deleteMessage(user1, conversation1.getId(), messageId);
         assertFalse(messageRepository.existsById(messageId));
     }
 
@@ -335,7 +332,7 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
         ObjectId messageId = conversationService
                 .getMessages(user1, conversation1.getId(), MessageSearchOptions.earliest()).get(1).getId();
         assertThrows(UnauthorizedActionException.class, () -> {
-            conversationService.deleteMessage(user1, messageId);
+            conversationService.deleteMessage(user1, conversation1.getId(), messageId);
         });
     }
 }

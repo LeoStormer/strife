@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.leostormer.strife.conversation.ConversationService;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.friends.FriendRequest;
-import com.leostormer.strife.friends.FriendRequestService;
+import com.leostormer.strife.user.friends.FriendRequest;
+import com.leostormer.strife.user.friends.FriendRequestService;
 
 import lombok.AllArgsConstructor;
 
@@ -57,25 +57,15 @@ public class UserService implements UserDetailsService {
     }
 
     public List<User> getBlockedUsers(User user) {
-        return friendRequestService.getAllBlockedFriendRequests(user)
-                .stream()
-                .filter(request -> request.hasSentBlockRequest(user))
-                .map(request -> request.getOtherUser(user))
-                .toList();
+        return getUsersById(user.getBlockedUsers().stream().toList());
     }
 
     public List<User> getFriends(User user) {
-        return friendRequestService.getAllAcceptedFriendRequests(user)
-                .stream()
-                .map(request -> request.getOtherUser(user))
-                .toList();
+        return getUsersById(user.getFriends().stream().toList());
     }
 
-    public List<User> getPendingFriends(User user) {
-        return friendRequestService.getAllPendingFriendRequests(user)
-                .stream()
-                .map(request -> request.getOtherUser(user))
-                .toList();
+    public List<FriendRequest> getPendingFriendRequests(User user) {
+        return friendRequestService.getAllPendingFriendRequests(user);
     }
 
     public FriendRequest sendFriendRequest(User sender, ObjectId receiverId) {
@@ -88,12 +78,23 @@ public class UserService implements UserDetailsService {
         return friendRequestService.sendFriendRequest(sender, receiver);
     }
 
+    @Transactional
     public FriendRequest acceptFriendRequest(User receiver, ObjectId requestId) {
-        return friendRequestService.acceptFriendRequest(receiver, requestId);
+        FriendRequest friendRequest = friendRequestService.acceptFriendRequest(receiver, requestId);
+        User sender = friendRequest.getOtherUser(receiver);
+        receiver.getFriends().add(sender.getId());
+        sender.getFriends().add(receiver.getId());
+        userRepository.saveAll(List.of(sender, receiver));
+        return friendRequest;
     }
 
+    @Transactional
     public void removeFriendRequest(User user, ObjectId requestId) {
-        friendRequestService.removeFriendRequest(user, requestId);
+        FriendRequest friendRequest = friendRequestService.removeFriendRequest(user, requestId);
+        User otherUser = friendRequest.getOtherUser(user);
+        otherUser.getFriends().remove(user.getId());
+        user.getFriends().remove(otherUser.getId());
+        userRepository.saveAll(List.of(user, otherUser));
     }
 
     @Transactional
@@ -103,10 +104,10 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
-        friendRequestService.blockUser(sender, receiver);
 
-        // Users who have blocked each other cant speak to each other
         conversationService.lockConversation(sender, receiver);
+        sender.getBlockedUsers().add(receiverId);
+        userRepository.save(sender);
     }
 
     @Transactional
@@ -116,12 +117,13 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
-        friendRequestService.unblockUser(sender, receiver);
-        Optional<FriendRequest> optional = friendRequestService.getFriendRequestByUsers(sender, receiver);
-        if (optional.isEmpty())
-            // friend request was deleted meaning, sender is neither blocking
-            // nor blocked by receiver
+                
+        if (!receiver.hasBlocked(sender))
             conversationService.unlockConversation(sender, receiver);
+
+
+        sender.getBlockedUsers().remove(receiverId);
+        userRepository.save(sender);
     }
 
     public User registerUser(User user) {
@@ -133,26 +135,10 @@ public class UserService implements UserDetailsService {
     }
 
     public User updateUserDetails(User user, UserUpdate userUpdate) {
-        User userData = new User(user.getId(), user.getUsername(), user.getPassword(), user.getEmail(),
-                user.getProfilePic(), user.getCreatedDate());
-
-        if (userUpdate.getEmail() != null)
-            userData.setEmail(userUpdate.getEmail());
-
-        if (userUpdate.getProfilePic() != null)
-            userData.setProfilePic(userUpdate.getProfilePic());
-
-        if (userUpdate.getPassword() != null && !userUpdate.getPassword().isEmpty())
-            userData.setPassword(passwordEncoder.encode(userUpdate.getPassword()));
-
-        if (userUpdate.getUsername() != null && !userUpdate.getUsername().isEmpty()
-                && !user.getUsername().equals(userUpdate.getUsername())) {
-            if (userRepository.existsByUsername(userUpdate.getUsername()))
-                throw new UsernameTakenException();
-            userData.setUsername(userUpdate.getUsername());
-        }
-
-        return userRepository.save(userData);
+        if (userUpdate.getUsername() != null &&  userRepository.existsByUsername(userUpdate.getUsername()))
+            throw new UsernameTakenException();
+        userUpdate.setPassword(passwordEncoder.encode(userUpdate.getPassword()));
+        return userRepository.updateUserDetails(user.getId(), userUpdate);
     }
 
     @Override
