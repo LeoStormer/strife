@@ -7,6 +7,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +43,9 @@ public class ServerController {
 
     @Autowired
     private final UserService userService;
+
+    @Autowired
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("")
     public ResponseEntity<ServerView> createServer(Principal principal, @RequestParam String serverName,
@@ -342,7 +346,9 @@ public class ServerController {
         User user = userService.getUser(principal);
         try {
             Message message = serverService.sendMessage(user, serverId, channelId, content);
-            return ResponseEntity.ok().body(new MessageView(message));
+            MessageView messageView = new MessageView(message);
+            messagingTemplate.convertAndSend("/topic/server/" + serverId + "/channel/" + channelId, messageView);
+            return ResponseEntity.ok().body(messageView);
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (ResourceNotFoundException e) {

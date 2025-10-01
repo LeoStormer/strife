@@ -1,4 +1,4 @@
-package com.leostormer.strife.security;
+package com.leostormer.strife.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
