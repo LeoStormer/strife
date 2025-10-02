@@ -1,7 +1,7 @@
 package com.leostormer.strife.user;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,6 +44,7 @@ public class UserServiceTests extends AbstractIntegrationTest {
     private ObjectId user2Id;
     private ObjectId user3Id;
     private ObjectId user4Id;
+    private ObjectId user5Id;
 
     private void createPendingFriendship(User sender, User receiver) {
         FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).build();
@@ -92,10 +93,17 @@ public class UserServiceTests extends AbstractIntegrationTest {
         user4.setPassword("password101112");
         user4 = userRepository.save(user4);
         
+        // no pre-existing relationships
+        User user5 = new User();
+        user5.setUsername("user4");
+        user5.setPassword("password101112");
+        user5 = userRepository.save(user5);
+
         user1Id = user1.getId();
         user2Id = user2.getId();
         user3Id = user3.getId();
         user4Id = user4.getId();
+        user5Id = user5.getId();
 
         createAcceptedFriendship(user1, user2);
         createAcceptedFriendship(user2, user3);
@@ -206,11 +214,61 @@ public class UserServiceTests extends AbstractIntegrationTest {
     }
 
     @Test
+    void shouldSendFriendRequest() {
+        User user1 = userRepository.findById(user1Id).get();
+        userService.sendFriendRequest(user1, user5Id);
+        Optional<FriendRequest> result = friendRequestRepository.findOneByUserIds(user1Id, user5Id);
+        assertTrue(result.isPresent() && !result.get().isAccepted());
+    }
+
+    @Test
     void shouldNotSendFriendRequestToSelf() {
         User user1 = userRepository.findById(user1Id).get();
         assertThrows(UnauthorizedActionException.class, () -> {
             userService.sendFriendRequest(user1, user1.getId());
         });
+    }
+
+    @Test
+    @Transactional
+    void shouldAcceptFriendRequest() {
+        User user4 = userRepository.findById(user4Id).get();
+        FriendRequest pendingfriendRequest = friendRequestRepository.findOneByUserIds(user2Id, user4Id).get();
+        userService.acceptFriendRequest(user4, pendingfriendRequest.getId());
+        Optional<FriendRequest> result = friendRequestRepository.findOneByUserIds(user2Id, user4Id);
+        assertTrue(result.isPresent() && result.get().isAccepted());
+        User updatedUser2 = userRepository.findById(user2Id).get();
+        User updatedUser4 = userRepository.findById(user4Id).get();
+        assertTrue(updatedUser2.isFriend(user4Id));
+        assertTrue(updatedUser4.isFriend(user2Id));
+    }
+
+    @Test
+    @Transactional
+    void shouldRemoveSentPendingFriendRequest() {
+        User user2 = userRepository.findById(user2Id).get();
+        FriendRequest pendingfriendRequest = friendRequestRepository.findOneByUserIds(user2Id, user4Id).get();
+        userService.removeFriendRequest(user2, pendingfriendRequest.getId());
+        Optional<FriendRequest> result = friendRequestRepository.findOneByUserIds(user2Id, user4Id);
+        assertTrue(result.isEmpty());
+        User updatedUser2 = userRepository.findById(user2Id).get();
+        User updatedUser4 = userRepository.findById(user4Id).get();
+        assertFalse(updatedUser2.isFriend(user4Id));
+        assertFalse(updatedUser4.isFriend(user2Id));
+    }
+
+    @Test
+    @Transactional
+    void shouldRemoveAcceptedFriendRequest() {
+        User user1 = userRepository.findById(user1Id).get();
+        FriendRequest acceptedfriendRequest = friendRequestRepository.findOneByUserIds(user2Id, user1Id).get();
+        userService.removeFriendRequest(user1, acceptedfriendRequest.getId());
+        Optional<FriendRequest> result = friendRequestRepository.findOneByUserIds(user1Id, user2Id);
+        assertTrue(result.isEmpty());
+        User updatedUser1 = userRepository.findById(user1Id).get();
+        User updatedUser2 = userRepository.findById(user2Id).get();
+        assertFalse(updatedUser1.isFriend(user2Id));
+        assertFalse(updatedUser2.isFriend(user1Id));
     }
 
     @Test
@@ -232,6 +290,19 @@ public class UserServiceTests extends AbstractIntegrationTest {
             userService.blockUser(user1, user1Id);
         });
         assertFalse(userRepository.findById(user1Id).get().hasBlocked(user1Id));
+    }
+
+    @Test
+    @Transactional
+    void shouldBlockFriendAndRemoveFriendship() {
+        User user1 = userRepository.findById(user1Id).get();
+        userService.blockUser(user1, user2Id);
+        Optional<User> updatedUser1 = userRepository.findById(user1Id);
+        Optional<User> updatedUser2 = userRepository.findById(user2Id);
+        assertTrue(updatedUser1.isPresent() && updatedUser2.isPresent());
+        assertTrue(updatedUser1.get().hasBlocked(user2Id));
+        assertFalse(updatedUser1.get().isFriend(user2Id));
+        assertFalse(updatedUser2.get().isFriend(user1Id));
     }
 
     @Test

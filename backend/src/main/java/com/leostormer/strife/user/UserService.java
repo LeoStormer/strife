@@ -36,8 +36,8 @@ public class UserService implements UserDetailsService {
     private final ConversationService conversationService;
 
     public User getUser(Principal principal) {
-        // currently authenticated principal should always correspond to an active user
-        // in database
+        // currently authenticated principal should always correspond to an
+        // active user in database
         return getUserByUsername(principal.getName()).get();
     }
 
@@ -48,6 +48,7 @@ public class UserService implements UserDetailsService {
     public List<User> getUsersById(List<ObjectId> userIds) {
         return userRepository.findAllById(userIds);
     }
+
     public boolean doesUserExist(ObjectId userId) {
         return userRepository.existsById(userId);
     }
@@ -81,39 +82,30 @@ public class UserService implements UserDetailsService {
     @Transactional
     public FriendRequest acceptFriendRequest(User receiver, ObjectId requestId) {
         FriendRequest friendRequest = friendRequestService.acceptFriendRequest(receiver, requestId);
-        User sender = friendRequest.getOtherUser(receiver);
-        receiver.getFriends().add(sender.getId());
-        sender.getFriends().add(receiver.getId());
-        userRepository.saveAll(List.of(sender, receiver));
+        userRepository.acceptFriendRequest(friendRequest.getSender().getId(), friendRequest.getReceiver().getId());
         return friendRequest;
     }
 
     @Transactional
     public void removeFriendRequest(User user, ObjectId requestId) {
         User otherUser = friendRequestService.removeFriendRequest(user, requestId);
-        otherUser.getFriends().remove(user.getId());
-        user.getFriends().remove(otherUser.getId());
-        userRepository.saveAll(List.of(user, otherUser));
+        userRepository.removeFriendRequest(user.getId(), otherUser.getId());
     }
-
 
     @Transactional
     public void blockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot block yourself");
 
-        User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+        if (!userRepository.existsById(receiverId))
+            throw new ResourceNotFoundException(USER_NOT_FOUND);
 
         if (sender.isFriend(receiverId)) {
-            sender.getFriends().remove(receiver.getId());
-            receiver.getFriends().remove(sender.getId());
             friendRequestService.removeFriendRequest(sender.getId(), receiverId);
         }
 
-        conversationService.lockConversation(sender, receiver);
-        sender.getBlockedUsers().add(receiverId);
-        userRepository.save(sender);
+        conversationService.lockConversation(sender.getId(), receiverId);
+        userRepository.blockUser(sender.getId(), receiverId);
     }
 
     @Transactional
@@ -123,13 +115,11 @@ public class UserService implements UserDetailsService {
 
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
-                
+
         if (!receiver.hasBlocked(sender))
-            conversationService.unlockConversation(sender, receiver);
+            conversationService.unlockConversation(sender.getId(), receiverId);
 
-
-        sender.getBlockedUsers().remove(receiverId);
-        userRepository.save(sender);
+        userRepository.unblockUser(sender.getId(), receiverId);
     }
 
     public User registerUser(User user) {
@@ -141,7 +131,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User updateUserDetails(User user, UserUpdate userUpdate) {
-        if (userUpdate.getUsername() != null &&  userRepository.existsByUsername(userUpdate.getUsername()))
+        if (userUpdate.getUsername() != null && userRepository.existsByUsername(userUpdate.getUsername()))
             throw new UsernameTakenException();
         userUpdate.setPassword(passwordEncoder.encode(userUpdate.getPassword()));
         return userRepository.updateUserDetails(user.getId(), userUpdate);

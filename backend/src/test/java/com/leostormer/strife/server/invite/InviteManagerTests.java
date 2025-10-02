@@ -19,13 +19,19 @@ public class InviteManagerTests extends ServerServiceTestSetup {
     @Autowired
     private InviteRepository inviteRepository;
 
-    private static final int NUM_INVITES = 5;
+    private static final int NUM_INVITES = 6;
 
     private static final long SEVEN_DAYS = 604800;
 
     private static final int MAX_ALLOWED_USES = 100;
 
     private String inviteId;
+
+    private String unlimitedInviteId;
+
+    private String inviteByBannedUserId;
+
+    private String inviteWithNoRemainingUsesId;
 
     private String expiredInviteId;
 
@@ -34,11 +40,15 @@ public class InviteManagerTests extends ServerServiceTestSetup {
         Server existingServer = serverRepository.findById(existingServerId).get();
         inviteId = inviteRepository.save(new Invite(owner, existingServer, SEVEN_DAYS, MAX_ALLOWED_USES)).getId();
         expiredInviteId = inviteRepository.save(new Invite(owner, existingServer, -SEVEN_DAYS, MAX_ALLOWED_USES)).getId();
+        inviteWithNoRemainingUsesId = inviteRepository.save(new Invite(owner, existingServer, NUM_INVITES, MAX_ALLOWED_USES, 0)).getId();
+        unlimitedInviteId = inviteRepository.save(new Invite(bannedUser, existingServer, SEVEN_DAYS, Invite.UNLIMITED_USES)).getId();
 
-        for (int i = 0; i < NUM_INVITES - 2; i++) {
+        for (int i = 0; i < NUM_INVITES - 4; i++) {
             Invite invite = new Invite(owner, existingServer, SEVEN_DAYS, MAX_ALLOWED_USES);
             inviteRepository.save(invite);
         }
+
+        inviteByBannedUserId = unlimitedInviteId;
     }
 
     @AfterEach
@@ -50,9 +60,25 @@ public class InviteManagerTests extends ServerServiceTestSetup {
     @Transactional
     public void shouldJoinByInvite() {
         serverService.joinByInvite(nonMemberUser, inviteId);
+        assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
         Invite invite = inviteRepository.findById(inviteId).get();
         assertEquals(MAX_ALLOWED_USES - 1, invite.getRemainingUses());
+    }
+
+    @Test
+    @Transactional
+    public void shouldJoinByInviteEvenIfInviteCreatorHasSinceBeenBanned() {
+        serverService.joinByInvite(nonMemberUser, inviteByBannedUserId);
         assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+    }
+
+    @Test
+    @Transactional
+    public void shouldJoinByInviteWithUnlimitedUses() {
+        serverService.joinByInvite(nonMemberUser, unlimitedInviteId);
+        assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        Invite invite = inviteRepository.findById(unlimitedInviteId).get();
+        assertEquals(Invite.UNLIMITED_USES, invite.getRemainingUses());
     }
 
     @Test
@@ -67,6 +93,14 @@ public class InviteManagerTests extends ServerServiceTestSetup {
     public void shouldNotJoinByExpiredInvite() {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.joinByInvite(nonMemberUser, expiredInviteId);
+        });
+        assertFalse(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+    }
+
+    @Test
+    public void shouldNotJoinByInviteWithNoRemainingUses() {
+        assertThrows(UnauthorizedActionException.class, () -> {
+            serverService.joinByInvite(nonMemberUser, inviteWithNoRemainingUsesId);
         });
         assertFalse(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
     }

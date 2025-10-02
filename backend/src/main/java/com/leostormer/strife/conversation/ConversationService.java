@@ -46,22 +46,12 @@ public class ConversationService {
         return conversationRepository.getAllConversationsWhereUserIsPresent(user.getId());
     }
 
-    public void lockConversation(User user1, User user2) {
-        Conversation conversation = getConversationByUsers(user1, user2)
-                .orElse(new Conversation(true, List.of(user1, user2), List.of(false, false)));
-        conversation.setLocked(true);
-        conversationRepository.save(conversation);
+    public void lockConversation(ObjectId user1Id, ObjectId user2Id) {
+        conversationRepository.lockUserDirectConversation(user1Id, user2Id);
     }
 
-    public void unlockConversation(Conversation conversation) {
-        conversation.setLocked(false);
-        conversationRepository.save(conversation);
-    }
-
-    public void unlockConversation(User user1, User user2) {
-        Optional<Conversation> optional = getConversationByUsers(user1, user2);
-        if (optional.isPresent())
-            unlockConversation(optional.get());
+    public void unlockConversation(ObjectId user1Id, ObjectId user2Id) {
+        conversationRepository.unlockDirectConversation(user1Id, user2Id);
     }
 
     public Conversation startNewConversation(User user1, List<User> otherUsers) {

@@ -2,6 +2,7 @@ package com.leostormer.strife.channel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.bson.types.ObjectId;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import com.leostormer.strife.conversation.Conversation;
@@ -25,8 +27,10 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
 
     @Override
     public Optional<ServerChannel> findServerChannelById(ObjectId channelId) {
-        return Optional.ofNullable(mongoTemplate.findOne(new Query(Criteria.where("_id").is(channelId)), ServerChannel.class));
+        return Optional
+                .ofNullable(mongoTemplate.findOne(new Query(Criteria.where("_id").is(channelId)), ServerChannel.class));
     }
+
     @Override
     public List<ServerChannel> findAllByServerId(ObjectId serverId) {
         return mongoTemplate.find(new Query(Criteria.where("server").is(serverId)), ServerChannel.class);
@@ -70,8 +74,10 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
 
     @Override
     public Optional<Conversation> findConversationById(Object conversationId) {
-        return Optional.ofNullable(mongoTemplate.findOne(new Query(Criteria.where("_id").is(conversationId)), Conversation.class));
+        return Optional.ofNullable(
+                mongoTemplate.findOne(new Query(Criteria.where("_id").is(conversationId)), Conversation.class));
     }
+
     @Override
     public List<Conversation> getAllUserConversations(ObjectId userId) {
         return mongoTemplate.find(new Query(Criteria.where("userPresenceMap." + userId.toHexString()).exists(true)),
@@ -103,5 +109,21 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
     @Override
     public boolean conversationExistsByUserIds(ObjectId... userIds) {
         return mongoTemplate.exists(new Query(containsGivenUsersAndOnlyGivenUsers(userIds)), Conversation.class);
+    }
+
+    @Override
+    public void lockUserDirectConversation(ObjectId userId, ObjectId otherUserId) {
+        Query query = new Query(containsGivenUsersAndOnlyGivenUsers(userId, otherUserId));
+        Map<ObjectId, Boolean> userPresenceMap = Map.of(userId, false, otherUserId, false);
+        Update update = Update.update("locked", true).setOnInsert("numUsers", 2).setOnInsert("userPresenceMap",
+                userPresenceMap);
+        mongoTemplate.upsert(query, update, Conversation.class);
+    }
+
+    @Override
+    public void unlockDirectConversation(ObjectId userId, ObjectId otherUserId) {
+        Query query = new Query(containsGivenUsersAndOnlyGivenUsers(userId, otherUserId));
+        Update update = Update.update("locked", false);
+        mongoTemplate.updateFirst(query, update, Conversation.class);    
     }
 }

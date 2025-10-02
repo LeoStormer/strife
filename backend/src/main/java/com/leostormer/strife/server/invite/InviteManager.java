@@ -2,7 +2,6 @@ package com.leostormer.strife.server.invite;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,14 +36,10 @@ public interface InviteManager extends IUsesServerRepository {
             return;
         }
 
-        int remainingUses = invite.getRemainingUses();
-        boolean usesLimited = invite.getMaxUses() > 0;
-        boolean inviteExpired = invite.getExpiresAt().isBefore(Instant.now());
-        if (inviteExpired || (usesLimited && remainingUses == 0))
+        if (invite.isExpired() || !invite.hasRemainingUses())
             throw new UnauthorizedActionException("Invite not valid");
 
-        remainingUses -= usesLimited ? 1 : 0;
-        invite.setRemainingUses(remainingUses);
+        invite.decrementUsesIfLimited();
         inviteRepository.save(invite);
         getServerRepository().addMember(server.getId(), Member.fromUser(user));
     }

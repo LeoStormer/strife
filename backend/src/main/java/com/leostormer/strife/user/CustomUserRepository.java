@@ -15,4 +15,12 @@ public interface CustomUserRepository {
     List<User> getBlockedUsers(ObjectId userId);
 
     boolean existsByUsername(String username);
+
+    void acceptFriendRequest(ObjectId userId, ObjectId otherUserId);
+
+    void removeFriendRequest(ObjectId userId, ObjectId otherUserId);
+
+    void blockUser(ObjectId userId, ObjectId userToBlockId);
+
+    void unblockUser(ObjectId userId, ObjectId userToUnblockId);
 }

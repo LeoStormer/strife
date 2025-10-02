@@ -58,9 +58,11 @@ public class CustomUserRepositoryImpl implements CustomUserRepository {
 
     public class FriendResult {
         private List<User> result = new ArrayList<>();
+
         public List<User> getResult() {
             return result;
         }
+
         public void setResult(List<User> result) {
             this.result = result;
         }
@@ -88,5 +90,35 @@ public class CustomUserRepositoryImpl implements CustomUserRepository {
 
         AggregationResults<User> results = mongoTemplate.aggregate(aggregation, User.class, User.class);
         return results.getMappedResults();
+    }
+
+    @Override
+    public void acceptFriendRequest(ObjectId userId, ObjectId otherUserId) {
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(userId)),
+                new Update().addToSet("friends", otherUserId), User.class);
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(otherUserId)),
+                new Update().addToSet("friends", userId), User.class);
+    }
+
+    @Override
+    public void removeFriendRequest(ObjectId userId, ObjectId otherUserId) {
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(userId)),
+                new Update().pull("friends", otherUserId), User.class);
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(otherUserId)),
+                new Update().pull("friends", userId), User.class);
+    }
+
+    @Override
+    public void blockUser(ObjectId userId, ObjectId userToBlockId) {
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(userId)),
+                new Update().pull("friends", userToBlockId).addToSet("blockedUsers", userToBlockId), User.class);
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(userToBlockId)),
+                new Update().pull("friends", userId), User.class);
+    }
+
+    @Override
+    public void unblockUser(ObjectId userId, ObjectId userToUnblockId) {
+        mongoTemplate.updateFirst(new Query(Criteria.where("_id").is(userId)),
+                new Update().pull("blockedUsers", userToUnblockId), User.class);
     }
 }

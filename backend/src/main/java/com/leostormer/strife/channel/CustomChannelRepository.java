@@ -95,4 +95,22 @@ public interface CustomChannelRepository {
      * @return whether such converation exists
      */
     boolean conversationExistsByUserIds(ObjectId... userIds);
+
+    /**
+     * Locks the direct conversation between two given users. Creates a locked
+     * one if it doesn't exist.
+     * 
+     * @param userId id of one of the given users
+     * @param otherUserId id of the other given users
+     */
+    void lockUserDirectConversation(ObjectId userId, ObjectId otherUserId);
+
+    /**
+     * Unlocks the direct conversation between two given users. If no such
+     * conversation exists, does nothing.
+     * 
+     * @param userId
+     * @param otherUserId
+     */
+    void unlockDirectConversation(ObjectId userId, ObjectId otherUserId);
 }
