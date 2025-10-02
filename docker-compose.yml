@@ -1,0 +1,81 @@
+services:
+
+  mongo1:
+    image: mongo:8.0
+    container_name: mongo1
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo1-data:/data/db
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    networks:
+      - mongo-network
+
+
+  mongo2:
+    image: mongo:8.0
+    container_name: mongo2
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo2-data:/data/db
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    depends_on:
+      - mongo1
+    networks:
+      - mongo-network
+
+  mongo3:
+    image: mongo:8.0
+    container_name: mongo3
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo3-data:/data/db
+    command: mongod --replSet rs0 --bind_ip_all --port 27017
+    depends_on:
+      - mongo1
+    networks:
+      - mongo-network
+
+  mongo-init:
+    image: mongo:8.0
+    container_name: mongo-init
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    volumes:
+      - ./scripts/rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - mongo-network
+    entrypoint: [ "bash", "/scripts/rs-init.sh" ]
+
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo-init
+    networks:
+      - mongo-network
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/strife?replicaSet=rs0
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - mongo-network
+
+networks:
+  mongo-network:
+    driver: bridge
+
+volumes:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
