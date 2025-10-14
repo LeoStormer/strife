@@ -34,6 +34,7 @@ public class User {
     @Size(min = 8)
     private String password;
 
+    @NotEmpty
     @Email
     private String email;
 

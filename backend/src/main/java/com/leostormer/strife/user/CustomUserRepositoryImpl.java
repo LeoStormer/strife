@@ -46,6 +46,11 @@ public class CustomUserRepositoryImpl implements CustomUserRepository {
     }
 
     @Override
+    public Optional<User> findOneByEmail(String email) {
+        return Optional.ofNullable(mongoTemplate.findOne(new Query(Criteria.where("email").is(email)), User.class));
+    }
+
+    @Override
     public User updateUserDetails(ObjectId userId, UserUpdate userUpdate) {
         return mongoTemplate.findAndModify(new Query(Criteria.where("_id").is(userId)), getUpdateObject(userUpdate),
                 FindAndModifyOptions.options().returnNew(true), User.class);
@@ -54,6 +59,11 @@ public class CustomUserRepositoryImpl implements CustomUserRepository {
     @Override
     public boolean existsByUsername(String username) {
         return mongoTemplate.exists(new Query(Criteria.where("username").is(username)), User.class);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return mongoTemplate.exists(new Query(Criteria.where("email").is(email)), User.class);
     }
 
     public class FriendResult {

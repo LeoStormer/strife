@@ -8,6 +8,8 @@ import org.bson.types.ObjectId;
 public interface CustomUserRepository {
     Optional<User> findOneByUsername(String username);
 
+    Optional<User> findOneByEmail(String email);
+
     User updateUserDetails(ObjectId userId, UserUpdate userUpdate);
 
     List<User> getFriends(ObjectId userId);
@@ -15,6 +17,8 @@ public interface CustomUserRepository {
     List<User> getBlockedUsers(ObjectId userId);
 
     boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
 
     void acceptFriendRequest(ObjectId userId, ObjectId otherUserId);
 

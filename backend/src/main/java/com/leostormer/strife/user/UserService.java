@@ -38,7 +38,7 @@ public class UserService implements UserDetailsService {
     public User getUser(Principal principal) {
         // currently authenticated principal should always correspond to an
         // active user in database
-        return getUserByUsername(principal.getName()).get();
+        return userRepository.findOneByEmail(principal.getName()).get();
     }
 
     public Optional<User> getUserById(ObjectId userId) {
@@ -123,7 +123,7 @@ public class UserService implements UserDetailsService {
     }
 
     public User registerUser(User user) {
-        if (userRepository.existsByUsername(user.getUsername()))
+        if (userRepository.existsByUsername(user.getUsername()) || userRepository.existsByEmail(user.getEmail()))
             throw new UsernameTakenException();
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -138,11 +138,11 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = getUserByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findOneByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
+                .username(user.getEmail())
                 .password(user.getPassword())
                 .build();
     }
