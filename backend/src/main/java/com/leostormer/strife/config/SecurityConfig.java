@@ -13,8 +13,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
+import org.springframework.security.web.context.DelegatingSecurityContextRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter.Directive;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.cors.CorsConfiguration;
 
@@ -23,10 +32,17 @@ import org.springframework.web.cors.CorsConfiguration;
 @EnableTransactionManagement
 public class SecurityConfig {
 
-    private CsrfTokenRepository csrfTokenRepository() {
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         repository.setHeaderName("X-XSRF-TOKEN");
         return repository;
+    }
+
+    private LogoutHandler logoutHandler() {
+        HeaderWriterLogoutHandler logoutHandler = new HeaderWriterLogoutHandler(
+                new ClearSiteDataHeaderWriter(Directive.ALL));
+        return logoutHandler;
     }
 
     @Bean
@@ -42,15 +58,34 @@ public class SecurityConfig {
                         return configuration;
                     });
                 })
-                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
+                .securityContext(securityContext -> securityContext
+                        .securityContextRepository(securityContextRepository())
+                        .requireExplicitSave(true))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/user/register", "/login", "/logout", "/error").permitAll()
+                        .requestMatchers(
+                                "/api/user/register",
+                                "/api/user/login",
+                                "/api/user/logout",
+                                "/error")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
-                .formLogin(form -> form.usernameParameter("email").permitAll())
+                .formLogin(form -> form.disable())
+                .logout(logout -> logout
+                        .logoutUrl("/api/user/logout")
+                        .addLogoutHandler(logoutHandler())
+                        .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler()))
                 .httpBasic(Customizer.withDefaults())
                 .build();
+    }
+
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new DelegatingSecurityContextRepository(new HttpSessionSecurityContextRepository(),
+                new RequestAttributeSecurityContextRepository());
     }
 
     @Bean

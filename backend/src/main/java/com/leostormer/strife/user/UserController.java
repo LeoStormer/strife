@@ -8,6 +8,7 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,8 @@ import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.user.friends.FriendRequestView;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -138,14 +141,33 @@ public class UserController {
         }
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<UserView> registerUser(@Valid @RequestBody User user) {
+    @PostMapping("/login")
+    public ResponseEntity<UserView> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         try {
-            return ResponseEntity.ok(new UserView(userService.registerUser(user)));
+            return ResponseEntity.ok().body(userService.login(loginRequest, request, response).toUserView());
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity<UserView> registerUser(@Valid @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+        LoginRequest loginRequest = new LoginRequest(user.getEmail(), user.getPassword());
+        try {
+            userService.registerUser(user);
         } catch (UsernameTakenException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
+        }
+
+        try {
+            return ResponseEntity.ok(userService.login(loginRequest, request, response).toUserView());
+        } catch (Exception e) {
+            // User profile was created but failed to login so user should try logging in later.
+            return ResponseEntity.status(HttpStatus.CREATED).build();
         }
     }
 

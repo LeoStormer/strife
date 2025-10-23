@@ -64,4 +64,8 @@ public class User {
     public boolean isFriend(ObjectId userId) {
         return friends.contains(userId);
     }
+
+    public UserView toUserView() {
+        return new UserView(this);
+    }
 }

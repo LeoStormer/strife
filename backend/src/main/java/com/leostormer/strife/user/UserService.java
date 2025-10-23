@@ -6,10 +6,16 @@ import java.util.Optional;
 
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +25,8 @@ import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.user.friends.FriendRequest;
 import com.leostormer.strife.user.friends.FriendRequestService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 
 @Service
@@ -34,6 +42,8 @@ public class UserService implements UserDetailsService {
     private final FriendRequestService friendRequestService;
     @Autowired
     private final ConversationService conversationService;
+    @Autowired
+    private SecurityContextRepository securityContextRepository;
 
     public User getUser(Principal principal) {
         // currently authenticated principal should always correspond to an
@@ -141,9 +151,26 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findOneByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        return toUserDetails(user);
+    }
+
+    private UserDetails toUserDetails(User user) {
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
                 .build();
+    }
+
+    public User login(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+        User user = userRepository.findOneByEmail(loginRequest.email()).orElseThrow(() -> new UsernameNotFoundException("Authentication failed"));
+        if (!passwordEncoder.matches(loginRequest.password(), user.getPassword()))
+            throw new BadCredentialsException("Authentication failed");
+        
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(toUserDetails(user), null, List.of());
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, request, response);
+        return user;
     }
 }
