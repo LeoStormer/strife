@@ -2,12 +2,15 @@ import React from "react";
 import ConversationList from "../components/ConversationList";
 import { Outlet } from "react-router-dom";
 
+/**
+ * Adds a section listing the authenticated user's conversations. 
+ */
 function UserLayout() {
   return (
-    <div>
+    <>
       <ConversationList />
       <Outlet />
-    </div>
+    </>
   );
 }
 

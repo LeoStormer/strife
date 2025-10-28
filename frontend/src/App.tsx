@@ -5,17 +5,17 @@ import {
   RouterProvider,
   Route,
 } from "react-router-dom";
-import RootLayout from "./layout/RootLayout";
+import RootLayout from "./layouts/RootLayout";
 import LoginPage from "./pages/LoginPage";
 import RegristrationPage from "./pages/RegistrationPage";
 import FriendsPage from "./pages/FriendsPage";
 import NotFoundPage from "./pages/NotFoundPage";
-import ServerListLayout from "./layout/ServerListLayout";
+import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
 import ServerChannelPage from "./pages/ServerChannelPage";
 import ConversationPage from "./pages/ConversationPage";
-import UserLayout from "./layout/UserLayout";
+import UserLayout from "./layouts/UserLayout";
 import HomePage from "./pages/HomePage";
-import ServerLayout from "./layout/ServerLayout";
+import ServerLayout from "./layouts/ServerLayout";
 
 function App() {
   const router = createBrowserRouter(
@@ -25,7 +25,7 @@ function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegristrationPage />} />
         <Route path="*" element={<NotFoundPage />} />
-        <Route path="servers" element={<ServerListLayout />}>
+        <Route path="servers" element={<AuthenticatedLayout />}>
           <Route path="" element={<ServerLayout />}>
             <Route
               path=":serverId/:channelId"
@@ -49,7 +49,7 @@ function App() {
     )
   );
 
-  return (<RouterProvider router={router} />);
+  return <RouterProvider router={router} />;
 }
 
 export default App;

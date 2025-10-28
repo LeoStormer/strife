@@ -1,0 +1,18 @@
+import React, { createContext, ReactNode, useState } from "react";
+
+export const PageNameContext = createContext('')
+export const PageNameDispatchcontext = createContext((pageName: string) => {});
+
+export function PageNameContextProvider({ children }: { children: ReactNode }) {
+  const [pageName, setPageName] = useState("");
+
+  return (
+    <PageNameContext value={pageName}>
+      <PageNameDispatchcontext value={setPageName}>
+        {children}
+      </PageNameDispatchcontext>
+    </PageNameContext>
+  );
+}
+
+export default PageNameContext;
