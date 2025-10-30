@@ -16,34 +16,36 @@ import ConversationPage from "./pages/ConversationPage";
 import UserLayout from "./layouts/UserLayout";
 import HomePage from "./pages/HomePage";
 import ServerLayout from "./layouts/ServerLayout";
+import DiscoveryPage from "./pages/DiscoveryPage";
 
 function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<RootLayout />}>
+      <Route path='/' element={<RootLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegristrationPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-        <Route path="servers" element={<AuthenticatedLayout />}>
-          <Route path="" element={<ServerLayout />}>
+        <Route path='login' element={<LoginPage />} />
+        <Route path='register' element={<RegristrationPage />} />
+        <Route path='*' element={<NotFoundPage />} />
+        <Route path='servers' element={<AuthenticatedLayout />}>
+          <Route path='' element={<ServerLayout />}>
             <Route
-              path=":serverId/:channelId"
+              path=':serverId/:channelId'
               element={<ServerChannelPage />}
             />
             <Route
-              path=":serverId/:channelId/threads/:threadId"
+              path=':serverId/:channelId/threads/:threadId'
               element={<ServerChannelPage />}
             />
             <Route
-              path=":serverId/:channelId/:threadId"
+              path=':serverId/:channelId/:threadId'
               element={<ServerChannelPage />}
             />
           </Route>
-          <Route path="@me" element={<UserLayout />}>
-            <Route path="friends" element={<FriendsPage />} />
-            <Route path=":channelId" element={<ConversationPage />} />
+          <Route path='@me' element={<UserLayout />}>
+            <Route path='friends' element={<FriendsPage />} />
+            <Route path=':channelId' element={<ConversationPage />} />
           </Route>
+          <Route path='discover' element={<DiscoveryPage />} />
         </Route>
       </Route>
     )

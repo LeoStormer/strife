@@ -1,42 +1,36 @@
-import { createContext, ReactNode, useState } from "react";
+import {
+  createContext,
+  type Dispatch,
+  type PropsWithChildren,
+  type SetStateAction,
+  useContext,
+  useState,
+} from "react";
 
 type Server = {
   id: string;
   name: string;
-  icon: string;
-  description: string;
+  icon?: string;
+  description?: string;
 };
 
-interface ServerSelectionContextType {
+type ServerSelectionContextType = {
   servers: Server[];
   selectedId: string | null;
-  updateServers: (servers: Server[]) => void;
+  setServers: Dispatch<SetStateAction<Server[]>>;
   selectServer: (serverId: string) => void;
   getServer: (serverId: string) => Server | null;
-}
+};
 
-export const ServerSelectionContext = createContext<ServerSelectionContextType>(
-  {
-    servers: [],
-    selectedId: null,
-    updateServers: (servers: Server[]) => {},
-    selectServer: (serverId: string) => {},
-    getServer: (serverId: string) => null,
-  }
-);
+export const ServerSelectionContext =
+  createContext<ServerSelectionContextType | null>(null);
 
 export const ServerSelectionContextProvider = ({
   children,
-}: {
-  children: ReactNode;
-}) => {
+}: PropsWithChildren) => {
   const [servers, setServers] = useState<Server[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const serverMap = new Map(servers.map((server) => [server.id, server]));
-
-  const updateServers = (updatedServers: Server[]) => {
-    setServers(updatedServers);
-  };
 
   const selectServer = (serverId: string | null) => {
     if (serverId !== null && !serverMap.has(serverId)) {
@@ -49,9 +43,21 @@ export const ServerSelectionContextProvider = ({
 
   return (
     <ServerSelectionContext
-      value={{ servers, updateServers, selectedId, selectServer, getServer }}
+      value={{ servers, setServers, selectedId, selectServer, getServer }}
     >
       {children}
     </ServerSelectionContext>
   );
+};
+
+export const useServerSelectionContext = () => {
+  const context = useContext(ServerSelectionContext);
+
+  if (!context) {
+    throw new Error(
+      "useServerSelectionContext must be called from a descendant of a ServerSelectionContextProvider"
+    );
+  }
+
+  return context;
 };

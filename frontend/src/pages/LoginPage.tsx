@@ -2,7 +2,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
 import api from "../api";
 import { HttpStatusCode, isAxiosError } from "axios";
-import { FormEvent, useContext } from "react";
+import { type FormEvent, useContext } from "react";
 import { UserContext } from "../contexts/UserContext";
 
 function LoginPage() {

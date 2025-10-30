@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { useDraggable, UseDraggableArguments } from "@dnd-kit/core";
+import { type ReactNode } from "react";
+import { useDraggable, type UseDraggableArguments } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 type DraggableProps = UseDraggableArguments & {

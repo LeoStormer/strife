@@ -1,16 +1,16 @@
-import React, { createContext, ReactNode, useState } from "react";
+import { createContext, type ReactNode, useState } from "react";
 
-export const PageNameContext = createContext('')
-export const PageNameDispatchcontext = createContext((pageName: string) => {});
+export const PageNameContext = createContext("");
+export const PageNameDispatchContext = createContext((pageName: string) => {});
 
 export function PageNameContextProvider({ children }: { children: ReactNode }) {
   const [pageName, setPageName] = useState("");
 
   return (
     <PageNameContext value={pageName}>
-      <PageNameDispatchcontext value={setPageName}>
+      <PageNameDispatchContext value={setPageName}>
         {children}
-      </PageNameDispatchcontext>
+      </PageNameDispatchContext>
     </PageNameContext>
   );
 }

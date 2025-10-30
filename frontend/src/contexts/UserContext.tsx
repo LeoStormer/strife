@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useState } from "react";
+import { createContext, type PropsWithChildren, useState } from "react";
 
 export type User = {
   id: string;
@@ -7,11 +7,11 @@ export type User = {
   createdDate: Date;
 };
 
-interface UserContextType {
+type UserContextType = {
   user: User | null;
   login: (userData: User) => void;
   logout: () => void;
-}
+};
 
 export const UserContext = createContext<UserContextType>({
   user: null,
@@ -19,7 +19,7 @@ export const UserContext = createContext<UserContextType>({
   logout: () => {},
 });
 
-export const UserContextProvider = ({ children }: { children: ReactNode }) => {
+export const UserContextProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(null);
   const login = (userData: User) => setUser(userData);
   const logout = () => setUser(null);

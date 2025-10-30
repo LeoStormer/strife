@@ -1,7 +1,11 @@
+import { type FormEventHandler } from "react";
 import { Link } from "react-router-dom";
-import { FormEventHandler } from "react";
 
-function LoginForm({ handleSubmit }: { handleSubmit: FormEventHandler<HTMLFormElement>}) {
+type LoginFormProps = {
+  handleSubmit: FormEventHandler<HTMLFormElement>;
+};
+
+function LoginForm({ handleSubmit }: LoginFormProps) {
   return (
     <div className='form-container'>
       <form className='login-form' onSubmit={handleSubmit}>

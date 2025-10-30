@@ -1,5 +1,3 @@
-import React from "react";
-
 function getInitials(serverName: string) {
   return serverName
     .split(" ")
@@ -8,17 +6,16 @@ function getInitials(serverName: string) {
 }
 
 type ServerIconProps = {
-  serverIconImage?: string;
+  serverIconImage: string | undefined;
   serverName: string;
 };
 
 function ServerIcon({ serverIconImage, serverName }: ServerIconProps) {
-  const icon =
-    serverIconImage == null ? (
-      <img src={serverIconImage} alt=''></img>
-    ) : (
-      <label>{getInitials(serverName)}</label>
-    );
+  const icon = serverIconImage ? (
+    <img src={serverIconImage} alt=''></img>
+  ) : (
+    <label>{getInitials(serverName)}</label>
+  );
   return <>{icon}</>;
 }
 
