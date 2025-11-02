@@ -28,7 +28,7 @@ export const ServerSelectionContext =
 export const ServerSelectionContextProvider = ({
   children,
 }: PropsWithChildren) => {
-  const [servers, setServers] = useState<Server[]>([]);
+  const [servers, setServers] = useState<Server[]>([{id: "1", name: "Server 1"},{id: "2", name: "Server 2"},{id: "3", name: "Server 3"}]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const serverMap = new Map(servers.map((server) => [server.id, server]));
 

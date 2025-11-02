@@ -51,7 +51,7 @@ public class SecurityConfig {
                 .cors(cors -> {
                     cors.configurationSource(request -> {
                         CorsConfiguration configuration = new CorsConfiguration();
-                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));// TODO: update for production
                         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                         configuration.setAllowedHeaders(Arrays.asList("*")); // Allow all headers
                         configuration.setAllowCredentials(true); // Allow sending cookies, needed for JSESSIONID
@@ -68,6 +68,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/user/register",
                                 "/api/user/login",
+                                "/api/user/auth-status",
                                 "/api/user/logout",
                                 "/error")
                         .permitAll()

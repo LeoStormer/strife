@@ -39,6 +39,7 @@ function RegristrationPage() {
     }
   };
 
+  // TODO: Switch to an alternate mobile styling when under 512 pixels width
   return <RegistrationForm handleSubmit={handleSubmit} />;
 }
 

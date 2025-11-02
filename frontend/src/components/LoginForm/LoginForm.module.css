@@ -1,0 +1,5 @@
+.form {
+  composes: form from "../../styles/Form.module.css";
+  max-height: 300px;
+  max-width: 600px;
+}

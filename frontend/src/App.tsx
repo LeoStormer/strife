@@ -17,6 +17,7 @@ import UserLayout from "./layouts/UserLayout";
 import HomePage from "./pages/HomePage";
 import ServerLayout from "./layouts/ServerLayout";
 import DiscoveryPage from "./pages/DiscoveryPage";
+import "./themes.css"
 
 function App() {
   const router = createBrowserRouter(

@@ -16,6 +16,8 @@ public class ServerView {
 
     private String description;
 
+    private String icon;
+
     private UserView owner;
 
     Map<String, Role> roles;

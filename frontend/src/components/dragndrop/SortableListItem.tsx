@@ -1,11 +1,11 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { type Arguments } from "@dnd-kit/sortable/dist/hooks/useSortable";
 import { CSS } from "@dnd-kit/utilities";
-import { type Key, type PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 
-type SortableProps = PropsWithChildren<Arguments & { key: Key }>;
+type SortableProps = PropsWithChildren<Arguments>;
 
-function SortableListItem({ children, key, ...useProps }: SortableProps) {
+function SortableListItem({ children, ...useProps }: SortableProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable(useProps);
 
@@ -15,7 +15,7 @@ function SortableListItem({ children, key, ...useProps }: SortableProps) {
   };
 
   return (
-    <li key={key} ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <li ref={setNodeRef} style={style} {...attributes} {...listeners}>
       {children}
     </li>
   );

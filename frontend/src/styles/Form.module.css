@@ -1,0 +1,45 @@
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  min-width: 100vw;
+}
+
+.form {
+  background-color: var(--primary-color);
+  width: 100%;
+  border-radius: 10px;
+}
+
+.wrapper {
+  margin: 32px;
+}
+
+.label {
+  color: white;
+  font-size: 15px;
+}
+
+.input {
+  border-radius: 5px;
+  border: none;
+  background-color: rgb(73, 70, 70);
+  height: 40px;
+  width: 100%;
+}
+
+.button {
+  background-color: var(--secondary-color);
+  color: black;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+  height: 40px;
+  width: 100%;
+}
+
+.formGroup > * {
+  margin-top: 10px;
+}

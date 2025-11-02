@@ -3,15 +3,17 @@ import {
   type PropsWithChildren,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useServerSelectionContext } from "../contexts/ServerSelectionContext";
 import ServerIcon from "./ServerIcon";
 import {
   closestCenter,
   DndContext,
+  type DragCancelEvent,
   type DragEndEvent,
+  type DragOverEvent,
   DragOverlay,
+  type DragStartEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -23,6 +25,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableListItem from "./dragndrop/SortableListItem";
+import Modal from "./Modal";
 
 type ServerBarButtonProps = PropsWithChildren<{
   isSelected?: boolean | undefined;
@@ -75,6 +78,7 @@ function NavigateButton({
 function ServerBar() {
   const { servers, setServers, selectedId, selectServer, getServer } =
     useServerSelectionContext();
+  const [draggingId, setDraggingId] = useState<string | null>(null);
   const [isButtonSelected, setIsButtonSelected] = useState([
     false,
     false,
@@ -91,16 +95,49 @@ function ServerBar() {
   };
   const navigate = useNavigate();
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setDraggingId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) {
+      return
+    }
+
+    const willCombineIntoFolder = false;
+    // see how close Acive is to the center of Over and either display a bar
+    // above / below Over or diplay effect showing that they will combine into
+    // a folder component. See dnd-kit events to learn how to do this 
+
+    if (willCombineIntoFolder) {
+      // display effect
+    } else {
+      // display bar above or below
+    }
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setDraggingId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) {
       return;
     }
-    const oldIndex = servers.findIndex((server) => server.id === active.id);
-    const newIndex = servers.findIndex((server) => server.id === over.id);
-    setServers((servers) => arrayMove(servers, oldIndex, newIndex));
+
+    const willCombineIntoFolder = false;
+    if (willCombineIntoFolder) {
+      // Combine them into a folder
+    } else {
+      const oldIndex = servers.findIndex((server) => server.id === active.id);
+      const newIndex = servers.findIndex((server) => server.id === over.id);
+      setServers((servers) => arrayMove(servers, oldIndex, newIndex));
+    }
   };
 
+  const handleDragCancel = (event: DragCancelEvent) => {
+    void event;
+    setDraggingId(null);
+  };
   const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
 
   const serverIconButtons = servers.map((server) => (
@@ -115,8 +152,8 @@ function ServerBar() {
     </SortableListItem>
   ));
 
-  const currentServerIcon = (() => {
-    let server = selectedId ? getServer(selectedId) : null;
+  const draggingServerIcon = (() => {
+    let server = draggingId ? getServer(draggingId) : null;
     return server ? (
       <ServerIcon serverName={server.name} serverIconImage={server.icon} />
     ) : null;
@@ -138,7 +175,9 @@ function ServerBar() {
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <SortableContext
             items={servers.map((server) => server.id)}
@@ -146,10 +185,9 @@ function ServerBar() {
           >
             {serverIconButtons}
           </SortableContext>
-          {createPortal(
-            <DragOverlay>{currentServerIcon}</DragOverlay>,
-            document.body
-          )}
+          <Modal>
+            <DragOverlay>{draggingServerIcon}</DragOverlay>,
+          </Modal>
         </DndContext>
         <li key='add-server'>
           <ServerBarButton
@@ -157,7 +195,7 @@ function ServerBar() {
             onClick={() => getButtonSelector(1)(true)}
           >
             <label>add a server</label>
-            {/* If selected render a modal */}
+            {isButtonSelected[1] ? <Modal>Add a server Modal</Modal> : null}
           </ServerBarButton>
         </li>
         <li key='server-discovery'>

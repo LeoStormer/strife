@@ -61,12 +61,13 @@ public class UserController {
     public ResponseEntity<List<FriendRequestView>> getPendingFriendRequests(Principal principal) {
         User user = userService.getUser(principal);
         try {
-            return ResponseEntity.ok(userService.getPendingFriendRequests(user).stream().map(FriendRequestView::new).toList());
+            return ResponseEntity
+                    .ok(userService.getPendingFriendRequests(user).stream().map(FriendRequestView::new).toList());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     @PostMapping("/friends/friend-request")
     public ResponseEntity<FriendRequestView> sendFriendRequest(Principal principal, @RequestParam ObjectId receiverId) {
         User sender = userService.getUser(principal);
@@ -142,7 +143,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserView> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<UserView> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request,
+            HttpServletResponse response) {
         try {
             return ResponseEntity.ok().body(userService.login(loginRequest, request, response).toUserView());
         } catch (AuthenticationException e) {
@@ -151,9 +153,10 @@ public class UserController {
             return ResponseEntity.internalServerError().build();
         }
     }
-    
+
     @PostMapping("/register")
-    public ResponseEntity<UserView> registerUser(@Valid @RequestBody User user, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<UserView> registerUser(@Valid @RequestBody User user, HttpServletRequest request,
+            HttpServletResponse response) {
         LoginRequest loginRequest = new LoginRequest(user.getEmail(), user.getPassword());
         try {
             userService.registerUser(user);
@@ -166,7 +169,8 @@ public class UserController {
         try {
             return ResponseEntity.ok(userService.login(loginRequest, request, response).toUserView());
         } catch (Exception e) {
-            // User profile was created but failed to login so user should try logging in later.
+            // User profile was created but failed to login so user should try logging in
+            // later.
             return ResponseEntity.status(HttpStatus.CREATED).build();
         }
     }
@@ -182,4 +186,14 @@ public class UserController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/auth-status")
+    public ResponseEntity<Boolean> checkLoginStatus(Principal principal) {
+        if (principal != null) {
+            return ResponseEntity.ok(true);
+        }
+
+        return ResponseEntity.ok(false);
+    }
+
 }

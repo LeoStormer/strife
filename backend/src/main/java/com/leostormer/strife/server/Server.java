@@ -29,6 +29,8 @@ public class Server {
 
     private String description;
 
+    private String icon;
+
     @DocumentReference(collection = "users", lazy = true)
     private User owner;
 
