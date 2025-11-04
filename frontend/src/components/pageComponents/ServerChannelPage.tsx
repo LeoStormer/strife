@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
-import { PageNameDispatchContext } from "../contexts/PageNameContext";
-import { useServerSelectionContext } from "../contexts/ServerSelectionContext";
+import { PageNameDispatchContext } from "../../contexts/PageNameContext";
+import { useServerSelectionContext } from "../../contexts/ServerSelectionContext";
 
 function ServerChannelPage() {
   const setPageName = useContext(PageNameDispatchContext);

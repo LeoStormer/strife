@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { PageNameDispatchContext } from "../contexts/PageNameContext";
+import { PageNameDispatchContext } from "../../contexts/PageNameContext";
 
 function DiscoveryPage() {
   const setPageName = useContext(PageNameDispatchContext);

@@ -1,9 +1,9 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import api from "../api";
-import RegistrationForm from "../components/RegistrationForm";
+import api from "../../api";
+import RegistrationForm from "../RegistrationForm";
 import { HttpStatusCode, isAxiosError } from "axios";
 import { type FormEvent, useContext } from "react";
-import { UserContext } from "../contexts/UserContext";
+import { UserContext } from "../../contexts/UserContext";
 
 function RegristrationPage() {
   const navigate = useNavigate();
