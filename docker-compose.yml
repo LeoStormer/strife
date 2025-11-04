@@ -71,7 +71,7 @@ services:
     networks:
       - mongo-network
     environment:
-      - REACT_APP_BACKEND_API_URL=http://backend:8080
+      - NEXT_PUBLIC_BACKEND_API_URL=http://backend:8080
 
 networks:
   mongo-network:

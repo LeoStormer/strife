@@ -6,18 +6,17 @@ import {
   Route,
 } from "react-router-dom";
 import RootLayout from "./layouts/RootLayout";
-import LoginPage from "./pages/LoginPage";
-import RegristrationPage from "./pages/RegistrationPage";
-import FriendsPage from "./pages/FriendsPage";
-import NotFoundPage from "./pages/NotFoundPage";
+import LoginPage from "./components/pageComponents/LoginPage";
+import RegristrationPage from "./components/pageComponents/RegistrationPage";
+import FriendsPage from "./components/pageComponents/FriendsPage";
+import NotFoundPage from "./components/pageComponents/NotFoundPage";
 import AuthenticatedLayout from "./layouts/AuthenticatedLayout";
-import ServerChannelPage from "./pages/ServerChannelPage";
-import ConversationPage from "./pages/ConversationPage";
+import ServerChannelPage from "./components/pageComponents/ServerChannelPage";
+import ConversationPage from "./components/pageComponents/ConversationPage";
 import UserLayout from "./layouts/UserLayout";
-import HomePage from "./pages/HomePage";
+import HomePage from "./components/pageComponents/HomePage";
 import ServerLayout from "./layouts/ServerLayout";
-import DiscoveryPage from "./pages/DiscoveryPage";
-import "./themes.css"
+import DiscoveryPage from "./components/pageComponents/DiscoveryPage";
 
 function App() {
   const router = createBrowserRouter(

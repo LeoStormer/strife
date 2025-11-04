@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { useAuthStatus } from "../hooks/useAuthStatus";
-import LoadingPage from "../pages/LoadingPage";
+import LoadingPage from "../components/pageComponents/LoadingPage";
 
 export type User = {
   id: string;
