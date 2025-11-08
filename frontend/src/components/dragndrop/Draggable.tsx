@@ -1,18 +1,32 @@
 import { type ReactNode } from "react";
 import { useDraggable, type UseDraggableArguments } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+import { CSS, type Transform } from "@dnd-kit/utilities";
+
+type StyleOverride = (transform: Transform | null) => {
+  transform: string | undefined;
+};
 
 type DraggableProps = UseDraggableArguments & {
   children?: ReactNode;
+  styleOveride?: StyleOverride | undefined;
 };
 
-function Draggable({ children, ...useDraggableProps }: DraggableProps) {
-  const { attributes, listeners, setNodeRef, transform } =
-    useDraggable(useDraggableProps);
+const returnAsIs: StyleOverride = (transform) => {
+  return {
+    transform: CSS.Transform.toString(transform),
+  };
+};
 
-  const style = transform
-    ? { transform: CSS.Transform.toString(transform) }
-    : undefined;
+function Draggable({
+  children,
+  styleOveride = returnAsIs,
+  ...useDraggableProps
+}: DraggableProps) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    ...useDraggableProps,
+  });
+
+  const style = styleOveride(transform);
 
   return (
     <div ref={setNodeRef} {...attributes} {...listeners} style={style}>
