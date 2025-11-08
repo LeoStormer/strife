@@ -1,17 +1,20 @@
-import React, { type PropsWithChildren } from "react";
+import React, {
+  type DetailedHTMLProps,
+  type FC,
+  type HTMLAttributes,
+} from "react";
 import { createPortal } from "react-dom";
 
-function Modal({ children }: PropsWithChildren) {
+const Modal: FC<
+  DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>
+> = (props) => {
   const modalRoot = document.getElementById("modal-root");
 
   if (!modalRoot) {
     throw new Error("Modal root cant be found");
   }
 
-  return createPortal(
-    <div className='modal-wrapper'>{children}</div>,
-    modalRoot
-  );
-}
+  return createPortal(<div {...props} />, modalRoot);
+};
 
 export default Modal;

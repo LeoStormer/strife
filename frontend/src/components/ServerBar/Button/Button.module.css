@@ -1,0 +1,55 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  /* height: 100%;
+  width: 100%; */
+}
+
+.button {
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-color);
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 0px;
+}
+
+.button > svg {
+  width: 100%;
+  height: 100%;
+  color: var(--text-color);
+}
+
+.button > label {
+  color: var(--text-color);
+  /* Change the font and the font size */
+}
+
+.button.selected {
+  background-color: var(--secondary-color);
+}
+
+.pill {
+  background-color: black;
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  margin-left: -4px;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background-color: var(--text-color);
+}
+
+.pill.hidden {
+  visibility: hidden;
+}
+
+.pill.hovered {
+  height: 20px;
+  border-radius: 4px;
+}
+
+.pill.selected {
+  border-radius: 4px;
+  height: 40px;
+}
