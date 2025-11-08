@@ -4,6 +4,7 @@ import Modal from "../Modal";
 import StyleComposer from "../../utils/StyleComposer";
 
 type TailStyle = "up" | "down" | "left" | "right" | "none";
+
 type RenderDirection = Omit<TailStyle, "none">;
 
 type TooltipProps = {
@@ -14,6 +15,18 @@ type TooltipProps = {
 };
 
 const TAIL_LENGTH = 4;
+
+const TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION: Record<
+  TailStyle,
+  RenderDirection
+> = {
+  up: "down",
+  down: "up",
+  left: "right",
+  right: "left",
+  none: "right",
+};
+
 const TAIL_MAP: Record<TailStyle, string | undefined> = {
   up: styles.up,
   down: styles.down,
@@ -23,32 +36,32 @@ const TAIL_MAP: Record<TailStyle, string | undefined> = {
 };
 
 const getTop = (
-  tailStyle: RenderDirection,
+  direction: RenderDirection,
   tooltipRect: DOMRect,
   targetRect: DOMRect
 ) => {
-  if (tailStyle === "right" || tailStyle === "left") {
+  if (direction === "right" || direction === "left") {
     return window.scrollY + targetRect.top;
   }
 
-  if (tailStyle === "up") {
+  if (direction === "down") {
     return window.scrollY + targetRect.bottom + TAIL_LENGTH;
   }
 
-  // tailstyle === bottom
+  // direction === up
   return window.scrollY + targetRect.top - tooltipRect.height - TAIL_LENGTH;
 };
 
 const getLeft = (
-  tailStyle: RenderDirection,
+  direction: RenderDirection,
   tooltipRect: DOMRect,
   targetRect: DOMRect
 ) => {
-  if (tailStyle === "left") {
+  if (direction === "right") {
     return window.scrollX + targetRect.right + TAIL_LENGTH;
   }
 
-  if (tailStyle === "up" || tailStyle === "down") {
+  if (direction === "up" || direction === "down") {
     return (
       window.scrollX +
       targetRect.left +
@@ -57,7 +70,7 @@ const getLeft = (
     );
   }
 
-  //tailstyle == right
+  //direction == left
   return window.scrollX + targetRect.left - tooltipRect.width - TAIL_LENGTH;
 };
 
@@ -65,7 +78,7 @@ function Tooltip({
   text,
   targetRef,
   tailStyle = "left",
-  direction = tailStyle === "none" ? "left" : tailStyle,
+  direction = TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION[tailStyle],
 }: TooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
