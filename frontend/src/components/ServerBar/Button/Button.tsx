@@ -7,7 +7,7 @@ import {
 } from "react";
 import styles from "./Button.module.css";
 import StyleComposer from "../../../utils/StyleComposer";
-import Tooltip from "../../Tooltip/Tooltip";
+import { useTooltipDispatchContext } from "../../../contexts/TooltipContext";
 
 type PillProps = {
   isSelected: boolean;
@@ -40,10 +40,28 @@ function Button({
   tooltipText,
 }: ButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const buttonRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const { showTooltip, hideTooltip } = useTooltipDispatchContext();
   const buttonClass = StyleComposer(styles.button, {
     [styles.selected as string]: isHovered || isSelected,
   });
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (buttonRef.current) {
+      showTooltip({
+        text: tooltipText,
+        targetRef: buttonRef as RefObject<HTMLDivElement>,
+        tailStyle: "left",
+        renderDirection: "right",
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    hideTooltip();
+  };
 
   return (
     <div ref={buttonRef} className={styles.wrapper}>
@@ -55,11 +73,10 @@ function Button({
       <button
         className={buttonClass}
         onClick={onClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {children}
-        {isHovered ? <Tooltip text={tooltipText} targetRef={buttonRef as RefObject<HTMLDivElement>} tailStyle="left" /> : null}
       </button>
     </div>
   );

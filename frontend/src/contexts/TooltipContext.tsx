@@ -1,44 +1,86 @@
 import {
   createContext,
+  useCallback,
   useContext,
-  useRef,
+  useMemo,
   useState,
-  type Dispatch,
   type PropsWithChildren,
   type RefObject,
-  type SetStateAction,
 } from "react";
+import Tooltip, {
+  TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION,
+  type RenderDirection,
+  type TailStyle,
+} from "../components/Tooltip";
 
-export type TailStyle = "up" | "down" | "left" | "right" |"none"
-
-type TooltipContextType = {
+type TooltipState = {
   text: string;
   isVisible: boolean;
-  targetRef: RefObject<HTMLElement | null>;
+  targetRef: RefObject<HTMLElement> | null;
   tailStyle: TailStyle;
+  renderDirection: RenderDirection;
+};
+
+type TooltipContextType = {
+  state: TooltipState;
+};
+
+type TooltipDispatchContextType = {
+  showTooltip: (props: {
+    text: string;
+    targetRef: RefObject<HTMLElement>;
+    tailStyle?: TailStyle;
+    renderDirection?: RenderDirection;
+  }) => void;
+  hideTooltip: () => void;
 };
 
 const TooltipContext = createContext<TooltipContextType | null>(null);
 
-type TooltipDispatchContextType = {
-  setText: Dispatch<SetStateAction<string>>;
-  setVisible: Dispatch<SetStateAction<boolean>>;
-  targetRef: RefObject<HTMLElement | null>;
-  setTailStyle: Dispatch<SetStateAction<TailStyle>>
-};
 const TooltipDispatchContext = createContext<TooltipDispatchContextType | null>(
   null
 );
 
 export const TooltipContextProvier = ({ children }: PropsWithChildren) => {
-  const [text, setText] = useState("");
-  const [isVisible, setVisible] = useState(false)
-  const targetRef = useRef<HTMLElement>(null)
-  const [tailStyle, setTailStyle] = useState<TailStyle>("none")
+  const [state, setState] = useState<TooltipState>({
+    text: "",
+    isVisible: false,
+    tailStyle: "none",
+    renderDirection: "right",
+    targetRef: null,
+  });
+
+  const showTooltip: TooltipDispatchContextType["showTooltip"] = useCallback(
+    ({
+      text,
+      tailStyle = "none",
+      renderDirection = TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION[tailStyle],
+      targetRef,
+    }) => {
+      setState({
+        text,
+        targetRef,
+        tailStyle,
+        renderDirection,
+        isVisible: true,
+      });
+    },
+    []
+  );
+
+  const hideTooltip = useCallback(() => {
+    setState({ ...state, isVisible: false });
+  }, []);
+
+  const dispatchValue = useMemo(
+    () => ({ showTooltip, hideTooltip }),
+    [showTooltip, hideTooltip]
+  );
 
   return (
-    <TooltipContext value={{ text, isVisible, targetRef, tailStyle }}>
-      <TooltipDispatchContext value={{ setText, setVisible, targetRef, setTailStyle }}>
+    <TooltipContext value={{ state }}>
+      <TooltipDispatchContext value={dispatchValue}>
+        <TooltipRenderer />
         {children}
       </TooltipDispatchContext>
     </TooltipContext>
@@ -60,9 +102,26 @@ export const useTooltipDispatchContext = () => {
   const context = useContext(TooltipDispatchContext);
   if (!context) {
     throw new Error(
-      "useTooltipContext must be called within a TooltipContextProvider"
+      "useTooltipDispatchContext must be called within a TooltipContextProvider"
     );
   }
 
   return context;
+};
+
+export const TooltipRenderer = () => {
+  const { state } = useTooltipContext();
+
+  if (!(state.isVisible && state.targetRef)) {
+    return null;
+  }
+
+  return (
+    <Tooltip
+      text={state.text}
+      tailStyle={state.tailStyle}
+      targetRef={state.targetRef}
+      renderDirection={state.renderDirection}
+    />
+  );
 };

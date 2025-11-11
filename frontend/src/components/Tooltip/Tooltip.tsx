@@ -1,22 +1,22 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import styles from "./ToolTip.module.css";
 import Modal from "../Modal";
 import StyleComposer from "../../utils/StyleComposer";
 
-type TailStyle = "up" | "down" | "left" | "right" | "none";
+export type TailStyle = "up" | "down" | "left" | "right" | "none";
 
-type RenderDirection = Omit<TailStyle, "none">;
+export type RenderDirection = Omit<TailStyle, "none">;
 
 type TooltipProps = {
   text: string;
   targetRef?: RefObject<HTMLElement>;
   tailStyle?: TailStyle;
-  direction?: RenderDirection;
+  renderDirection?: RenderDirection;
 };
 
 const TAIL_LENGTH = 4;
 
-const TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION: Record<
+export const TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION: Record<
   TailStyle,
   RenderDirection
 > = {
@@ -36,32 +36,32 @@ const TAIL_MAP: Record<TailStyle, string | undefined> = {
 };
 
 const getTop = (
-  direction: RenderDirection,
+  renderDirection: RenderDirection,
   tooltipRect: DOMRect,
   targetRect: DOMRect
 ) => {
-  if (direction === "right" || direction === "left") {
+  if (renderDirection === "right" || renderDirection === "left") {
     return window.scrollY + targetRect.top;
   }
 
-  if (direction === "down") {
+  if (renderDirection === "down") {
     return window.scrollY + targetRect.bottom + TAIL_LENGTH;
   }
 
-  // direction === up
+  // renderDirection === up
   return window.scrollY + targetRect.top - tooltipRect.height - TAIL_LENGTH;
 };
 
 const getLeft = (
-  direction: RenderDirection,
+  renderDirection: RenderDirection,
   tooltipRect: DOMRect,
   targetRect: DOMRect
 ) => {
-  if (direction === "right") {
+  if (renderDirection === "right") {
     return window.scrollX + targetRect.right + TAIL_LENGTH;
   }
 
-  if (direction === "up" || direction === "down") {
+  if (renderDirection === "up" || renderDirection === "down") {
     return (
       window.scrollX +
       targetRect.left +
@@ -70,7 +70,7 @@ const getLeft = (
     );
   }
 
-  //direction == left
+  //renderDirection === left
   return window.scrollX + targetRect.left - tooltipRect.width - TAIL_LENGTH;
 };
 
@@ -78,23 +78,23 @@ function Tooltip({
   text,
   targetRef,
   tailStyle = "left",
-  direction = TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION[tailStyle],
+  renderDirection = TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION[tailStyle],
 }: TooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
-  useEffect(() => {
-    if (!(tooltipRef && tooltipRef.current && targetRef && targetRef.current)) {
+  useLayoutEffect(() => {
+    if (!(tooltipRef?.current && targetRef?.current)) {
       return;
     }
 
     const targetRect = targetRef.current.getBoundingClientRect();
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    const top = getTop(direction, tooltipRect, targetRect);
-    const left = getLeft(direction, tooltipRect, targetRect);
+    const top = getTop(renderDirection, tooltipRect, targetRect);
+    const left = getLeft(renderDirection, tooltipRect, targetRect);
 
     setPosition({ top: top, left: left });
-  }, [text, tailStyle, direction]);
+  }, [text, tailStyle, renderDirection, targetRef]);
 
   const bubbleClass = StyleComposer(styles.bubble, {
     [TAIL_MAP[tailStyle] as string]: true,
@@ -104,7 +104,11 @@ function Tooltip({
     <Modal
       ref={tooltipRef}
       className={styles.container}
-      style={{ position: "absolute", top: position.top, left: position.left }}
+      style={{
+        position: "absolute",
+        top: position.top,
+        left: position.left,
+      }}
     >
       <div className={bubbleClass}>
         <p className={styles.content}>{text}</p>
