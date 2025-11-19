@@ -5,8 +5,10 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useAuthStatus } from "../hooks/useAuthStatus";
 import LoadingPage from "../components/pageComponents/LoadingPage";
+import api from "../api";
+
+type VoidFunc = () => void;
 
 export type User = {
   id: string;
@@ -18,7 +20,7 @@ export type User = {
 type UserContextType = {
   user: User | null;
   login: (userData: User) => void;
-  logout: () => void;
+  logout: VoidFunc;
 };
 
 export const UserContext = createContext<UserContextType>({
@@ -46,14 +48,42 @@ const getStoredUserData = (): User | null => {
   return null;
 };
 
+type UseAuthStatusProps = {
+  onRequestFinished: VoidFunc;
+  logout: UserContextType["logout"];
+};
+
+/**
+ * Chechs the authentication status of the user in the backend by making an API call.
+ * @param onRequestFinished - Callback function to be called when the auth status check is complete success or fail
+ * @param logout - function to log the user out locally if they are not authenticated
+ */
+const useAuthStatus = ({ onRequestFinished, logout }: UseAuthStatusProps) => {
+  useEffect(() => {
+    api
+      .get("/api/user/auth-status")
+      .then((response) => {
+        if (response.data === false) {
+          console.log("User not authenticated, logging out");
+          logout();
+        }
+      })
+      .catch(() => {
+        logout();
+      })
+      .finally(() => {
+        onRequestFinished();
+      });
+  }, []);
+};
+
 export const UserContextProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<User | null>(getStoredUserData);
   const [isLoading, setIsLoading] = useState(true);
   const login = (userData: User) => setUser(userData);
   const logout = () => setUser(null);
-  const onRequestFinished = () => setIsLoading(false);
 
-  useAuthStatus({ onRequestFinished, logout });
+  useAuthStatus({ onRequestFinished: () => setIsLoading(false), logout });
 
   useEffect(() => {
     try {

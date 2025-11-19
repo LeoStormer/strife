@@ -2,12 +2,12 @@ import { Navigate, useNavigate } from "react-router-dom";
 import LoginForm from "../LoginForm";
 import api from "../../api";
 import { HttpStatusCode, isAxiosError } from "axios";
-import { type FormEvent, useContext } from "react";
-import { UserContext } from "../../contexts/UserContext";
+import { type FormEvent } from "react";
+import { useUserContext } from "../../contexts/UserContext";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { user, login } = useContext(UserContext);
+  const { user, login } = useUserContext();
 
   if (user !== null) {
     return <Navigate to='/servers/@me/friends' replace />;

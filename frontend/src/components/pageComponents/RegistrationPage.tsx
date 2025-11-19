@@ -3,11 +3,11 @@ import api from "../../api";
 import RegistrationForm from "../RegistrationForm";
 import { HttpStatusCode, isAxiosError } from "axios";
 import { type FormEvent, useContext } from "react";
-import { UserContext } from "../../contexts/UserContext";
+import { useUserContext } from "../../contexts/UserContext";
 
 function RegristrationPage() {
   const navigate = useNavigate();
-  const { user, login } = useContext(UserContext);
+  const { user, login } = useUserContext();
 
   if (user !== null) {
     return <Navigate to='/servers/@me/friends' replace />;
