@@ -1,6 +1,5 @@
 import {
   useRef,
-  useState,
   type MouseEventHandler,
   type PropsWithChildren,
   type RefObject,
@@ -9,17 +8,9 @@ import styles from "./Button.module.css";
 import StyleComposer from "../../../utils/StyleComposer";
 import { useTooltipDispatchContext } from "../../../contexts/TooltipContext";
 
-type PillProps = {
-  isSelected: boolean;
-  isHovered: boolean;
-  isHidden: boolean;
-};
-
-function Pill({ isSelected, isHovered, isHidden = false }: PillProps) {
+function Pill({ isHidden = false }) {
   const className = StyleComposer(styles.pill, {
     [styles.hidden as string]: isHidden,
-    [styles.hovered as string]: isHovered,
-    [styles.selected as string]: isSelected,
   });
 
   return <div className={className}></div>;
@@ -34,20 +25,18 @@ export type ButtonProps = PropsWithChildren<{
 
 function Button({
   isSelected = false,
-  isPillHidden = false,
+  isPillHidden,
   children,
   onClick,
   tooltipText,
 }: ButtonProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const buttonRef = useRef<HTMLDivElement>(null);
   const { showTooltip, hideTooltip } = useTooltipDispatchContext();
   const buttonClass = StyleComposer(styles.button, {
-    [styles.selected as string]: isHovered || isSelected,
+    [styles.selected as string]: isSelected,
   });
 
   const handleMouseEnter = () => {
-    setIsHovered(true);
     if (buttonRef.current) {
       showTooltip({
         text: tooltipText,
@@ -59,17 +48,12 @@ function Button({
   };
 
   const handleMouseLeave = () => {
-    setIsHovered(false);
     hideTooltip();
   };
 
   return (
     <div ref={buttonRef} className={styles.wrapper}>
-      <Pill
-        isSelected={isSelected}
-        isHovered={isHovered}
-        isHidden={isPillHidden}
-      />
+      <Pill isHidden={isPillHidden} />
       <button
         className={buttonClass}
         onClick={onClick}

@@ -7,13 +7,6 @@ export type TailStyle = "up" | "down" | "left" | "right" | "none";
 
 export type RenderDirection = Omit<TailStyle, "none">;
 
-type TooltipProps = {
-  text: string;
-  targetRef?: RefObject<HTMLElement>;
-  tailStyle?: TailStyle;
-  renderDirection?: RenderDirection;
-};
-
 const TAIL_LENGTH = 4;
 
 export const TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION: Record<
@@ -27,7 +20,7 @@ export const TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION: Record<
   none: "right",
 };
 
-const TAIL_MAP: Record<TailStyle, string | undefined> = {
+const TAIL_STYLE_MAP: Record<TailStyle, string | undefined> = {
   up: styles.up,
   down: styles.down,
   left: styles.left,
@@ -74,17 +67,25 @@ const getLeft = (
   return window.scrollX + targetRect.left - tooltipRect.width - TAIL_LENGTH;
 };
 
+type TooltipProps = {
+  text: string;
+  targetRef?: RefObject<HTMLElement>;
+  tailStyle?: TailStyle;
+  renderDirection?: RenderDirection;
+  isVisible?: boolean;
+};
+
 function Tooltip({
   text,
   targetRef,
   tailStyle = "left",
   renderDirection = TAIL_STYLE_TO_DEFAULT_RENDER_DIRECTION[tailStyle],
+  isVisible = false,
 }: TooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useLayoutEffect(() => {
-    if (!(tooltipRef?.current && targetRef?.current)) {
+    if (!(tooltipRef?.current && targetRef?.current && isVisible)) {
       return;
     }
 
@@ -93,22 +94,22 @@ function Tooltip({
     const top = getTop(renderDirection, tooltipRect, targetRect);
     const left = getLeft(renderDirection, tooltipRect, targetRect);
 
-    setPosition({ top: top, left: left });
-  }, [text, tailStyle, renderDirection, targetRef]);
+    tooltipRef.current.style.top = `${top}px`;
+    tooltipRef.current.style.left = `${left}px`;
+  }, [text, tailStyle, renderDirection, targetRef, isVisible]);
+
+  const modalClass = StyleComposer(styles.container, {
+    [styles.hidden as string]: isVisible
+  })
 
   const bubbleClass = StyleComposer(styles.bubble, {
-    [TAIL_MAP[tailStyle] as string]: true,
+    [TAIL_STYLE_MAP[tailStyle] as string]: true,
   });
 
   return (
     <Modal
       ref={tooltipRef}
-      className={styles.container}
-      style={{
-        position: "absolute",
-        top: position.top,
-        left: position.left,
-      }}
+      className={modalClass}
     >
       <div className={bubbleClass}>
         <p className={styles.content}>{text}</p>

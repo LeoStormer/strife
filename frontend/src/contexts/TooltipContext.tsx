@@ -69,7 +69,7 @@ export const TooltipContextProvier = ({ children }: PropsWithChildren) => {
   );
 
   const hideTooltip = useCallback(() => {
-    setState({ ...state, isVisible: false });
+    setState((oldState) => ({ ...oldState, isVisible: false }));
   }, []);
 
   const dispatchValue = useMemo(
@@ -112,12 +112,13 @@ export const useTooltipDispatchContext = () => {
 export const TooltipRenderer = () => {
   const { state } = useTooltipContext();
 
-  if (!(state.isVisible && state.targetRef)) {
+  if (!state.targetRef) {
     return null;
   }
 
   return (
     <Tooltip
+      isVisible={state.isVisible}
       text={state.text}
       tailStyle={state.tailStyle}
       targetRef={state.targetRef}

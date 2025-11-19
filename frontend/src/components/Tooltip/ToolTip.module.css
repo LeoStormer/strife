@@ -1,6 +1,11 @@
 .container {
   display: inline-block;
+  position: absolute;
   pointer-events: none;
+}
+
+.hidden {
+  display: none;
 }
 
 .bubble {
