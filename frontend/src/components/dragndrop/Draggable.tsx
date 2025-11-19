@@ -1,17 +1,20 @@
-import { type ReactNode } from "react";
+import { type HTMLAttributes, type PropsWithChildren } from "react";
 import { useDraggable, type UseDraggableArguments } from "@dnd-kit/core";
 import { CSS, type Transform } from "@dnd-kit/utilities";
+import StyleComposer from "../../utils/StyleComposer";
 
-type StyleOverride = (transform: Transform | null) => {
+export type TransformOverride = (transform: Transform | null) => {
   transform: string | undefined;
 };
 
-type DraggableProps = UseDraggableArguments & {
-  children?: ReactNode;
-  styleOveride?: StyleOverride | undefined;
-};
+type DraggableProps = PropsWithChildren<
+  UseDraggableArguments &
+    Pick<HTMLAttributes<HTMLDivElement>, "className" | "style"> & {
+      transformOverride?: TransformOverride | undefined;
+    }
+>;
 
-const returnAsIs: StyleOverride = (transform) => {
+const transformToString: TransformOverride = (transform) => {
   return {
     transform: CSS.Transform.toString(transform),
   };
@@ -19,17 +22,28 @@ const returnAsIs: StyleOverride = (transform) => {
 
 function Draggable({
   children,
-  styleOveride = returnAsIs,
+  className,
+  transformOverride = transformToString,
+  style,
   ...useDraggableProps
 }: DraggableProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    ...useDraggableProps,
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      ...useDraggableProps,
+    });
+
+  const classToApply = StyleComposer(className, {
+    ["dragging"]: isDragging,
   });
 
-  const style = styleOveride(transform);
-
   return (
-    <div ref={setNodeRef} {...attributes} {...listeners} style={style}>
+    <div
+      ref={setNodeRef}
+      className={classToApply}
+      {...attributes}
+      {...listeners}
+      style={{ ...style, ...transformOverride(transform) }}
+    >
       {children}
     </div>
   );

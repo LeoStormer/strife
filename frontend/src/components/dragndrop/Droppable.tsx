@@ -1,11 +1,28 @@
 import { useDroppable, type UseDroppableArguments } from "@dnd-kit/core";
-import { type PropsWithChildren } from "react";
+import { type HTMLAttributes, type PropsWithChildren } from "react";
+import StyleComposer from "../../utils/StyleComposer";
 
-type DroppableProps = PropsWithChildren<UseDroppableArguments>;
+type DroppableProps = PropsWithChildren<
+  UseDroppableArguments &
+    Pick<HTMLAttributes<HTMLDivElement>, "className" | "style">
+>;
 
-function Droppable({ children, ...useDroppableProps }: DroppableProps) {
-  const { setNodeRef } = useDroppable(useDroppableProps);
-  return <div ref={setNodeRef}>{children}</div>;
+function Droppable({
+  children,
+  className,
+  style,
+  ...useDroppableProps
+}: DroppableProps) {
+  const { setNodeRef, isOver } = useDroppable(useDroppableProps);
+  const droppableClass = StyleComposer(className, {
+    ["over"]: isOver,
+  });
+
+  return (
+    <div ref={setNodeRef} className={droppableClass} style={style}>
+      {children}
+    </div>
+  );
 }
 
 export default Droppable;
