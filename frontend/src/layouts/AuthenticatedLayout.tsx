@@ -2,8 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import ServerBar from "../components/ServerBar";
 import UserStatusController from "../components/UserStatusController";
 import TopBar from "../components/TopBar";
-import { useContext } from "react";
-import { UserContext } from "../contexts/UserContext";
+import { useUserContext } from "../contexts/UserContext";
 import { ServerSelectionContextProvider } from "../contexts/ServerSelectionContext";
 import { PageNameContextProvider } from "../contexts/PageNameContext";
 
@@ -15,7 +14,7 @@ import { PageNameContextProvider } from "../contexts/PageNameContext";
  * logged in.
  */
 function AuthenticatedLayout() {
-  const { user } = useContext(UserContext);
+  const { user } = useUserContext();
 
   if (user === null) {
     return <Navigate to={"/login"} replace />;

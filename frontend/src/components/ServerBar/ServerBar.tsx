@@ -3,46 +3,126 @@ import {
   type PropsWithChildren,
   useState,
 } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useServerSelectionContext } from "../../contexts/ServerSelectionContext";
+import {
+  useLocation,
+  useNavigate,
+  type NavigateFunction,
+} from "react-router-dom";
+import {
+  useServerSelectionContext,
+  type Server,
+  type ServerSelectionContextType,
+} from "../../contexts/ServerSelectionContext";
 import ServerIcon from "../ServerIcon";
 import {
-  closestCenter,
   DndContext,
   type DragCancelEvent,
   type DragEndEvent,
-  type DragOverEvent,
   DragOverlay,
   type DragStartEvent,
   PointerSensor,
+  pointerWithin,
   TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import SortableListItem, {
-  type StyleOverride,
-} from "../dragndrop/SortableListItem";
+import { arrayMove } from "@dnd-kit/sortable";
 import Modal from "../Modal";
 import Icon from "../Icon";
 import ServerBarButton from "./Button";
 import styles from "./ServerBar.module.css";
-
-/**
- * a sidebar with a button to head towards user Layout path, a button for server discovery page, a button Selection of icons representing the Selection of servers a user is in.
- */
-// TODO: drop sortable implementation and do what discord does instead
-// have a dropable area that occupies top half of server button
-// if dragged over there insert before server button
-// and second droppable area that occupies lower half of server button
-// if dragged over this combine active and over server into a folder
-// or figure out how to achieve this using sortable and math
+import AddServerModal from "./AddServerModal";
+import { snapCenterToCursor } from "@dnd-kit/modifiers";
+import Droppable from "../dragndrop/Droppable";
+import Draggable, { type TransformOverride } from "../dragndrop/Draggable";
+import StyleComposer from "../../utils/StyleComposer";
 const DISCOVERY_PATH = "/servers/discover";
 const DIRECT_MESSAGES_PATH = "/servers/@me/friends";
+
+const restrictSortableToOriginalPosition: TransformOverride = (transform) => {
+  void transform;
+  return { transform: undefined };
+};
+
+type MoverProps = {
+  moverId: string;
+  sourceId?: string | undefined;
+  index: number;
+  isDragging?: boolean;
+};
+
+function Mover({ moverId, sourceId, index, isDragging = false }: MoverProps) {
+  return (
+    <Droppable
+      className={StyleComposer(styles.droppable, {
+        [styles.dragging as string]: isDragging,
+      })}
+      id={`Mover(${moverId})`}
+      data={{ source: sourceId, type: "mover", index }}
+    />
+  );
+}
+
+type ServerListItemProps = {
+  server: Server;
+  index: number;
+  selectedServerId: string | null;
+  selectServer: ServerSelectionContextType["selectServer"];
+  navigate: NavigateFunction;
+  draggingId: string | null;
+};
+
+function ServerListItem({
+  server,
+  index,
+  selectedServerId,
+  selectServer,
+  navigate,
+  draggingId,
+}: ServerListItemProps) {
+  const { id, name, icon } = server;
+  return (
+    <li key={id} className={styles.listItem}>
+      <Draggable
+        id={id}
+        transformOverride={restrictSortableToOriginalPosition}
+        data={{ index }}
+        className={styles.draggable}
+      >
+        <ServerBarButton
+          isSelected={selectedServerId === id}
+          onClick={() => {
+            selectServer(id);
+            navigate(`/servers/${id}`);
+          }}
+          tooltipText={name}
+        >
+          <ServerIcon serverName={name} serverIconImage={icon} />
+        </ServerBarButton>
+      </Draggable>
+      <Mover
+        moverId={id}
+        sourceId={id}
+        index={index}
+        isDragging={draggingId === id}
+      />
+      <Droppable
+        className={StyleComposer(`${styles.droppable} ${styles.combiner}`, {
+          [styles.dragging as string]: draggingId === id,
+        })}
+        id={`Combiner(${id})`}
+        data={{ source: id, type: "combiner", index }}
+      />
+    </li>
+  );
+}
+
+/**
+ * A sidebar with a button to navigate to user Layout path, a button that
+ * navigates to the server discovery page, a sortable list of icon buttons
+ * representing the selection of servers a user has joined that navigate to
+ * that server's page when clicked.
+ */
 function ServerBar() {
   const { servers, setServers, selectedId, selectServer, getServer } =
     useServerSelectionContext();
@@ -58,38 +138,24 @@ function ServerBar() {
     setDraggingId(event.active.id as string);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const willCombineIntoFolder = false;
-    // see how close Acive is to the center of Over and either display a bar
-    // above / below Over or diplay effect showing that they will combine into
-    // a folder component. See dnd-kit events to learn how to do this
-
-    if (willCombineIntoFolder) {
-      // display effect
-    } else {
-      // display bar above or below
-    }
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
     setDraggingId(null);
     const { active, over } = event;
-    if (!over || active.id === over.id) {
+    if (!over || !over.data.current || active.id === over.data.current.source) {
       return;
     }
 
-    const willCombineIntoFolder = false;
+    const willCombineIntoFolder = over.data.current.type === "combiner";
+
     if (willCombineIntoFolder) {
       // Combine them into a folder
     } else {
-      const oldIndex = servers.findIndex((server) => server.id === active.id);
-      const newIndex = servers.findIndex((server) => server.id === over.id);
-      setServers((servers) => arrayMove(servers, oldIndex, newIndex));
+      const oldIndex = active.data.current?.index as number;
+      const newIndex = over.data.current?.index as number;
+      const shifter = oldIndex < newIndex ? -1 : 0;
+      // Treats every index after the oldIndex as if the old didn't exist
+      // for the purpose of reinsertion
+      setServers((servers) => arrayMove(servers, oldIndex, newIndex + shifter));
     }
   };
 
@@ -97,31 +163,23 @@ function ServerBar() {
     void event;
     setDraggingId(null);
   };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 },
+      activationConstraint: { distance: 5 },
     }),
     useSensor(TouchSensor)
   );
 
-  const serverListItems = servers.map((server) => (
-    <SortableListItem
-      id={server.id}
-      key={server.id}
-      className={styles.listItem}
-      styleOverride={restrictSortableToOriginalPosition}
-    >
-      <ServerBarButton
-        isSelected={selectedId === server.id}
-        onClick={() => {
-          selectServer(server.id);
-          navigate(`/servers/${server.id}`);
-        }}
-        tooltipText={server.name}
-      >
-        <ServerIcon serverName={server.name} serverIconImage={server.icon} />
-      </ServerBarButton>
-    </SortableListItem>
+  const serverListItems = servers.map((server, index) => (
+    <ServerListItem
+      server={server}
+      index={index}
+      selectedServerId={selectedId}
+      selectServer={selectServer}
+      draggingId={draggingId}
+      navigate={navigate}
+    />
   ));
 
   const draggingServerIcon = (() => {
@@ -133,52 +191,50 @@ function ServerBar() {
 
   return (
     <>
-    <ul className={styles.serverBar}>
-      <li key='direct-messages' className={styles.listItem}>
-        <ServerBarButton
-          isSelected={isDirectMessagesSelected}
-          onClick={() => navigate(DIRECT_MESSAGES_PATH)}
-          tooltipText='Direct Messages'
-        >
-          <Icon name='person-circle' />
-        </ServerBarButton>
-      </li>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <SortableContext
-          items={servers.map((server) => server.id)}
-          strategy={verticalListSortingStrategy}
+      <ul className={styles.serverBar}>
+        <li key='direct-messages' className={styles.listItem}>
+          <ServerBarButton
+            isSelected={isDirectMessagesSelected}
+            onClick={() => navigate(DIRECT_MESSAGES_PATH)}
+            tooltipText='Direct Messages'
+          >
+            <Icon name='person-circle' />
+          </ServerBarButton>
+        </li>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={pointerWithin}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           {serverListItems}
-        </SortableContext>
-        <Modal>
-          <DragOverlay>{draggingServerIcon}</DragOverlay>
-        </Modal>
-      </DndContext>
-      <li key='add-server' className={styles.listItem}>
-        <ServerBarButton
+          <li key='add-server' className={styles.listItem}>
+            <ServerBarButton
               isSelected={isAddServerSelected}
               onClick={() => setIsAddServerSelected(true)}
-          tooltipText='Add a Server'
-        >
-          <Icon name='plus-lg' />
-        </ServerBarButton>
-      </li>
-      <li key='server-discovery' className={styles.listItem}>
-        <ServerBarButton
-          isSelected={isDiscoverySelected}
-          onClick={() => navigate(DISCOVERY_PATH)}
-          tooltipText='Discover'
-        >
-          <Icon name='compass' />
-        </ServerBarButton>
-      </li>
-    </ul>
+              tooltipText='Add a Server'
+            >
+              <Icon name='plus-lg' />
+            </ServerBarButton>
+            <Mover moverId='Last' index={servers.length} />
+          </li>
+          <Modal style={{ pointerEvents: "none" }}>
+            <DragOverlay modifiers={[snapCenterToCursor]}>
+              <div className={styles.dragOverlay}>{draggingServerIcon}</div>
+            </DragOverlay>
+          </Modal>
+        </DndContext>
+        <li key='server-discovery' className={styles.listItem}>
+          <ServerBarButton
+            isSelected={isDiscoverySelected}
+            onClick={() => navigate(DISCOVERY_PATH)}
+            tooltipText='Discover'
+          >
+            <Icon name='compass' />
+          </ServerBarButton>
+        </li>
+      </ul>
       {isAddServerSelected ? (
         <AddServerModal deselectButton={() => setIsAddServerSelected(false)} />
       ) : null}

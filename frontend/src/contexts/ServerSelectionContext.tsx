@@ -7,14 +7,14 @@ import {
   useState,
 } from "react";
 
-type Server = {
+export type Server = {
   id: string;
   name: string;
   icon?: string;
   description?: string;
 };
 
-type ServerSelectionContextType = {
+export type ServerSelectionContextType = {
   servers: Server[];
   selectedId: string | null;
   setServers: Dispatch<SetStateAction<Server[]>>;
