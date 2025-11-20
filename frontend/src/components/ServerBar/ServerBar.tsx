@@ -47,30 +47,11 @@ function ServerBar() {
   const { servers, setServers, selectedId, selectServer, getServer } =
     useServerSelectionContext();
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [isAddServerSelected, setIsAddServerSelected] = useState(false);
   const location = useLocation();
   const isDirectMessagesSelected =
     location.pathname.includes(DIRECT_MESSAGES_PATH);
   const isDiscoverySelected = location.pathname.includes(DISCOVERY_PATH);
-  const [isButtonSelected, setIsButtonSelected] = useState([
-    false,
-    false,
-    false,
-  ]);
-
-  const restrictSortableToOriginalPosition: StyleOverride = (
-    _transform,
-    transition
-  ) => {
-    return { transition };
-  };
-  const getButtonSelector = (index: number) => {
-    return (isSelected: boolean) =>
-      setIsButtonSelected(
-        isButtonSelected.map((value, idx) =>
-          idx === index ? isSelected : value
-        )
-      );
-  };
   const navigate = useNavigate();
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -151,6 +132,7 @@ function ServerBar() {
   })();
 
   return (
+    <>
     <ul className={styles.serverBar}>
       <li key='direct-messages' className={styles.listItem}>
         <ServerBarButton
@@ -180,12 +162,11 @@ function ServerBar() {
       </DndContext>
       <li key='add-server' className={styles.listItem}>
         <ServerBarButton
-          isSelected={isButtonSelected[1]}
-          onClick={() => getButtonSelector(1)(true)}
+              isSelected={isAddServerSelected}
+              onClick={() => setIsAddServerSelected(true)}
           tooltipText='Add a Server'
         >
           <Icon name='plus-lg' />
-          {isButtonSelected[1] ? <Modal>Add a server Modal</Modal> : null}
         </ServerBarButton>
       </li>
       <li key='server-discovery' className={styles.listItem}>
@@ -198,6 +179,10 @@ function ServerBar() {
         </ServerBarButton>
       </li>
     </ul>
+      {isAddServerSelected ? (
+        <AddServerModal deselectButton={() => setIsAddServerSelected(false)} />
+      ) : null}
+    </>
   );
 }
 
