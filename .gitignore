@@ -34,3 +34,6 @@ build/
 
 ### ENV Files ###
 .env
+
+### Helper Scripts ###
+rebase-sign.sh
