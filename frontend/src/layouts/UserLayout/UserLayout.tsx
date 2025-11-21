@@ -1,5 +1,5 @@
 import React from "react";
-import ConversationList from "../components/ConversationList";
+import ConversationList from "./ConversationList";
 import { Outlet } from "react-router-dom";
 
 /**
