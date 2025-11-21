@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import ChannelList from "../components/ChannelList";
+import ChannelList from "./ChannelList";
 
 /**
  * Adds a list of channels contained by the currently selected server.
