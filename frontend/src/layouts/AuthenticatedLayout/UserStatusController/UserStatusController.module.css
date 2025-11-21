@@ -1,0 +1,12 @@
+.container {
+    position: fixed;
+    left: 8px;
+    bottom: 8px;
+    width: 359px;
+    height: 58px;
+    border-radius: 12px;
+    /* background-color: var(--primary-color); */
+    background-color: blue;
+    color: var(--text-color);
+    z-index: 100;
+}

@@ -1,10 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
-import ServerBar from "../components/ServerBar";
-import UserStatusController from "../components/UserStatusController";
-import TopBar from "../components/TopBar";
-import { useUserContext } from "../contexts/UserContext";
-import { ServerSelectionContextProvider } from "../contexts/ServerSelectionContext";
-import { PageNameContextProvider } from "../contexts/PageNameContext";
+import ServerBar from "./ServerBar";
+import UserStatusController from "./UserStatusController";
+import TopBar from "./TopBar";
+import { useUserContext } from "../../contexts/UserContext";
+import { ServerSelectionContextProvider } from "../../contexts/ServerSelectionContext";
+import { PageNameContextProvider } from "../../contexts/PageNameContext";
+import styles from "./AuthenticatedLayout.module.css";
 
 /**
  * The main parent route after a user has authenticated. Adds a top
@@ -21,7 +22,7 @@ function AuthenticatedLayout() {
   }
 
   return (
-    <>
+    <div className={styles.container}>
       <PageNameContextProvider>
         <ServerSelectionContextProvider>
           <TopBar />
@@ -30,7 +31,7 @@ function AuthenticatedLayout() {
         </ServerSelectionContextProvider>
       </PageNameContextProvider>
       <UserStatusController />
-    </>
+    </div>
   );
 }
 

@@ -12,8 +12,8 @@ import {
   useServerSelectionContext,
   type Server,
   type ServerSelectionContextType,
-} from "../../contexts/ServerSelectionContext";
-import ServerIcon from "../ServerIcon";
+} from "../../../contexts/ServerSelectionContext";
+import ServerIcon from "../../../components/ServerIcon";
 import {
   DndContext,
   type DragCancelEvent,
@@ -27,15 +27,17 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import Modal from "../Modal";
-import Icon from "../Icon";
+import Modal from "../../../components/Modal";
+import Icon from "../../../components/Icon";
 import ServerBarButton from "./Button";
 import styles from "./ServerBar.module.css";
 import AddServerModal from "./AddServerModal";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
-import Droppable from "../dragndrop/Droppable";
-import Draggable, { type TransformOverride } from "../dragndrop/Draggable";
-import StyleComposer from "../../utils/StyleComposer";
+import Droppable from "../../../components/dragndrop/Droppable";
+import Draggable, {
+  type TransformOverride,
+} from "../../../components/dragndrop/Draggable";
+import StyleComposer from "../../../utils/StyleComposer";
 const DISCOVERY_PATH = "/servers/discover";
 const DIRECT_MESSAGES_PATH = "/servers/@me/friends";
 

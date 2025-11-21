@@ -5,8 +5,8 @@ import {
   type RefObject,
 } from "react";
 import styles from "./Button.module.css";
-import StyleComposer from "../../../utils/StyleComposer";
-import { useTooltipDispatchContext } from "../../../contexts/TooltipContext";
+import StyleComposer from "../../../../utils/StyleComposer";
+import { useTooltipDispatchContext } from "../../../../contexts/TooltipContext";
 
 function Pill({ isHidden = false }) {
   const className = StyleComposer(styles.pill, {

@@ -1,6 +1,6 @@
 import { useState, type MouseEventHandler } from "react";
 import styles from "./AddServerModal.module.css";
-import Modal from "../../Modal";
+import Modal from "../../../../components/Modal";
 
 const templates = [
   "Gaming",
