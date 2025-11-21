@@ -1,8 +1,6 @@
 .container {
-    width: 100vw;
-    height: 32px;
     grid-row: 1;
-    grid-column: span;
+    grid-column: span 4;
     /* background-color: var(--primary-color); */
     background-color: green;
 }
