@@ -5,6 +5,7 @@ export function generateStaticParams() {
     { slug: [""] },
     { slug: ["login"] },
     { slug: ["register"] },
+    { slug: ["not-found"] },
     { slug: ["servers", "@me"] },
     { slug: ["servers", "@me", "friends"] },
     { slug: ["servers", "discover"] },

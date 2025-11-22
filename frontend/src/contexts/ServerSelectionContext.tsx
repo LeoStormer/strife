@@ -10,6 +10,7 @@ import {
 export type Server = {
   id: string;
   name: string;
+  defaultChannelId: string;
   icon?: string;
   description?: string;
 };
@@ -28,7 +29,11 @@ export const ServerSelectionContext =
 export const ServerSelectionContextProvider = ({
   children,
 }: PropsWithChildren) => {
-  const [servers, setServers] = useState<Server[]>([{id: "1", name: "Server 1"},{id: "2", name: "Server 2"},{id: "3", name: "Server 3"}]);
+  const [servers, setServers] = useState<Server[]>([
+    { id: "1", name: "Server 1", defaultChannelId: "1" },
+    { id: "2", name: "Server 2", defaultChannelId: "1" },
+    { id: "3", name: "Server 3", defaultChannelId: "1" },
+  ]); // Use api to get these later
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const serverMap = new Map(servers.map((server) => [server.id, server]));
 
