@@ -4,13 +4,14 @@ import api from "../../api";
 import { HttpStatusCode, isAxiosError } from "axios";
 import { type FormEvent } from "react";
 import { useUserContext } from "../../contexts/UserContext";
+import { FRIENDS_PAGE_PATH } from "../../constants";
 
 function LoginPage() {
   const navigate = useNavigate();
   const { user, login } = useUserContext();
 
   if (user !== null) {
-    return <Navigate to='/servers/@me/friends' replace />;
+    return <Navigate to={FRIENDS_PAGE_PATH} replace />;
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -20,7 +21,7 @@ function LoginPage() {
     try {
       const response = await api.post("/api/user/login", payload);
       login(response.data);
-      navigate("/servers/@me/friends", { replace: true });
+      navigate(FRIENDS_PAGE_PATH, { replace: true });
     } catch (error: unknown) {
       if (isAxiosError(error) && error.status === HttpStatusCode.BadRequest) {
         alert("Invalid email or password");

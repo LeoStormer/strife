@@ -38,8 +38,7 @@ import Draggable, {
   type TransformOverride,
 } from "../../../components/dragndrop/Draggable";
 import StyleComposer from "../../../utils/StyleComposer";
-const DISCOVERY_PATH = "/servers/discover";
-const DIRECT_MESSAGES_PATH = "/servers/@me/friends";
+import { DISCOVERY_LAYOUT_PATH, USER_LAYOUT_PATH } from "../../../constants";
 
 const restrictSortableToOriginalPosition: TransformOverride = (transform) => {
   void transform;
@@ -131,9 +130,8 @@ function ServerBar() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [isAddServerSelected, setIsAddServerSelected] = useState(false);
   const location = useLocation();
-  const isDirectMessagesSelected =
-    location.pathname.includes(DIRECT_MESSAGES_PATH);
-  const isDiscoverySelected = location.pathname.includes(DISCOVERY_PATH);
+  const isDirectMessagesSelected = location.pathname.includes(USER_LAYOUT_PATH);
+  const isDiscoverySelected = location.pathname.includes(DISCOVERY_LAYOUT_PATH);
   const navigate = useNavigate();
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -181,6 +179,7 @@ function ServerBar() {
       selectServer={selectServer}
       draggingId={draggingId}
       navigate={navigate}
+      key={server.id}
     />
   ));
 
@@ -197,7 +196,7 @@ function ServerBar() {
         <li key='direct-messages' className={styles.listItem}>
           <ServerBarButton
             isSelected={isDirectMessagesSelected}
-            onClick={() => navigate(DIRECT_MESSAGES_PATH)}
+            onClick={() => navigate(USER_LAYOUT_PATH)}
             tooltipText='Direct Messages'
           >
             <Icon name='person-circle' />
@@ -230,7 +229,7 @@ function ServerBar() {
         <li key='server-discovery' className={styles.listItem}>
           <ServerBarButton
             isSelected={isDiscoverySelected}
-            onClick={() => navigate(DISCOVERY_PATH)}
+            onClick={() => navigate(DISCOVERY_LAYOUT_PATH)}
             tooltipText='Discover'
           >
             <Icon name='compass' />
