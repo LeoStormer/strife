@@ -28,17 +28,14 @@ function App() {
         <Route path='register' element={<RegristrationPage />} />
         <Route path='*' element={<NotFoundPage />} />
         <Route path='servers' element={<AuthenticatedLayout />}>
-          <Route path='' element={<ServerLayout />}>
+          <Route path=':serverId' element={<ServerLayout />}>
+            <Route path=':channelId' element={<ServerChannelPage />} />
             <Route
-              path=':serverId/:channelId'
+              path=':channelId/threads/:threadId'
               element={<ServerChannelPage />}
             />
             <Route
-              path=':serverId/:channelId/threads/:threadId'
-              element={<ServerChannelPage />}
-            />
-            <Route
-              path=':serverId/:channelId/:threadId'
+              path=':channelId/:threadId'
               element={<ServerChannelPage />}
             />
           </Route>
@@ -47,8 +44,8 @@ function App() {
             <Route path=':channelId' element={<ConversationPage />} />
           </Route>
           <Route path='discover' element={<DiscoveryLayout />}>
-            <Route path="servers" element={<ServerDiscoveryPage />} />
-            <Route path="applications" element={<ServerDiscoveryPage />} />
+            <Route path='servers' element={<ServerDiscoveryPage />} />
+            <Route path='applications' element={<ServerDiscoveryPage />} />
           </Route>
         </Route>
       </Route>
