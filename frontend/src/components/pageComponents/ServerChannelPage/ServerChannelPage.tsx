@@ -2,9 +2,12 @@ import React, { useContext, useEffect } from "react";
 import { PageNameDispatchContext } from "../../../contexts/PageNameContext";
 import { useServerSelectionContext } from "../../../contexts/ServerSelectionContext";
 import styles from "./ServerChannelPage.module.css";
+import sharedStyles from "../../../styles/ChannelViewer.module.css";
 
 function ChannelTitleBar() {
-  return <div className={styles.channelTitleBarContainer}>ChannelTitleBar</div>;
+  return (
+    <div className={sharedStyles.channelTitleBarContainer}>ChannelTitleBar</div>
+  );
 }
 
 function ServerChannelPage() {
@@ -17,12 +20,12 @@ function ServerChannelPage() {
   }, [selectedId, getServer, setPageName]);
 
   return (
-    <div className={styles.container}>
+    <div className={sharedStyles.container}>
       <ChannelTitleBar />
-      <div className={styles.flexContainer}>
-        <div className={styles.messageViewAreaContainer}>
+      <div className={sharedStyles.flexContainer}>
+        <div className={sharedStyles.messageViewAreaContainer}>
           Message View Area
-          <div className={styles.messageInputContainer}>
+          <div className={sharedStyles.messageInputContainer}>
             Message #channel-name
           </div>
         </div>
