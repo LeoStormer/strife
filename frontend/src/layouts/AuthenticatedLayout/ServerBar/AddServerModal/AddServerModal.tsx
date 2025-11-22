@@ -37,10 +37,10 @@ function LandingContent() {
         }
       />
       <div className={styles.scrollable}>
-        <button className={styles.button}>Create My Own</button>
-        <h4 className={styles.subheader}>Start from a template</h4>
+        <button key={'No Template'} className={styles.button}>Create My Own</button>
+        <h4 key={'Subheader'} className={styles.subheader}>Start from a template</h4>
         {templates.map((template: string) => (
-          <button className={styles.button}>{template}</button>
+          <button key={template} className={styles.button}>{template}</button>
         ))}
       </div>
       <h3>Have an invite already?</h3>
