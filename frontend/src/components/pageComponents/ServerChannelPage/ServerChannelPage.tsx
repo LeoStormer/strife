@@ -1,5 +1,5 @@
-import React, { useContext, useEffect } from "react";
-import { PageNameDispatchContext } from "../../../contexts/PageNameContext";
+import React from "react";
+import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
 import { useServerSelectionContext } from "../../../contexts/ServerSelectionContext";
 import styles from "./ServerChannelPage.module.css";
 import sharedStyles from "../../../styles/ChannelViewer.module.css";
@@ -11,13 +11,9 @@ function ChannelTitleBar() {
 }
 
 function ServerChannelPage() {
-  const setPageName = useContext(PageNameDispatchContext);
   const { getServer, selectedId } = useServerSelectionContext();
-
-  useEffect(() => {
-    const serverName = getServer(selectedId as string)?.name as string;
-    setPageName(serverName);
-  }, [selectedId, getServer, setPageName]);
+  const pageName = getServer(selectedId as string)?.name as string;
+  usePageNameDispatchContext({ pageName });
 
   return (
     <div className={sharedStyles.container}>

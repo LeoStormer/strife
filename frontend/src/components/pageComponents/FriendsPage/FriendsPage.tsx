@@ -1,24 +1,22 @@
-import React, { useContext, useEffect } from 'react'
-import { PageNameDispatchContext } from '../../../contexts/PageNameContext'
-import styles from "./FriendsPage.module.css"
-import FriendList from './FriendList'
-import ActivityFeed from './ActivityFeed'
-import FriendFilterBar from './FriendFilterBar'
+import React from "react";
+import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
+import styles from "./FriendsPage.module.css";
+import FriendList from "./FriendList";
+import ActivityFeed from "./ActivityFeed";
+import FriendFilterBar from "./FriendFilterBar";
+
+const PAGE_NAME = "Friends";
 
 function FriendsPage() {
-  const setPageName = useContext(PageNameDispatchContext)
+  usePageNameDispatchContext({ pageName: PAGE_NAME });
 
-  useEffect(() => {
-    setPageName("Friends")
-  }, [setPageName])
-  
   return (
     <div className={styles.container}>
       <FriendFilterBar />
       <FriendList />
       <ActivityFeed />
     </div>
-  )
+  );
 }
 
-export default FriendsPage
+export default FriendsPage;

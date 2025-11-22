@@ -1,8 +1,13 @@
 import React from "react";
 import styles from "./ConversationPage.module.css";
 import sharedStyles from "../../../styles/ChannelViewer.module.css";
+import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
+
+const PAGE_NAME = "Direct Messages";
 
 function ConversationPage() {
+  usePageNameDispatchContext({ pageName: PAGE_NAME });
+
   return (
     <div className={sharedStyles.container}>
       <div className={sharedStyles.channelTitleBarContainer}>UserName</div>
