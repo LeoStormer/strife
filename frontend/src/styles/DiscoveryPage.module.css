@@ -1,12 +1,46 @@
 .container {
-    display: flex;
-    grid-row: 2;
-    flex-direction: column;
-    grid-column: 3;
-    background-color: red;
-    overflow-y: scroll;
+  position: relative;
+  grid-row: 2;
+  grid-column: 3;
+  height: 100%;
+  background-color: red;
+  overflow-y: hidden;
 }
 
-.navBar {
-    position: sticky;
+.stickyHeaderContainer {
+  position: absolute;
+  height: 48px;
+  width: 100%;
+  color: var(--text-color);
+  z-index: 100;
+}
+
+.serverViewer {
+  height: 100%;
+  width: 100%;
+  overflow-y: scroll;
+}
+
+.serverViewerHeaderContainer {
+  height: 348px;
+  background-color: blue;
+}
+
+.serverGridHeader {
+  margin-left: 130px;
+}
+
+.serverGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 300px);
+  grid-auto-rows: 300px;
+  gap: 16px;
+  margin-left: 118px;
+}
+
+.gridItem {
+  background-color: aqua;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border-width: 1px;
 }
