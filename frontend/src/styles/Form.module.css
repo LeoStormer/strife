@@ -7,38 +7,87 @@
 }
 
 .form {
-  background-color: var(--background-color);
-  width: 100%;
+  background-color: var(--background-color) ;
   border-radius: 10px;
+  box-sizing: border-box;
+  width: 480px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  align-items: center;
 }
 
-.wrapper {
-  margin: 32px;
+@media (max-width: 512px) {
+  .form {
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0px;
+  }
+}
+.form > * {
+  width: 100%;
 }
 
-.label {
-  color: white;
+.header {
+  display: flex;
+  flex-direction: column;
+  row-gap: 8px;
+  justify-content: center;
+  align-items: center;
+  color: var(--on-background-color);
+}
+
+.header > * {
+  margin: 0px;
+}
+
+.inputLabel {
+  color: var(--on-background-color);
   font-size: 15px;
 }
 
 .input {
-  border-radius: 5px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  padding: 12px;
   border: none;
-  background-color: rgb(73, 70, 70);
+  background-color: rgb(255, 255, 255, 0.1);
   height: 40px;
   width: 100%;
+  margin-top: 8px;
+  color: var(--on-background-color)
+}
+
+.inputLabel:has(~ .input:required)::after {
+  content: " *";
+  color: red;
+  font-weight: bold;
 }
 
 .button {
   background-color: var(--accent-color);
-  color: black;
+  border: none;
+  color: var(--on-accent-color);
   font-weight: bold;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   height: 40px;
   width: 100%;
+
 }
 
-.formGroup > * {
-  margin-top: 10px;
+.label {
+  margin-top: 4px;
+  color: var(--on-background-color);
+  font-size: 14px;
+}
+
+.link {
+  color: var(--accent-color) !important;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
 }

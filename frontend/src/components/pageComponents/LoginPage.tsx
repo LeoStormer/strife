@@ -31,7 +31,6 @@ function LoginPage() {
     }
   };
 
-  // TODO: switch to an alternate styling when under 512 pixel width
   return <LoginForm handleSubmit={handleSubmit} />;
 }
 
