@@ -1,12 +1,17 @@
 
+:root {
+  --accent-color: #D00000;
+  --on-accent-color: #f5d9d9;
+  --on-accent-color-dark: #ffb3b3;
+  --on-accent-color-darker: #ff7777;
+}
+
 [data-theme = 'light'] {
-  --primary-color: #fce3e3;
-  --secondary-color: #D00000;
-  --text-color: #180000;
+  --background-color: #ffdcdc;
+  --on-background-color: #000000;
 }
 
 [data-theme = 'dark'] {
-  --primary-color: #200505;
-  --secondary-color: #D00000;
-  --text-color: #f5d9d9;
+  --background-color: #200000;
+  --on-background-color: #f5d9d9;
 }

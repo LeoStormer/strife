@@ -5,7 +5,7 @@ import { hexToRgba } from "../../../utils/hexToRgba";
 function ServerDiscoveryPage() {
   const [stickyHeaderAlpha, setStickyHeaderAlpha] = useState(0);
   const rootStyles = window.getComputedStyle(document.documentElement);
-  const primaryColor = rootStyles.getPropertyValue("--primary-color").trim();
+  const primaryColor = rootStyles.getPropertyValue("--background-color").trim();
   const stickyHeaderBackgroundColor = hexToRgba(
     primaryColor,
     stickyHeaderAlpha

@@ -3,7 +3,7 @@
   flex-direction: column;
   grid-row: 2;
   grid-column: 1;
-  background-color: var(--primary-color);
+  background-color: var(--background-color);
   margin: 0;
   padding: 0;
 }
@@ -34,7 +34,7 @@
   height: 5px;
   border-radius: 3px;
   top: -6px;
-  background-color: var(--secondary-color);
+  background-color: var(--accent-color);
 }
 
 .droppable.combiner {
@@ -49,14 +49,14 @@
   border-radius: 50%;
   top: -8px;
   left: 4px;
-  background-color: var(--secondary-color);
+  background-color: var(--accent-color);
 }
 
 .dragOverlay {
   height: 40px;
   width: 40px;
-  background-color: var(--primary-color);
-  color: var(--text-color);
+  background-color: var(--background-color);
+  color: var(--on-background-color);
   display: flex;
   align-items: center;
   border-radius: 12px;
@@ -66,7 +66,7 @@
 }
 
 .draggable:global(.dragging) {
-  background-color: var(--primary-color);
+  background-color: var(--background-color);
   width: 40px;
   height: 40px;
   border-radius: 12px;

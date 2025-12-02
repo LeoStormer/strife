@@ -6,13 +6,13 @@
 .button {
   width: 40px;
   height: 40px;
-  background-color: var(--primary-color);
+  background-color: var(--background-color);
   border-radius: 12px;
   margin-left: auto;
   margin-right: auto;
   border: 0px;
   transition: all 0.3s, ease-in;
-  color: var(--text-color);
+  color: var(--on-background-color);
   font-size: 12pt;
 }
 
@@ -23,7 +23,8 @@
 
 .button.selected,
 .button:hover {
-  background-color: var(--secondary-color);
+  background-color: var(--accent-color);
+  color: var(--on-accent-color)
 }
 
 .pill {
@@ -33,7 +34,7 @@
   left: -4px;
   position: absolute;
   transition: height 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background-color: var(--text-color);
+  background-color: var(--on-background-color);
 }
 
 .pill.hidden {
