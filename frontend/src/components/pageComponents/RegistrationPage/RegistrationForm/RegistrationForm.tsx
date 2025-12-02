@@ -1,7 +1,7 @@
 import { type FormEventHandler } from "react";
 import { Link } from "react-router-dom";
-import formStyles from "../../styles/Form.module.css";
-import { LOGIN_PAGE_PATH } from "../../constants";
+import formStyles from "../../../../styles/Form.module.css";
+import { LOGIN_PAGE_PATH } from "../../../../constants";
 
 type RegistrationFormProps = {
   handleSubmit: FormEventHandler<HTMLFormElement>;
@@ -52,8 +52,8 @@ function RegistrationForm({ handleSubmit }: RegistrationFormProps) {
         </div>
         <div className={formStyles.label}>
           Lorem ipsum dolor sit amet, consectetur adipiscing{" "}
-          <span className={formStyles.link}>elit sed vel</span> neque
-          nec risus tristique condimentum{" "}
+          <span className={formStyles.link}>elit sed vel</span> neque nec risus
+          tristique condimentum{" "}
           <span className={formStyles.link}>Pellentesque finibus</span>
         </div>
         <div>

@@ -1,7 +1,7 @@
 import { type FormEventHandler } from "react";
 import { Link } from "react-router-dom";
-import formStyles from "../../styles/Form.module.css";
-import { REGISTRATION_PAGE_PATH } from "../../constants";
+import formStyles from "../../../../styles/Form.module.css";
+import { REGISTRATION_PAGE_PATH } from "../../../../constants";
 
 type LoginFormProps = {
   handleSubmit: FormEventHandler<HTMLFormElement>;

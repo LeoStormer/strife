@@ -1,10 +1,10 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import LoginForm from "../LoginForm";
-import api from "../../api";
+import LoginForm from "./LoginForm";
+import api from "../../../api";
 import { HttpStatusCode, isAxiosError } from "axios";
 import { type FormEvent } from "react";
-import { useUserContext } from "../../contexts/UserContext";
-import { FRIENDS_PAGE_PATH } from "../../constants";
+import { useUserContext } from "../../../contexts/UserContext";
+import { FRIENDS_PAGE_PATH } from "../../../constants";
 
 function LoginPage() {
   const navigate = useNavigate();
