@@ -2,15 +2,16 @@ import { Navigate, useNavigate } from "react-router-dom";
 import api from "../../api";
 import RegistrationForm from "../RegistrationForm";
 import { HttpStatusCode, isAxiosError } from "axios";
-import { type FormEvent, useContext } from "react";
+import { type FormEvent } from "react";
 import { useUserContext } from "../../contexts/UserContext";
+import { FRIENDS_PAGE_PATH, LOGIN_PAGE_PATH } from "../../constants";
 
 function RegristrationPage() {
   const navigate = useNavigate();
   const { user, login } = useUserContext();
 
   if (user !== null) {
-    return <Navigate to='/servers/@me/friends' replace />;
+    return <Navigate to={FRIENDS_PAGE_PATH} replace />;
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -22,14 +23,14 @@ function RegristrationPage() {
       if (response.status === HttpStatusCode.Created) {
         alert(
           "Account successfully created but an error occured while logging in. " +
-            "Please try again later."
+            "Please try logging in later."
         );
-        navigate("/login");
+        navigate(LOGIN_PAGE_PATH);
         return;
       }
 
       login(response.data);
-      navigate("/servers/@me/friends", { replace: true });
+      navigate(FRIENDS_PAGE_PATH, { replace: true });
     } catch (error) {
       if (isAxiosError(error) && error.status === HttpStatusCode.Conflict) {
         alert("Please use a different email");

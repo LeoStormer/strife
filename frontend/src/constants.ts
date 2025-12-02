@@ -1,6 +1,6 @@
 
 
-export const HOME_PAGE_PATH = ""
+export const HOME_PAGE_PATH = "/"
 export const LOGIN_PAGE_PATH = "/login"
 export const REGISTRATION_PAGE_PATH = "/register"
 export const USER_LAYOUT_PATH = "/servers/@me"

@@ -2,6 +2,10 @@
 
 export type IconName =
 	| "chat-fill"
+	| "chevron-down"
+	| "chevron-left"
+	| "chevron-right"
+	| "chevron-up"
 	| "compass"
 	| "gear-fill"
 	| "gift-fill"

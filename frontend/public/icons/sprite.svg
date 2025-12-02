@@ -5,6 +5,18 @@
 <symbol fill="currentColor" class="bi bi-chat-fill" viewBox="0 0 16 16" id="chat-fill">
   <path d="M8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6-.097 1.016-.417 2.13-.771 2.966-.079.186.074.394.273.362 2.256-.37 3.597-.938 4.18-1.234A9 9 0 0 0 8 15"></path>
 </symbol>
+<symbol fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16" id="chevron-down">
+  <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"></path>
+</symbol>
+<symbol fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16" id="chevron-left">
+  <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"></path>
+</symbol>
+<symbol fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16" id="chevron-right">
+  <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"></path>
+</symbol>
+<symbol fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16" id="chevron-up">
+  <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708z"></path>
+</symbol>
 <symbol fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16" id="compass">
   <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016m6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"></path>
   <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"></path>
