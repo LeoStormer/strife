@@ -5,14 +5,17 @@ export function generateStaticParams() {
     { slug: [""] },
     { slug: ["login"] },
     { slug: ["register"] },
+    { slug: ["not-found"] },
+    { slug: ["servers", "@me"] },
     { slug: ["servers", "@me", "friends"] },
     { slug: ["servers", "discover"] },
+    { slug: ["servers", "discover", "servers"] },
+    { slug: ["servers", "discover", "applications"] },
   ];
 
   return routes;
 }
 
 export default function Page(props: any) {
-  console.log(props)
   return <ClientOnly />;
 }

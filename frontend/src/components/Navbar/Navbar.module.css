@@ -1,0 +1,44 @@
+.container {
+  height: 80px;
+  box-sizing: border-box;
+  top: 0px;
+}
+
+.buttonLink {
+  text-decoration: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+}
+
+.brandLogo {
+  position: fixed;
+  height: 40px;
+  top: 40px;
+  left: 40px;
+  color: var(--accent-color);
+  font-size: larger;
+  font-weight: bold;
+}
+
+.navCategoryContainer {
+  display: flex;
+  justify-self: center;
+  justify-content: center;
+  align-items: end;
+  height: 80px;
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+}
+
+.loginButton {
+  position: fixed;
+  border-radius: 16px;
+  height: 40px;
+  width: 80px;
+  top: 40px;
+  right: 40px;
+  background-color: var(--accent-color);
+  color: var(--on-accent-color);
+}

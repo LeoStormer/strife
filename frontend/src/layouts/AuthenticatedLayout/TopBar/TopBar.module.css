@@ -1,0 +1,6 @@
+.container {
+  grid-row: 1;
+  grid-column: span 4;
+  /* background-color: var(--background-color); */
+  background-color: green;
+}

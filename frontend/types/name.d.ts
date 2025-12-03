@@ -2,10 +2,16 @@
 
 export type IconName =
 	| "chat-fill"
+	| "chevron-down"
+	| "chevron-left"
+	| "chevron-right"
+	| "chevron-up"
 	| "compass"
+	| "facebook"
 	| "gear-fill"
 	| "gift-fill"
 	| "headphones"
+	| "instagram"
 	| "mic-fill"
 	| "mic-mute"
 	| "person-circle"
@@ -14,4 +20,7 @@ export type IconName =
 	| "plus-lg"
 	| "search"
 	| "shop"
-	| "volume-up-fill";
+	| "tiktok"
+	| "twitter-x"
+	| "volume-up-fill"
+	| "youtube";

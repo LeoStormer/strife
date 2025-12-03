@@ -9,7 +9,7 @@
 }
 
 .bubble {
-  background-color: var(--primary-color);
+  background-color: var(--background-color);
   position: relative;
   padding: 10px 15px;
   border-radius: 12px;
@@ -31,7 +31,7 @@
   left: 50%;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-bottom: 4px solid var(--primary-color);
+  border-bottom: 4px solid var(--background-color);
   transform: translateX(-50%);
 }
 
@@ -40,7 +40,7 @@
   left: 50%;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 4px solid var(--primary-color);
+  border-top: 4px solid var(--background-color);
   transform: translateX(-50%);
 }
 
@@ -49,7 +49,7 @@
   top: 50%;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-right: 4px solid var(--primary-color);
+  border-right: 4px solid var(--background-color);
   transform: translateY(-50%);
 }
 
@@ -58,12 +58,12 @@
   top: 50%;
   border-top: 4px solid transparent;
   border-bottom: 4px solid transparent;
-  border-left: 4px solid var(--primary-color); /* Use CSS variable */
+  border-left: 4px solid var(--background-color); /* Use CSS variable */
   transform: translateY(-50%); /* Center the tail vertically */
 }
 
 .content {
-  color: var(--text-color);
+  color: var(--on-background-color);
   margin: 0;
   padding: 0;
   overflow: hidden;

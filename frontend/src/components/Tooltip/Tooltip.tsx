@@ -99,7 +99,7 @@ function Tooltip({
   }, [text, tailStyle, renderDirection, targetRef, isVisible]);
 
   const modalClass = StyleComposer(styles.container, {
-    [styles.hidden as string]: isVisible
+    [styles.hidden as string]: !isVisible
   })
 
   const bubbleClass = StyleComposer(styles.bubble, {
