@@ -1,16 +1,25 @@
 import React, { useContext } from "react";
 import PageNameContext from "../../../contexts/PageNameContext";
 import styles from "./TopBar.module.css";
+import Icon from "../../../components/Icon";
+import { Link } from "react-router-dom";
 
 function TopBar() {
-  const pageName = useContext(PageNameContext);
+  const { icon, pageName } = useContext(PageNameContext);
 
   return (
-    <div className={styles.container}>
-      {`Page Name = ${pageName}`}
-      <button>Inbox</button>
-      <button>Help</button>
-    </div>
+    <header className={styles.container}>
+      {icon ? <Icon className={styles.pageIcon} name={icon} /> : null}
+      <p className={styles.pageTitle}>{pageName}</p>
+      <div className={styles.iconButtonContainer}>
+        <button className={styles.iconButton}>
+          <Icon name='inbox-fill' />
+        </button>
+        <Link to='#' className={styles.iconButton}>
+          <Icon name='question-circle-fill' />
+        </Link>
+      </div>
+    </header>
   );
 }
 

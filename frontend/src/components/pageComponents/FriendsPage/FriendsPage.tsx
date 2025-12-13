@@ -8,7 +8,7 @@ import FriendFilterBar from "./FriendFilterBar";
 const PAGE_NAME = "Friends";
 
 function FriendsPage() {
-  usePageNameDispatchContext({ pageName: PAGE_NAME });
+  usePageNameDispatchContext({ pageName: PAGE_NAME, icon: "person-greeting" });
 
   return (
     <div className={styles.container}>
