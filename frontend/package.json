@@ -10,12 +10,12 @@
     "@testing-library/jest-dom": "^6.9.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "axios": "1.12.2",
+    "axios": "1.13.2",
     "js-cookie": "3.0.5",
-    "next": "^16.0.1",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-router-dom": "7.9.3",
+    "next": "^16.0.10",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "7.10.1",
     "typescript": "^5.9.3",
     "web-vitals": "^5.1.0"
   },
@@ -46,11 +46,11 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/js-cookie": "^3.0.6",
-    "@types/node": "^24.9.1",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
+    "@types/node": "^25.0.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "fs-extra": "^11.3.2",
-    "glob": "^11.0.3",
+    "glob": "^13.0.0",
     "node-html-parser": "^7.0.1"
   }
 }
