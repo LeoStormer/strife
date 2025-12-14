@@ -7,6 +7,14 @@ type UseLastVisitedPathProps = {
   defaultPath: string;
 };
 
+/**
+ * Redirects to the last visited path if the current location is the `basePath`.
+ * Redirects instead to the `defaultPath` if no last visited path is stored.
+ *
+ * @param {string} props.storageKey - The key used to store the last visited path in `localStorage`.
+ * @param {string} props.basePath - The entry path that triggers redirection (e.g., '/servers/@me').
+ * @param {string} props.defaultPath - The fallback path (e.g., `/servers/@me/friends`).
+ */
 export const useLastVisitedPath = ({
   storageKey,
   basePath,
@@ -20,6 +28,10 @@ export const useLastVisitedPath = ({
     let lastVisitedPath: string;
     const isBasePath = regex.test(location.pathname);
 
+    if (!location.pathname.includes(basePath)) {
+      return;
+    }
+
     try {
       lastVisitedPath = localStorage.getItem(storageKey) ?? defaultPath;
       if (!isBasePath) {
@@ -32,5 +44,5 @@ export const useLastVisitedPath = ({
     if (isBasePath) {
       navigate(lastVisitedPath, { replace: true });
     }
-  }, [location]);
+  }, [location, storageKey, basePath, defaultPath]);
 };

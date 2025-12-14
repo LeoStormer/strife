@@ -4,8 +4,10 @@ import {
   type PropsWithChildren,
   type SetStateAction,
   useContext,
+  useEffect,
   useState,
 } from "react";
+import { useLocation } from "react-router-dom";
 
 export type Server = {
   id: string;
@@ -15,16 +17,21 @@ export type Server = {
   description?: string;
 };
 
-export type ServerSelectionContextType = {
+type ServerSelectionContextType = {
   servers: Server[];
   selectedId: string | null;
   setServers: Dispatch<SetStateAction<Server[]>>;
-  selectServer: (serverId: string) => void;
   getServer: (serverId: string) => Server | null;
 };
 
 export const ServerSelectionContext =
   createContext<ServerSelectionContextType | null>(null);
+
+export const getServerIdFromPath = (path: string) => {
+  const regex = /(?<=servers\/)([0-9a-fA-F]+)(?=\/|$)/;
+  const match = path.match(regex);
+  return match?.at(0);
+};
 
 export const ServerSelectionContextProvider = ({
   children,
@@ -36,19 +43,22 @@ export const ServerSelectionContextProvider = ({
   ]); // Use api to get these later
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const serverMap = new Map(servers.map((server) => [server.id, server]));
-
-  const selectServer = (serverId: string | null) => {
-    if (serverId !== null && !serverMap.has(serverId)) {
-      throw new Error("User does not have access to this server");
-    }
-    setSelectedId(serverId);
-  };
-
   const getServer = (serverId: string) => serverMap.get(serverId) ?? null;
+
+  const location = useLocation();
+  const serverIdFromPath = getServerIdFromPath(location.pathname);
+
+  useEffect(() => {
+    if (serverIdFromPath && serverMap.has(serverIdFromPath)) {
+      setSelectedId(serverIdFromPath);
+    } else {
+      setSelectedId(null);
+    }
+  }, [serverIdFromPath, servers]);
 
   return (
     <ServerSelectionContext
-      value={{ servers, setServers, selectedId, selectServer, getServer }}
+      value={{ servers, setServers, selectedId, getServer }}
     >
       {children}
     </ServerSelectionContext>
