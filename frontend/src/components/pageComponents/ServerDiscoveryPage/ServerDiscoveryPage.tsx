@@ -31,7 +31,7 @@ function ServerDiscoveryPage() {
         <h2 className={styles.serverGridHeader}>Featured Servers</h2>
         <div className={styles.serverGrid}>
           {Array.from({ length: 12 }, (_, index) => (
-            <div className={styles.gridItem}>{index}</div>
+            <div key={index} className={styles.gridItem}>{index}</div>
           ))}
         </div>
       </div>

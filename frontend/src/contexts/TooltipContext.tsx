@@ -29,8 +29,8 @@ type TooltipDispatchContextType = {
   showTooltip: (props: {
     text: string;
     targetRef: RefObject<HTMLElement>;
-    tailStyle?: TailStyle;
-    renderDirection?: RenderDirection;
+    tailStyle?: TailStyle | undefined;
+    renderDirection?: RenderDirection | undefined;
   }) => void;
   hideTooltip: () => void;
 };

@@ -1,17 +1,8 @@
-import {
-  type MouseEventHandler,
-  type PropsWithChildren,
-  useState,
-} from "react";
-import {
-  useLocation,
-  useNavigate,
-  type NavigateFunction,
-} from "react-router-dom";
+import { type RefObject, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   useServerSelectionContext,
   type Server,
-  type ServerSelectionContextType,
 } from "../../../contexts/ServerSelectionContext";
 import ServerIcon from "../../../components/ServerIcon";
 import {
@@ -29,7 +20,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import Modal from "../../../components/Modal";
 import Icon from "../../../components/Icon";
-import ServerBarButton from "./Button";
+import TooltipTrigger from "../../../components/TooltipTrigger";
 import styles from "./ServerBar.module.css";
 import AddServerModal from "./AddServerModal";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
@@ -68,8 +59,6 @@ type ServerListItemProps = {
   server: Server;
   index: number;
   selectedServerId: string | null;
-  selectServer: ServerSelectionContextType["selectServer"];
-  navigate: NavigateFunction;
   draggingId: string | null;
 };
 
@@ -77,29 +66,32 @@ function ServerListItem({
   server,
   index,
   selectedServerId,
-  selectServer,
-  navigate,
   draggingId,
 }: ServerListItemProps) {
   const { id, name, icon } = server;
+  const targetRef = useRef<HTMLLIElement>(null);
   return (
-    <li key={id} className={styles.listItem}>
+    <li ref={targetRef} key={id} className={styles.listItem}>
       <Draggable
         id={id}
         transformOverride={restrictSortableToOriginalPosition}
         data={{ index }}
         className={styles.draggable}
       >
-        <ServerBarButton
-          isSelected={selectedServerId === id}
-          onClick={() => {
-            selectServer(id);
-            navigate(`/servers/${id}`);
-          }}
+        <TooltipTrigger
+          targetRef={targetRef as RefObject<HTMLElement>}
+          tailStyle='left'
           tooltipText={name}
         >
-          <ServerIcon serverName={name} serverIconImage={icon} />
-        </ServerBarButton>
+          <Link
+            to={`/servers/${id}`}
+            className={StyleComposer(styles.navItem, {
+              [styles.selected as string]: selectedServerId === id,
+            })}
+          >
+            <ServerIcon serverName={name} serverIconImage={icon} />
+          </Link>
+        </TooltipTrigger>
       </Draggable>
       <Mover
         moverId={id}
@@ -125,14 +117,16 @@ function ServerListItem({
  * that server's page when clicked.
  */
 function ServerBar() {
-  const { servers, setServers, selectedId, selectServer, getServer } =
+  const { servers, setServers, selectedId, getServer } =
     useServerSelectionContext();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [isAddServerSelected, setIsAddServerSelected] = useState(false);
   const location = useLocation();
   const isDirectMessagesSelected = location.pathname.includes(USER_LAYOUT_PATH);
   const isDiscoverySelected = location.pathname.includes(DISCOVERY_LAYOUT_PATH);
-  const navigate = useNavigate();
+  const directMessagesTargetRef = useRef<HTMLLIElement>(null);
+  const addServerTargetRef = useRef<HTMLLIElement>(null);
+  const discoveryTargetRef = useRef<HTMLLIElement>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
     setDraggingId(event.active.id as string);
@@ -176,9 +170,7 @@ function ServerBar() {
       server={server}
       index={index}
       selectedServerId={selectedId}
-      selectServer={selectServer}
       draggingId={draggingId}
-      navigate={navigate}
       key={server.id}
     />
   ));
@@ -191,17 +183,29 @@ function ServerBar() {
   })();
 
   return (
-    <>
+    <nav className={styles.navContainer}>
       <ul className={styles.serverBar}>
-        <li key='direct-messages' className={styles.listItem}>
-          <ServerBarButton
-            isSelected={isDirectMessagesSelected}
-            onClick={() => navigate(USER_LAYOUT_PATH)}
+        <li
+          ref={directMessagesTargetRef}
+          key='direct-messages'
+          className={styles.listItem}
+        >
+          <TooltipTrigger
+            targetRef={directMessagesTargetRef as RefObject<HTMLElement>}
+            tailStyle='left'
             tooltipText='Direct Messages'
           >
-            <Icon name='person-circle' />
-          </ServerBarButton>
+            <Link
+              to={USER_LAYOUT_PATH}
+              className={StyleComposer(styles.navItem, {
+                [styles.selected as string]: isDirectMessagesSelected,
+              })}
+            >
+              <Icon name='person-circle' />
+            </Link>
+          </TooltipTrigger>
         </li>
+        <div className={styles.separator}></div>
         <DndContext
           sensors={sensors}
           collisionDetection={pointerWithin}
@@ -210,14 +214,25 @@ function ServerBar() {
           onDragCancel={handleDragCancel}
         >
           {serverListItems}
-          <li key='add-server' className={styles.listItem}>
-            <ServerBarButton
-              isSelected={isAddServerSelected}
-              onClick={() => setIsAddServerSelected(true)}
+          <li
+            ref={addServerTargetRef}
+            key='add-server'
+            className={styles.listItem}
+          >
+            <TooltipTrigger
+              targetRef={addServerTargetRef as RefObject<HTMLElement>}
+              tailStyle='left'
               tooltipText='Add a Server'
             >
-              <Icon name='plus-lg' />
-            </ServerBarButton>
+              <button
+                onClick={() => setIsAddServerSelected(true)}
+                className={StyleComposer(styles.navItem, {
+                  [styles.selected as string]: isAddServerSelected,
+                })}
+              >
+                <Icon name='plus-lg' />
+              </button>
+            </TooltipTrigger>
             <Mover moverId='Last' index={servers.length} />
           </li>
           <Modal style={{ pointerEvents: "none" }}>
@@ -226,20 +241,31 @@ function ServerBar() {
             </DragOverlay>
           </Modal>
         </DndContext>
-        <li key='server-discovery' className={styles.listItem}>
-          <ServerBarButton
-            isSelected={isDiscoverySelected}
-            onClick={() => navigate(DISCOVERY_LAYOUT_PATH)}
+        <li
+          ref={discoveryTargetRef}
+          key='server-discovery'
+          className={styles.listItem}
+        >
+          <TooltipTrigger
+            targetRef={discoveryTargetRef as RefObject<HTMLElement>}
+            tailStyle='left'
             tooltipText='Discover'
           >
-            <Icon name='compass' />
-          </ServerBarButton>
+            <Link
+              to={DISCOVERY_LAYOUT_PATH}
+              className={StyleComposer(styles.navItem, {
+                [styles.selected as string]: isDiscoverySelected,
+              })}
+            >
+              <Icon name='compass' />
+            </Link>
+          </TooltipTrigger>
         </li>
       </ul>
       {isAddServerSelected ? (
         <AddServerModal deselectButton={() => setIsAddServerSelected(false)} />
       ) : null}
-    </>
+    </nav>
   );
 }
 

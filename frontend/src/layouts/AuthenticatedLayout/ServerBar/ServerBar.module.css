@@ -1,22 +1,30 @@
+.navContainer {
+  grid-row: 2;
+  grid-column: 1;
+}
+
 .serverBar {
   display: flex;
   flex-direction: column;
-  grid-row: 2;
-  grid-column: 1;
-  background-color: var(--background-color);
   margin: 0;
   padding: 0;
+  row-gap: 8px;
+  align-items: center;
 }
 
-.serverBar > * {
-  margin-top: 4px;
-  margin-bottom: 4px;
+.separator {
+  width: 32px;
+  height: 1px;
+  background-color: rgb(255, 255, 255, 0.2);
 }
 
 .listItem {
   list-style-type: none;
   position: relative;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .droppable {
@@ -77,6 +85,60 @@
 
 .draggable:global(.dragging) > * {
   display: none;
+}
+
+.navItem {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  line-height: 100%;
+  width: 40px;
+  height: 40px;
+  background-color: rgb(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 0px;
+  transition: all 0.3s, ease-in;
+  color: var(--on-background-color);
+  font-size: 12pt;
+}
+
+.navItem > svg {
+  width: 2em;
+  height: 2em;
+}
+
+.navItem.selected,
+.navItem:hover {
+  background-color: var(--accent-color);
+  color: var(--on-accent-color)
+}
+
+.navItem::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: -20px;
+  height: 8px;
+  width: 8px;
+  border-radius: 4px;
+  transition: height 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background-color: var(--on-background-color);
+}
+
+.navItem.pillHidden::after {
+  visibility: hidden;
+}
+
+.navItem:hover::after {
+  height: 20px;
+}
+
+.navItem.selected::after {
+  height: 40px;
 }
 
 .folder {
