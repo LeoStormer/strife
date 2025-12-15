@@ -1,46 +1,51 @@
 import {
   createContext,
-  type ReactNode,
+  type PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
-import { type IconName } from "../../types/name";
+import type { ServerIconProps } from "../components/ServerIcon";
+import type { IconProps } from "../components/Icon/Icon";
+
+export type DynamicIconProps =
+  | ({ type: "svg" } & IconProps)
+  | ({ type: "serverIcon" } & ServerIconProps);
 
 type PageNameContextType = {
-  icon: IconName | null;
+  iconProps: DynamicIconProps | null;
   pageName: string;
 };
 
 export const PageNameContext = createContext<PageNameContextType>({
-  icon: null,
+  iconProps: null,
   pageName: "",
 });
 
 type PageNameDispatchProps = {
   pageName?: string | undefined;
-  icon?: IconName | null;
+  iconProps?: DynamicIconProps | null;
 };
 
 export const PageNameDispatchContext = createContext(
-  ({ pageName = "", icon = null }: PageNameDispatchProps) => {}
+  ({}: PageNameDispatchProps) => {}
 );
 
-export function PageNameContextProvider({ children }: { children: ReactNode }) {
-  const [icon, setIcon] = useState<IconName | null>(null);
+export function PageNameContextProvider({ children }: PropsWithChildren) {
+  const [iconProps, setIconProps] = useState<DynamicIconProps | null>(null);
   const [pageName, setPageName] = useState("");
 
   const dispatchPageName = useCallback(
-    ({ pageName = "", icon = null }: PageNameDispatchProps) => {
-      setIcon(icon);
+    ({ pageName = "", iconProps = null }: PageNameDispatchProps) => {
+      setIconProps(iconProps);
       setPageName(pageName);
     },
-    [setIcon, setPageName]
+    [setIconProps, setPageName]
   );
 
   return (
-    <PageNameContext value={{ icon, pageName }}>
+    <PageNameContext value={{ iconProps, pageName }}>
       <PageNameDispatchContext value={dispatchPageName}>
         {children}
       </PageNameDispatchContext>
@@ -50,11 +55,11 @@ export function PageNameContextProvider({ children }: { children: ReactNode }) {
 
 export const usePageNameDispatchContext = ({
   pageName,
-  icon = null,
+  iconProps = null,
 }: PageNameDispatchProps) => {
   const dispatchPageName = useContext(PageNameDispatchContext);
   useEffect(() => {
-    dispatchPageName({ pageName, icon });
+    dispatchPageName({ pageName, iconProps });
   }, [dispatchPageName, pageName]);
 };
 

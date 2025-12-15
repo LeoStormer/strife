@@ -1,14 +1,14 @@
 import {type SVGProps} from 'react'
 import type { IconName } from '../../../types/name'
 
-type IconProps = SVGProps<SVGSVGElement> & {
+export type IconProps = SVGProps<SVGSVGElement> & {
   name: IconName,
 }
 
-function Icon({ name, className, ...svgProps }: IconProps) {
+function Icon({ name, ...svgProps }: IconProps) {
   const href = `/icons/sprite.svg#${name}` 
   return (
-    <svg className={className} {...svgProps}>
+    <svg {...svgProps}>
       <use href={href}/>
     </svg>
   )

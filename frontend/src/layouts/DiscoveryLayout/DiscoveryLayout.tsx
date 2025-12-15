@@ -1,4 +1,3 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import DiscoveryPathList from "./DiscoveryPathList";
 import { usePageNameDispatchContext } from "../../contexts/PageNameContext";
@@ -9,7 +8,11 @@ const DISCOVERY_PATH_STORAGE_KEY = "DISCOVERY_PATH";
 const PAGE_NAME = "Discovery";
 
 function DiscoveryLayout() {
-  usePageNameDispatchContext({ pageName: PAGE_NAME });
+  usePageNameDispatchContext({
+    pageName: PAGE_NAME,
+    iconProps: { type: "svg", name: "compass" },
+  });
+
   useLastVisitedPath({
     storageKey: DISCOVERY_PATH_STORAGE_KEY,
     basePath: DISCOVERY_LAYOUT_PATH,

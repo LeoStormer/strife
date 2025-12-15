@@ -18,6 +18,16 @@
 .pageIcon {
   width: 24px;
   height: 24px;
+  margin: 0px;
+}
+
+p.pageIcon {
+  background-color: rgb(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  font-size: 12px;
 }
 
 .iconButtonContainer {

@@ -1,3 +1,5 @@
+import type { DetailedHTMLProps, HTMLAttributes } from "react";
+
 function getInitials(serverName: string) {
   return serverName
     .split(" ")
@@ -5,16 +7,37 @@ function getInitials(serverName: string) {
     .join("");
 }
 
-type ServerIconProps = {
-  serverIconImage: string | undefined;
+export type ServerIconProps = DetailedHTMLProps<
+  HTMLAttributes<HTMLElement>,
+  HTMLElement
+> & {
+  serverIconImage?: string | undefined;
   serverName: string;
 };
 
-function ServerIcon({ serverIconImage, serverName }: ServerIconProps) {
+function ServerIcon({
+  serverIconImage,
+  serverName,
+  ...props
+}: ServerIconProps) {
   const icon = serverIconImage ? (
-    <img src={serverIconImage} alt=''></img>
+    <img
+      src={serverIconImage}
+      alt=''
+      {...(props as DetailedHTMLProps<
+        HTMLAttributes<HTMLImageElement>,
+        HTMLImageElement
+      >)}
+    ></img>
   ) : (
-    <label>{getInitials(serverName)}</label>
+    <p
+      {...(props as DetailedHTMLProps<
+        HTMLAttributes<HTMLParagraphElement>,
+        HTMLParagraphElement
+      >)}
+    >
+      {getInitials(serverName)}
+    </p>
   );
   return <>{icon}</>;
 }
