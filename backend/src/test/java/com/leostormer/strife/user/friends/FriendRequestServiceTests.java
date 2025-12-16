@@ -40,10 +40,12 @@ public class FriendRequestServiceTests extends AbstractIntegrationTest {
     static void setUp(@Autowired UserService userService) {
         user1 = new User();
         user1.setUsername("testuser1");
+        user1.setEmail("testuser1@someEmail.com");
         user1.setPassword("password123");
 
         user2 = new User();
         user2.setUsername("testuser2");
+        user1.setEmail("testuser2@someEmail.com");
         user2.setPassword("password1234");
 
         user1 = userService.registerUser(user1);

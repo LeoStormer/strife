@@ -46,6 +46,14 @@ public class UserServiceTests extends AbstractIntegrationTest {
     private ObjectId user4Id;
     private ObjectId user5Id;
 
+    private User createUser(String username, String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setEmail(username + "@someEmail.com");
+        return userRepository.save(user);
+    }
+
     private void createPendingFriendship(User sender, User receiver) {
         FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).build();
         friendRequestRepository.save(friendRequest);
@@ -73,31 +81,16 @@ public class UserServiceTests extends AbstractIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        User user1 = new User();
-        user1.setUsername("user1");
-        user1.setPassword("password123");
-        user1 = userRepository.save(user1);
+        User user1 = createUser("user1", "password123");
 
-        User user2 = new User();
-        user2.setUsername("user2");
-        user2.setPassword("password456");
-        user2 = userRepository.save(user2);
+        User user2 = createUser("user2", "password456");
 
-        User user3 = new User();
-        user3.setUsername("user3");
-        user3.setPassword("password789");
-        user3 = userRepository.save(user3);
+        User user3 = createUser("user3", "password789");
 
-        User user4 = new User();
-        user4.setUsername("user4");
-        user4.setPassword("password101112");
-        user4 = userRepository.save(user4);
+        User user4 = createUser("user4", "password101112");
         
         // no pre-existing relationships
-        User user5 = new User();
-        user5.setUsername("user4");
-        user5.setPassword("password101112");
-        user5 = userRepository.save(user5);
+        User user5 = createUser("user4", "password101112");
 
         user1Id = user1.getId();
         user2Id = user2.getId();
