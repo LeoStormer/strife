@@ -1,5 +1,5 @@
 .background {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--transparent-black);
   position: fixed;
   width: 100vw;
   height: 100vh;
@@ -56,19 +56,18 @@
 .scrollable {
   display: flex;
   flex-direction: column;
+  row-gap: 5px;
   align-items: center;
   height: 100%;
   overflow-y: scroll;
 }
 
 .scrollable::-webkit-scrollbar {
-  /* Make the scrollbar itself very thin */
   width: 6px;
 }
 
 .scrollable::-webkit-scrollbar-thumb {
-  /* Style the draggable part */
-  background-color: var(--on-background-color); /* Semi-transparent color */
+  background-color: var(--on-background-color);
   border-radius: 3px;
 }
 
@@ -76,5 +75,14 @@
   width: 100%;
   min-height: 60px;
   border-radius: 10px;
-  margin-bottom: 5px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--background-color) 80%, var(--contrast-mix-color) 20%);
+  background-color: var(--on-background-contrast);
+  padding: 0px;
+  color: var(--on-background-color);
+}
+
+.button:hover {
+  background-color: var(--on-background-contrast-medium);
 }

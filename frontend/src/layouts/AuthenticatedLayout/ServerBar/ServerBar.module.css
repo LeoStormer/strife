@@ -15,7 +15,7 @@
 .separator {
   width: 32px;
   height: 1px;
-  background-color: rgb(255, 255, 255, 0.2);
+  background-color: var(--on-background-contrast-strong);
 }
 
 .listItem {
@@ -97,7 +97,7 @@
   line-height: 100%;
   width: 40px;
   height: 40px;
-  background-color: rgb(255, 255, 255, 0.1);
+  background-color: var(--on-background-contrast);
   border-radius: 12px;
   border: 0px;
   transition: all 0.3s, ease-in;

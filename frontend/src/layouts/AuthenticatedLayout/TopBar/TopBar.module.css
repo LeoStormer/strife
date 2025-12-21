@@ -22,7 +22,7 @@
 }
 
 p.pageIcon {
-  background-color: rgb(255, 255, 255, 0.1);
+  background-color: var(--on-background-contrast);
   display: flex;
   justify-content: center;
   align-items: center;

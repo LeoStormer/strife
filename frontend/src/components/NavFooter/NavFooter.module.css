@@ -33,7 +33,7 @@
   width: 300px;
   padding: 17px 16px 17.5px 24px;
   border-radius: 16px;
-  background-color: rgb(255, 255, 255, 0.1);
+  background-color: var(--brighten);
   cursor: pointer;
 }
 

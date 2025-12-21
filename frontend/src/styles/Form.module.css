@@ -52,7 +52,7 @@
   border-radius: 8px;
   padding: 12px;
   border: none;
-  background-color: rgb(255, 255, 255, 0.1);
+  background-color: var(--on-background-contrast);
   height: 40px;
   width: 100%;
   margin-top: 8px;
