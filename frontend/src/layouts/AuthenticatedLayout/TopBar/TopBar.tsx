@@ -3,20 +3,18 @@ import PageNameContext, {
   type DynamicIconProps,
 } from "../../../contexts/PageNameContext";
 import styles from "./TopBar.module.css";
-import Icon, { type IconProps } from "../../../components/Icon";
+import Icon from "../../../components/Icon";
 import { Link } from "react-router-dom";
-import ServerIcon, {
-  type ServerIconProps,
-} from "../../../components/ServerIcon";
+import ServerIcon from "../../../components/ServerIcon";
 
-const DynamicIcon = ({ type, ...props }: DynamicIconProps) => {
-  if (type === "svg") {
-    const iconProps = props as IconProps;
+const DynamicIcon = (props: DynamicIconProps) => {
+  if (props.type === "svg") {
+    const {type, ...iconProps} = props;
     return <Icon {...iconProps} />;
   }
 
-  if (type === "serverIcon") {
-    const iconProps = props as ServerIconProps;
+  if (props.type === "serverIcon") {
+    const {type, ...iconProps} = props;
     return <ServerIcon {...iconProps} />;
   }
 

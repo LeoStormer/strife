@@ -1,13 +1,10 @@
-import React, {
-  type DetailedHTMLProps,
+import {
   type FC,
-  type HTMLAttributes,
+  type JSX,
 } from "react";
 import { createPortal } from "react-dom";
 
-const Modal: FC<
-  DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>
-> = (props) => {
+const Modal: FC<JSX.IntrinsicElements["div"]> = (props) => {
   const modalRoot = document.getElementById("modal-root");
 
   if (!modalRoot) {

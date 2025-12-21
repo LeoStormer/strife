@@ -1,16 +1,7 @@
-import React, {
-  type DetailedHTMLProps,
-  type HTMLAttributes,
-  type PropsWithChildren,
-} from "react";
 import styles from "./Navbar.module.css";
 import { Link } from "react-router-dom";
 import { HOME_PAGE_PATH, LOGIN_PAGE_PATH } from "../../constants";
 import NavCategory, { type SubCategories } from "./NavCategory";
-
-type Props = PropsWithChildren<
-  DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>
->;
 
 const categories = {
   Download: undefined,
@@ -62,7 +53,7 @@ const categories = {
   Careers: undefined,
 };
 
-function Navbar({}: Props) {
+function Navbar() {
   return (
     <nav className={styles.container}>
       <Link
