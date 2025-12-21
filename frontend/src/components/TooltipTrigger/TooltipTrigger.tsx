@@ -1,52 +1,49 @@
-import {
-  type DetailedHTMLProps,
-  type HTMLAttributes,
-  type RefObject,
-} from "react";
-import { useTooltipDispatchContext } from "../../contexts/TooltipContext";
+import { useRef, type RefObject } from "react";
 import type { RenderDirection, TailStyle } from "../Tooltip";
+import { useTooltipDispatchContext } from "../../contexts/TooltipContext";
 
-export type ButtonProps = Omit<
-  DetailedHTMLProps<HTMLAttributes<HTMLDivElement>, HTMLDivElement>,
-  "onMouseEnter" | "onMouseLeave"
-> & {
-  targetRef: RefObject<HTMLElement>;
+export type TooltipTriggerProps = {
   tooltipText: string;
   tailStyle?: TailStyle;
   renderDirection?: RenderDirection;
 };
 
-function Button({
-  targetRef,
+function TooltipTrigger<T extends HTMLElement>({
   tailStyle,
   tooltipText,
   renderDirection,
-  ...divProps
-}: ButtonProps) {
+}: TooltipTriggerProps) {
   const { showTooltip, hideTooltip } = useTooltipDispatchContext();
+  const targetRef = useRef<T | null>(null);
 
-  const handleMouseEnter = () => {
+  const onMouseEnter = () => {
     if (targetRef.current) {
       showTooltip({
         text: tooltipText,
-        targetRef,
+        targetRef: targetRef as RefObject<T>,
         tailStyle,
         renderDirection,
       });
     }
   };
 
-  const handleMouseLeave = () => {
+  const onMouseLeave = () => {
     hideTooltip();
   };
 
-  return (
-    <div
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      {...divProps}
-    />
-  );
+  const getTargetProps = () => {
+    return { ref: targetRef };
+  };
+
+  const getTriggerProps = () => {
+    return { onMouseEnter, onMouseLeave };
+  };
+
+  const getAllProps = () => {
+    return { ...getTargetProps(), ...getTriggerProps() };
+  };
+
+  return { getTargetProps, getTriggerProps, getAllProps };
 }
 
-export default Button;
+export default TooltipTrigger;

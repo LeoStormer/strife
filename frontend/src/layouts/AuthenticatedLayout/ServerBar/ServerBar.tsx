@@ -69,29 +69,27 @@ function ServerListItem({
   draggingId,
 }: ServerListItemProps) {
   const { id, name, icon } = server;
-  const targetRef = useRef<HTMLLIElement>(null);
+  const { getTargetProps, getTriggerProps } = TooltipTrigger<HTMLLIElement>({
+    tooltipText: name,
+    tailStyle: "left",
+  });
   return (
-    <li ref={targetRef} key={id} className={styles.listItem}>
+    <li {...getTargetProps()} key={id} className={styles.listItem}>
       <Draggable
         id={id}
         transformOverride={restrictSortableToOriginalPosition}
         data={{ index }}
         className={styles.draggable}
       >
-        <TooltipTrigger
-          targetRef={targetRef as RefObject<HTMLElement>}
-          tailStyle='left'
-          tooltipText={name}
+        <Link
+          {...getTriggerProps()}
+          to={`/servers/${id}`}
+          className={StyleComposer(styles.navItem, {
+            [styles.selected as string]: selectedServerId === id,
+          })}
         >
-          <Link
-            to={`/servers/${id}`}
-            className={StyleComposer(styles.navItem, {
-              [styles.selected as string]: selectedServerId === id,
-            })}
-          >
-            <ServerIcon serverName={name} serverIconImage={icon} />
-          </Link>
-        </TooltipTrigger>
+          <ServerIcon serverName={name} serverIconImage={icon} />
+        </Link>
       </Draggable>
       <Mover
         moverId={id}
@@ -124,9 +122,18 @@ function ServerBar() {
   const location = useLocation();
   const isDirectMessagesSelected = location.pathname.includes(USER_LAYOUT_PATH);
   const isDiscoverySelected = location.pathname.includes(DISCOVERY_LAYOUT_PATH);
-  const directMessagesTargetRef = useRef<HTMLLIElement>(null);
-  const addServerTargetRef = useRef<HTMLLIElement>(null);
-  const discoveryTargetRef = useRef<HTMLLIElement>(null);
+  const directMessagesTriggerProps = TooltipTrigger<HTMLLIElement>({
+    tooltipText: "Direct Messages",
+    tailStyle: "left",
+  });
+  const addServerTriggerProps = TooltipTrigger<HTMLLIElement>({
+    tooltipText: "Add a Server",
+    tailStyle: "left",
+  });
+  const discoveryTriggerProps = TooltipTrigger<HTMLLIElement>({
+    tooltipText: "Discover",
+    tailStyle: "left",
+  });
 
   const handleDragStart = (event: DragStartEvent) => {
     setDraggingId(event.active.id as string);
@@ -186,24 +193,19 @@ function ServerBar() {
     <nav className={styles.navContainer}>
       <ul className={styles.serverBar}>
         <li
-          ref={directMessagesTargetRef}
+          {...directMessagesTriggerProps.getTargetProps()}
           key='direct-messages'
           className={styles.listItem}
         >
-          <TooltipTrigger
-            targetRef={directMessagesTargetRef as RefObject<HTMLElement>}
-            tailStyle='left'
-            tooltipText='Direct Messages'
+          <Link
+            {...directMessagesTriggerProps.getTriggerProps()}
+            to={USER_LAYOUT_PATH}
+            className={StyleComposer(styles.navItem, {
+              [styles.selected as string]: isDirectMessagesSelected,
+            })}
           >
-            <Link
-              to={USER_LAYOUT_PATH}
-              className={StyleComposer(styles.navItem, {
-                [styles.selected as string]: isDirectMessagesSelected,
-              })}
-            >
-              <Icon name='person-circle' />
-            </Link>
-          </TooltipTrigger>
+            <Icon name='person-circle' />
+          </Link>
         </li>
         <div className={styles.separator}></div>
         <DndContext
@@ -215,24 +217,19 @@ function ServerBar() {
         >
           {serverListItems}
           <li
-            ref={addServerTargetRef}
+            {...addServerTriggerProps.getTargetProps()}
             key='add-server'
             className={styles.listItem}
           >
-            <TooltipTrigger
-              targetRef={addServerTargetRef as RefObject<HTMLElement>}
-              tailStyle='left'
-              tooltipText='Add a Server'
+            <button
+              {...addServerTriggerProps.getTriggerProps()}
+              onClick={() => setIsAddServerSelected(true)}
+              className={StyleComposer(styles.navItem, {
+                [styles.selected as string]: isAddServerSelected,
+              })}
             >
-              <button
-                onClick={() => setIsAddServerSelected(true)}
-                className={StyleComposer(styles.navItem, {
-                  [styles.selected as string]: isAddServerSelected,
-                })}
-              >
-                <Icon name='plus-lg' />
-              </button>
-            </TooltipTrigger>
+              <Icon name='plus-lg' />
+            </button>
             <Mover moverId='Last' index={servers.length} />
           </li>
           <Modal style={{ pointerEvents: "none" }}>
@@ -242,24 +239,19 @@ function ServerBar() {
           </Modal>
         </DndContext>
         <li
-          ref={discoveryTargetRef}
+          {...discoveryTriggerProps.getTargetProps()}
           key='server-discovery'
           className={styles.listItem}
         >
-          <TooltipTrigger
-            targetRef={discoveryTargetRef as RefObject<HTMLElement>}
-            tailStyle='left'
-            tooltipText='Discover'
+          <Link
+            {...discoveryTriggerProps.getTriggerProps()}
+            to={DISCOVERY_LAYOUT_PATH}
+            className={StyleComposer(styles.navItem, {
+              [styles.selected as string]: isDiscoverySelected,
+            })}
           >
-            <Link
-              to={DISCOVERY_LAYOUT_PATH}
-              className={StyleComposer(styles.navItem, {
-                [styles.selected as string]: isDiscoverySelected,
-              })}
-            >
-              <Icon name='compass' />
-            </Link>
-          </TooltipTrigger>
+            <Icon name='compass' />
+          </Link>
         </li>
       </ul>
       {isAddServerSelected ? (
