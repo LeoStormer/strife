@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import "../index.css"
-import "../themes.css"
+import "../index.css";
+import "../themes.css";
 
-export const metaData: Metadata = {
-  title: 'React App',
-  description: 'Web site created using create-react-app',
-}
+export const metadata: Metadata = {
+  title: {
+    template: "Strife | %s",
+    default: "Strife",
+  },
+  description: "A Discord-like real-time chat application made for practice",
+};
 
 export default function RootLayout({ children }: React.PropsWithChildren) {
   return (
