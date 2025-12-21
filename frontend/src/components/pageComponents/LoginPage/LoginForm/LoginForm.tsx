@@ -1,4 +1,4 @@
-import { type FormEventHandler } from "react";
+import { useEffect, useRef, type FormEventHandler } from "react";
 import { Link } from "react-router-dom";
 import formStyles from "../../../../styles/Form.module.css";
 import { REGISTRATION_PAGE_PATH } from "../../../../constants";
@@ -8,6 +8,13 @@ type LoginFormProps = {
 };
 
 function LoginForm({ handleSubmit }: LoginFormProps) {
+  const focusRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (focusRef.current) {
+      focusRef.current.focus();
+    }
+  }, []);
+
   return (
     <div className={formStyles.container}>
       <form className={formStyles.form} onSubmit={handleSubmit}>
@@ -20,6 +27,7 @@ function LoginForm({ handleSubmit }: LoginFormProps) {
             Email
           </label>
           <input
+            ref={focusRef}
             className={formStyles.input}
             type='email'
             name='email'
