@@ -5,10 +5,105 @@
   bottom: 8px;
   width: 359px;
   height: 58px;
+  padding: 8px;
   border-radius: 12px;
   border-width: 1px;
-  /* background-color: var(--background-color); */
-  background-color: blue;
+  border-style: solid;
+  border-color: color-mix(
+    in srgb,
+    var(--background-color) 80%,
+    var(--contrast-mix-color) 20%
+  );
+  background-color: var(--background-color);
   color: var(--on-background-color);
+  display: grid;
+  grid-template-columns: 50% 50%;
   z-index: 100;
+}
+
+.button {
+  all: unset;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease-out;
+}
+
+.button:hover {
+  background-color: var(--on-background-contrast-strong);
+  cursor: pointer;
+}
+
+.statusContainer {
+  justify-content: start;
+  padding-left: 4px;
+  column-gap: 8px;
+  border-radius: 4px;
+}
+
+.labelContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.username {
+  font-size: 12px;
+}
+
+.status {
+  font-size: 10px;
+  color: color-mix(in srgb, var(--on-background-color) 70%, black 30%);
+}
+
+.profilePicture {
+  width: 32px;
+  height: 32px;
+}
+
+.controlsFlexContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+}
+
+.controlWrapper {
+  display: flex;
+  column-gap: 1px;
+}
+
+.controlWrapper:has(> .button:hover) .button:not(:hover) {
+  background-color: var(--on-background-contrast);
+}
+
+.toggle {
+  width: 32px;
+  height: 32px;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.toggle > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.controlWrapper:not(:has(> .options)) .toggle {
+  border-radius: 8px;
+}
+
+.options {
+  width: 18px;
+  height: 32px;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.options > svg {
+  width: 12px;
+  height: 12px;
+}
+
+.options.open > svg {
+  transform: rotate(180deg);
 }
