@@ -1,5 +1,5 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from "react";
-import styles from "./ToolTip.module.css";
+import { useLayoutEffect, useRef, type RefObject } from "react";
+import styles from "./Tooltip.module.css";
 import Modal from "../Modal";
 import StyleComposer from "../../utils/StyleComposer";
 

@@ -19,9 +19,7 @@
   width: fit-content;
   word-wrap: break-word;
   box-sizing: border-box;
-  border-style: solid;
-  border-color: var(--border-highlight-color);
-  border-width: 1px;
+  border: 1px solid var(--border-highlight-color);
 }
 
 .bubble::before,
