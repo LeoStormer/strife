@@ -8,6 +8,7 @@ export type IconName =
 	| "chevron-up"
 	| "compass"
 	| "facebook"
+	| "folder-fill"
 	| "gear-fill"
 	| "gift-fill"
 	| "headphones"

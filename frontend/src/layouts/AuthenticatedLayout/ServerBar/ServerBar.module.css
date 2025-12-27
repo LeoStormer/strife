@@ -3,7 +3,7 @@
   grid-column: 1;
 }
 
-.serverBar {
+.list {
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -29,19 +29,35 @@
 
 .droppable {
   position: absolute;
-  width: 100%;
-  height: 50%;
-  top: 0;
+  width: 72px;
+  height: 24px;
+  top: -4px;
   pointer-events: none;
+  z-index: 100;
 }
 
-.droppable:not(.combiner):global(.over):not(.dragging)::after {
+.listItem:has(.folder) > .droppable {
+  height: 28px;
+}
+
+.listItem:has(.folder.open) > .droppable.combiner {
+  top: 24px;
+}
+
+.droppable.notAllowed {
+  pointer-events: initial;
+  cursor: not-allowed;
+}
+
+.droppable:not(.combiner):global(.over):not(.dragging, .notAllowed)::after {
   content: "";
   position: absolute;
-  width: 100%;
+  width: 72px;
   height: 5px;
   border-radius: 3px;
   top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
   background-color: var(--accent-color);
 }
 
@@ -49,7 +65,7 @@
   top: 50%;
 }
 
-.droppable.combiner:global(.over):not(.dragging)::after {
+.droppable.combiner:global(.over):not(.dragging, .notAllowed)::after {
   content: "";
   position: absolute;
   width: 16px;
@@ -74,13 +90,13 @@
 }
 
 .draggable:global(.dragging) {
-  background-color: var(--background-color);
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  margin-left: auto;
-  margin-right: auto;
-  border: 0px;
+}
+
+.draggable:global(.dragging):has(.folder) {
+  width: 48px;
+  height: 48px;
 }
 
 .draggable:global(.dragging) > * {
@@ -100,9 +116,10 @@
   background-color: var(--on-background-contrast);
   border-radius: 12px;
   border: 0px;
-  transition: all 0.3s, ease-in;
+  transition: background-color 0.3s ease-out;
   color: var(--on-background-color);
   font-size: 12pt;
+  cursor: pointer;
 }
 
 .navItem > svg {
@@ -113,9 +130,10 @@
 .navItem.selected,
 .navItem:hover {
   background-color: var(--accent-color);
-  color: var(--on-accent-color)
+  color: var(--on-accent-color);
 }
 
+.folder::after,
 .navItem::after {
   content: "";
   position: absolute;
@@ -128,21 +146,146 @@
   transition: height 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background-color: var(--on-background-color);
 }
+.folder::after {
+  left: -16px;
+}
 
+.folder.pillHidden::after,
 .navItem.pillHidden::after {
   visibility: hidden;
 }
 
+.folder:hover::after,
 .navItem:hover::after {
   height: 20px;
 }
 
+.folder:has(.navItem.selected)::after,
 .navItem.selected::after {
   height: 40px;
 }
 
 .folder {
-  height: 48px;
-  width: 48px;
+  --animation-duration: 0.2s;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 4px;
   border-radius: 16px;
+  background-color: var(--on-background-contrast);
+  transition: height var(--animation-duration) ease;
+  interpolate-size: allow-keywords;
+}
+
+/* wrapper exists in order to hide overflow-y but show overflow x */
+.folder .wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  row-gap: 8px;
+  overflow: hidden;
+  transition: overflow var(--animation-duration) allow-discrete;
+  transition-delay: 0s;
+}
+
+.folder.open .wrapper {
+  overflow: visible;
+  transition-delay: var(--animation-duration);
+}
+
+.folder:not(.open) {
+  cursor: pointer;
+}
+
+.folder:not(.open) > * {
+  pointer-events: none;
+}
+
+.folder.open {
+  height: max-content;
+}
+
+.folder.open
+  .droppable.combiner:global(.over):not(.dragging, .notAllowed)::after {
+  content: "";
+  position: absolute;
+  width: 72px;
+  height: 5px;
+  border-radius: 3px;
+  top: calc(100% + 2px);
+  background-color: var(--accent-color);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.folder.open:has(
+    .listItem:last-child
+      .droppable.combiner:global(.over):not(.dragging, .notAllowed)
+  ) {
+  padding-bottom: 24px;
+}
+
+.iconDisplay {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  grid-template-rows: 50% 50%;
+  row-gap: 1px;
+  column-gap: 1px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+}
+
+.icon {
+  all: unset;
+  color: var(--on-background-color);
+  background-color: var(--on-background-contrast);
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  font-size: 7pt;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.folderButton {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border-style: none;
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: background-color 0.3s ease-out;
+}
+
+.folderButton:hover {
+  background-color: var(--on-background-contrast);
+}
+
+.folderButton > svg {
+  width: 24px;
+  height: 24px;
+}
+
+.folder .listItem:has(.folderButton) {
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: start;
+  height: 40px;
+  row-gap: 8px;
+  overflow: hidden;
+}
+
+.folder .listItem:has(.folderButton) > * {
+  transition: transform calc(var(--animation-duration) * 0.5) ease-out;
+}
+
+.folder:not(.open) .listItem:has(.folderButton) > * {
+  transform: translateY(calc(-100% - 8px));
 }

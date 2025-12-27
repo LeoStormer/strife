@@ -1,8 +1,10 @@
-import { type RefObject, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   useServerSelectionContext,
+  type Folder,
   type Server,
+  type ServerItem,
 } from "../../../contexts/ServerSelectionContext";
 import ServerIcon from "../../../components/ServerIcon";
 import {
@@ -17,7 +19,6 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
 import Modal from "../../../components/Modal";
 import Icon from "../../../components/Icon";
 import TooltipTrigger from "../../../components/TooltipTrigger";
@@ -36,49 +37,77 @@ const restrictSortableToOriginalPosition: TransformOverride = (transform) => {
   return { transform: undefined };
 };
 
-type MoverProps = {
-  moverId: string;
-  sourceId?: string | undefined;
-  index: number;
-  isDragging?: boolean;
+type DragType = "server" | "folder" | null;
+
+type DragNDropData = {
+  source: "last" | string;
+  type?: "mover" | "combiner";
+  folderId?: string | undefined;
 };
 
-function Mover({ moverId, sourceId, index, isDragging = false }: MoverProps) {
+type MoverProps = {
+  moverId: string;
+  dragType: DragType;
+  sourceId?: string | undefined;
+  isDragging?: boolean;
+  folderId?: string | undefined;
+  isEnabled?: boolean;
+};
+
+function Mover({
+  moverId,
+  sourceId,
+  isDragging = false,
+  dragType,
+  folderId,
+  isEnabled = true,
+}: MoverProps) {
   return (
     <Droppable
       className={StyleComposer(styles.droppable, {
         [styles.dragging as string]: isDragging,
+        [styles.notAllowed as string]:
+          dragType === "folder" && folderId != undefined,
       })}
       id={`Mover(${moverId})`}
-      data={{ source: sourceId, type: "mover", index }}
+      disabled={!isEnabled}
+      data={{ source: sourceId, type: "mover", folderId }}
     />
   );
 }
 
 type ServerListItemProps = {
   server: Server;
-  index: number;
   selectedServerId: string | null;
   draggingId: string | null;
+  dragType: DragType;
+  folderId?: string | undefined;
+  isPillHidden?: boolean;
+  isDNDEnabled?: boolean;
 };
 
 function ServerListItem({
   server,
-  index,
   selectedServerId,
   draggingId,
+  dragType,
+  folderId,
+  isPillHidden = false,
+  isDNDEnabled = true,
 }: ServerListItemProps) {
   const { id, name, icon } = server;
   const { getTargetProps, getTriggerProps } = TooltipTrigger<HTMLLIElement>({
     tooltipText: name,
     tailStyle: "left",
   });
+
   return (
-    <li {...getTargetProps()} key={id} className={styles.listItem}>
+    <li {...getTargetProps()} className={styles.listItem}>
       <Draggable
         id={id}
         transformOverride={restrictSortableToOriginalPosition}
-        data={{ index }}
+        disabled={!isDNDEnabled}
+        data={{ source: id, folderId }}
         className={styles.draggable}
       >
         <Link
@@ -86,6 +115,7 @@ function ServerListItem({
           to={`/servers/${id}`}
           className={StyleComposer(styles.navItem, {
             [styles.selected as string]: selectedServerId === id,
+            [styles.pillHidden as string]: isPillHidden,
           })}
         >
           <ServerIcon serverName={name} serverIconImage={icon} />
@@ -94,16 +124,117 @@ function ServerListItem({
       <Mover
         moverId={id}
         sourceId={id}
-        index={index}
+        isDragging={draggingId === id}
+        dragType={dragType}
+        folderId={folderId}
+        isEnabled={isDNDEnabled}
+      />
+      <Droppable
+        className={StyleComposer(`${styles.droppable} ${styles.combiner}`, {
+          [styles.dragging as string]: draggingId === id,
+          [styles.notAllowed as string]: dragType === "folder",
+        })}
+        id={`Combiner(${id})`}
+        data={{ source: id, type: "combiner", folderId }}
+        disabled={!isDNDEnabled}
+      />
+    </li>
+  );
+}
+
+type ServerFolderProps = Omit<ServerListItemProps, "server" | "folderId"> & {
+  servers: Server[];
+  id: string;
+};
+
+function ServerFolder({
+  id,
+  servers,
+  selectedServerId,
+  draggingId,
+  dragType,
+  isDNDEnabled = true,
+}: ServerFolderProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const names = servers.map((s) => s.name).reduce((s1, s2) => `${s1} | ${s2}`);
+  const { getTargetProps, getTriggerProps } = TooltipTrigger<HTMLLIElement>({
+    tooltipText: names,
+    tailStyle: "left",
+  });
+
+  const folderClass = StyleComposer(`${styles.folder} ${styles.list}`, {
+    [styles.open as string]: isOpen,
+    [styles.pillHidden as string]: isOpen,
+  });
+
+  return (
+    <li {...getTargetProps()} className={styles.listItem}>
+      <Mover
+        moverId={id}
+        sourceId={id}
+        dragType={dragType}
+        isEnabled={isDNDEnabled}
         isDragging={draggingId === id}
       />
       <Droppable
         className={StyleComposer(`${styles.droppable} ${styles.combiner}`, {
           [styles.dragging as string]: draggingId === id,
+          [styles.notAllowed as string]: dragType === "folder",
         })}
         id={`Combiner(${id})`}
-        data={{ source: id, type: "combiner", index }}
+        data={{ source: "last", type: "combiner", folderId: id }}
+        disabled={!isDNDEnabled}
       />
+      <Draggable
+        id={id}
+        data={{ source: id }}
+        transformOverride={restrictSortableToOriginalPosition}
+        disabled={!isDNDEnabled}
+        className={styles.draggable}
+      >
+        <ul
+          {...(!isOpen ? getTriggerProps() : {})}
+          className={folderClass}
+          onClick={() => {
+            if (!isOpen) {
+              setIsOpen(true);
+            }
+          }}
+        >
+          <div className={styles.wrapper}>
+            <li className={styles.listItem}>
+              <button
+                {...getTriggerProps()}
+                className={styles.folderButton}
+                onClick={() => setIsOpen(false)}
+              >
+                <Icon name='folder-fill' />
+              </button>
+              <div className={styles.iconDisplay}>
+                {servers.map(({ name, icon }) => (
+                  <ServerIcon
+                    className={styles.icon}
+                    serverIconImage={icon}
+                    serverName={name}
+                  />
+                ))}
+              </div>
+            </li>
+            {servers.map((server, i) => (
+              <ServerListItem
+                folderId={id}
+                selectedServerId={selectedServerId}
+                server={server}
+                draggingId={draggingId}
+                dragType={dragType}
+                isPillHidden={!isOpen}
+                isDNDEnabled={isOpen}
+                key={server.id}
+              />
+            ))}
+          </div>
+        </ul>
+      </Draggable>
     </li>
   );
 }
@@ -115,9 +246,10 @@ function ServerListItem({
  * that server's page when clicked.
  */
 function ServerBar() {
-  const { servers, setServers, selectedId, getServer } =
+  const { servers, rootOrder, selectedId, getServer, moveItem, createFolder } =
     useServerSelectionContext();
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragType, setDragType] = useState<DragType>(null);
   const [isAddServerSelected, setIsAddServerSelected] = useState(false);
   const location = useLocation();
   const isDirectMessagesSelected = location.pathname.includes(USER_LAYOUT_PATH);
@@ -136,33 +268,58 @@ function ServerBar() {
   });
 
   const handleDragStart = (event: DragStartEvent) => {
+    const { type } = servers[event.active.id]!;
     setDraggingId(event.active.id as string);
+    setDragType(type);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     setDraggingId(null);
+    setDragType(null);
     const { active, over } = event;
     if (!over || !over.data.current || active.id === over.data.current.source) {
       return;
     }
 
-    const willCombineIntoFolder = over.data.current.type === "combiner";
+    const activeData = active.data.current as DragNDropData;
+    const overData = over.data.current as DragNDropData;
 
-    if (willCombineIntoFolder) {
-      // Combine them into a folder
-    } else {
-      const oldIndex = active.data.current?.index as number;
-      const newIndex = over.data.current?.index as number;
-      const shifter = oldIndex < newIndex ? -1 : 0;
-      // Treats every index after the oldIndex as if the old didn't exist
-      // for the purpose of reinsertion
-      setServers((servers) => arrayMove(servers, oldIndex, newIndex + shifter));
+    if (overData.type === "combiner") {
+      if (servers[activeData.source]?.type === "folder") {
+        return;
+      }
+
+      if (!overData.folderId) {
+        const overIndex = rootOrder.indexOf(overData.source as string);
+        createFolder([overData.source, activeData.source], overIndex);
+        return;
+      }
+
+      const folder = servers[overData.folderId] as Folder;
+      const nextOverIndex = folder.serverOrder.indexOf(overData.source) + 1;
+      if (
+        overData.source === "last" ||
+        nextOverIndex === folder.serverOrder.length
+      ) {
+        moveItem(activeData.source, "last", overData.folderId);
+        return;
+      }
+
+      moveItem(activeData.source, folder.serverOrder[nextOverIndex] as string);
+      return;
     }
+
+    if (overData.source == "last") {
+      moveItem(activeData.source, overData.source, overData.folderId);
+      return;
+    }
+    moveItem(activeData.source, overData.source);
   };
 
   const handleDragCancel = (event: DragCancelEvent) => {
     void event;
     setDraggingId(null);
+    setDragType(null);
   };
 
   const sensors = useSensors(
@@ -172,29 +329,69 @@ function ServerBar() {
     useSensor(TouchSensor)
   );
 
-  const serverListItems = servers.map((server, index) => (
-    <ServerListItem
-      server={server}
-      index={index}
-      selectedServerId={selectedId}
-      draggingId={draggingId}
-      key={server.id}
-    />
-  ));
+  const serverListItems = rootOrder.map((itemId) => {
+    const item = servers[itemId]!;
+    if (item.type === "server") {
+      const { type, ...server } = item;
+      return (
+        <ServerListItem
+          server={server}
+          selectedServerId={selectedId}
+          draggingId={draggingId}
+          dragType={dragType}
+          key={server.id}
+        />
+      );
+    }
+    const { type, ...folder } = item;
+    const serverList = folder.serverOrder.map(
+      (serverId) => getServer(serverId)!
+    );
+    return (
+      <ServerFolder
+        id={folder.id}
+        servers={serverList}
+        selectedServerId={selectedId}
+        draggingId={draggingId}
+        dragType={dragType}
+        key={folder.id}
+      />
+    );
+  });
 
   const draggingServerIcon = (() => {
-    let server = draggingId ? getServer(draggingId) : null;
-    return server ? (
+    let item = draggingId ? servers[draggingId]! : null;
+    if (!item) {
+      return null;
+    }
+
+    if (item.type === "folder") {
+      return (
+        <div className={styles.iconDisplay}>
+          {item.serverOrder.map((serverId) => {
+            const { name, icon } = servers[serverId] as ServerItem;
+            return (
+              <ServerIcon
+                className={styles.icon}
+                serverIconImage={icon}
+                serverName={name}
+              />
+            );
+          })}
+        </div>
+      );
+    }
+    const server = item as ServerItem;
+    return (
       <ServerIcon serverName={server.name} serverIconImage={server.icon} />
-    ) : null;
+    );
   })();
 
   return (
     <nav className={styles.navContainer}>
-      <ul className={styles.serverBar}>
+      <ul className={styles.list}>
         <li
           {...directMessagesTriggerProps.getTargetProps()}
-          key='direct-messages'
           className={styles.listItem}
         >
           <Link
@@ -218,7 +415,6 @@ function ServerBar() {
           {serverListItems}
           <li
             {...addServerTriggerProps.getTargetProps()}
-            key='add-server'
             className={styles.listItem}
           >
             <button
@@ -230,7 +426,7 @@ function ServerBar() {
             >
               <Icon name='plus-lg' />
             </button>
-            <Mover moverId='Last' index={servers.length} />
+            <Mover moverId='Last' sourceId='last' dragType={dragType} />
           </li>
           <Modal style={{ pointerEvents: "none" }}>
             <DragOverlay modifiers={[snapCenterToCursor]}>
@@ -240,7 +436,6 @@ function ServerBar() {
         </DndContext>
         <li
           {...discoveryTriggerProps.getTargetProps()}
-          key='server-discovery'
           className={styles.listItem}
         >
           <Link
