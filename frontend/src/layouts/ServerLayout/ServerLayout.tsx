@@ -1,9 +1,8 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import ChannelList from "./ChannelList";
 import { useLastVisitedPath } from "../../contexts/useLastVisitedSubPath";
 import {
   useServerSelectionContext,
-  getServerIdFromPath,
   type Server,
 } from "../../contexts/ServerSelectionContext";
 
@@ -11,18 +10,21 @@ import {
  * Adds a list of channels contained by the currently selected server.
  */
 function ServerLayout() {
-  const { pathname } = useLocation();
-  const { getServer } = useServerSelectionContext();
-  const serverId = getServerIdFromPath(pathname);
+  const { getServer, selectedId: serverId, isLoading } = useServerSelectionContext();
 
+  // TODO: implement loading state
+  if (isLoading) {
+
+  }
+  
   if (!serverId) {
     return <Navigate to={"/not-found"} replace />;
   }
 
-  const server = getServer(serverId) as Server;
+  const { defaultChannelId } = getServer(serverId) as Server;
   const storageKey = `SERVER_PATH(${serverId})`;
   const basePath = `/servers/${serverId}`;
-  const defaultPath = `${basePath}/${server.defaultChannelId}`;
+  const defaultPath = `${basePath}/${defaultChannelId}`;
 
   useLastVisitedPath({ storageKey, basePath, defaultPath });
 

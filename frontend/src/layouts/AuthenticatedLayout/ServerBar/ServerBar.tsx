@@ -246,8 +246,17 @@ function ServerFolder({
  * that server's page when clicked.
  */
 function ServerBar() {
-  const { servers, rootOrder, selectedId, getServer, moveItem, createFolder } =
-    useServerSelectionContext();
+  const {
+    servers,
+    rootOrder,
+    selectedId,
+    getServer,
+    moveItem,
+    createFolder,
+    isLoading,
+  } = useServerSelectionContext();
+
+  // TODO if isLoading show a loading state
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<DragType>(null);
   const [isAddServerSelected, setIsAddServerSelected] = useState(false);

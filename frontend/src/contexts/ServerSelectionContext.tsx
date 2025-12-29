@@ -3,9 +3,11 @@ import {
   type PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import { useLocation } from "react-router-dom";
+import api from "../api";
 
 export type Server = {
   id: string;
@@ -34,6 +36,7 @@ type MoveItem = {
 type ServerSelectionContextType = {
   servers: Record<string, ServerItem | Folder>;
   rootOrder: string[];
+  isLoading: boolean;
   selectedId: string | null;
   getServer: (serverId: string) => Server | null;
   moveItem: MoveItem;
@@ -49,71 +52,123 @@ export const getServerIdFromPath = (path: string) => {
   return match?.at(0);
 };
 
-const getUserJoinedServers = (): ServerSelectionContextType["servers"] => {
+const getServersFromApi = async (): Promise<Server[]> => {
   if (process.env.NODE_ENV === "production") {
-    // get joined servers from api
-    // map server array to proper structure
-    return {};
+    return await api.get("/user/servers");
   }
 
-  return {
-    "1": { id: "1", type: "server", name: "Server 1", defaultChannelId: "1" },
-    "2": { id: "2", type: "server", name: "Server 2", defaultChannelId: "1" },
-    "3": { id: "3", type: "server", name: "Server 3", defaultChannelId: "1" },
-    "4": { id: "4", type: "server", name: "Server 4", defaultChannelId: "1" },
-    "5": { id: "5", type: "server", name: "Server 5", defaultChannelId: "1" },
-  };
+  //TODO: Remove after implementing
+  return [
+    { id: "1", name: "Server 1", defaultChannelId: "1" },
+    { id: "2", name: "Server 2", defaultChannelId: "1" },
+    { id: "3", name: "Server 3", defaultChannelId: "1" },
+    { id: "4", name: "Server 4", defaultChannelId: "1" },
+    { id: "5", name: "Server 5", defaultChannelId: "1" },
+  ];
+};
+
+const FOLDER_STORAGE_KEY = "SERVERBAR_FOLDERS";
+const getLocalFolders = (): Folder[] => {
+  try {
+    const storedData = localStorage.getItem(FOLDER_STORAGE_KEY);
+
+    if (!storedData) {
+      return [];
+    }
+    return JSON.parse(storedData);
+  } catch (error) {
+    return [];
+  }
+};
+
+const saveFoldersToLocalStorage = (folders: Folder[]) => {
+  try {
+    localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders));
+  } catch (error) {
+    console.log(`Failed to save folders to localStorage: ${error}`);
+  }
 };
 
 const ROOT_ORDER_KEY = "SERVERBAR_ORDER";
 const getRootOrder = (): string[] => {
-  // try {
-  //   const storedData = localStorage.getItem(ROOT_ORDER_KEY)
+  try {
+    const storedData = localStorage.getItem(ROOT_ORDER_KEY);
 
-  //   if (!storedData) {
-  //     return []
-  //   }
-  //   return JSON.parse(storedData)
-  // } catch (error) {
-  //   return []
-  // }
-  return ["1", "2", "3", "4", "5"];
+    if (!storedData) {
+      return [];
+    }
+    return JSON.parse(storedData);
+  } catch (error) {
+    return [];
+  }
+};
+
+const saveRootOrderToLocalStorage = (rootOrder: string[]) => {
+  try {
+    localStorage.setItem(ROOT_ORDER_KEY, JSON.stringify(rootOrder));
+  } catch (error) {
+    console.log(`Failed to save root order to localStorage: ${error}`);
+  }
+};
+
+const getUserJoinedServers = (
+  serversFromApi: Server[]
+): ServerSelectionContextType["servers"] => {
+  const serverSet = new Set(serversFromApi.map((server) => server.id));
+  const folders = getLocalFolders()
+    .map((folder) => {
+      const filteredServerOrder = folder.serverOrder.filter((id) =>
+        serverSet.has(id)
+      );
+      return { ...folder, serverOrder: filteredServerOrder };
+    })
+    .filter((folder) => folder.serverOrder.length > 0);
+
+  const serverItems: Record<string, ServerItem | Folder> = {};
+  serversFromApi.forEach((server) => {
+    serverItems[server.id] = { ...server, type: "server" };
+  });
+  folders.forEach((folder) => {
+    serverItems[folder.id] = folder;
+  });
+
+  return serverItems;
 };
 
 const reconcileRootOrder = (
   servers: ServerSelectionContextType["servers"],
   rootOrder: string[]
 ) => {
-  const filteredRootOrder = rootOrder.filter((id) => {
-    const item = servers[id];
-    if (!item) {
-      return false;
-    }
-
-    if (item.type === "folder") {
-    }
-  });
+  const cleanedRootOrder = rootOrder.filter((id) => servers[id] != undefined);
+  const alreadyOrdered = new Set(cleanedRootOrder);
+  const serversInFolders = new Set(
+    Object.values(servers)
+      .filter((item) => item.type === "folder")
+      .flatMap((item) => item.serverOrder)
+  );
+  const newServers = Object.keys(servers).filter(
+    (id) => !(alreadyOrdered.has(id) || serversInFolders.has(id))
+  );
+  return [...cleanedRootOrder, ...newServers];
 };
 
 export const ServerSelectionContextProvider = ({
   children,
 }: PropsWithChildren) => {
   const [servers, setServers] = useState<ServerSelectionContextType["servers"]>(
-    () => getUserJoinedServers()
+    {}
   );
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getServer = useCallback(
-    (serverId: string) => {
-      const item = servers[serverId];
-      if (item && item.type == "server") {
-        const { type, ...server } = item;
-        return server;
-      }
+  const getServer = (serverId: string) => {
+    const item = servers[serverId];
+    if (item && item.type == "server") {
+      const { type, ...server } = item;
+      return server;
+    }
 
-      return null;
-    },
-    [servers]
-  );
+    return null;
+  };
 
   const location = useLocation();
   const serverIdFromPath = getServerIdFromPath(location.pathname);
@@ -254,12 +309,45 @@ export const ServerSelectionContextProvider = ({
     setRootOrder(newRootOrder);
   };
 
+  useEffect(() => {
+    getServersFromApi()
+      .then((serversFromApi) => {
+        const userServers = getUserJoinedServers(serversFromApi);
+        setServers(userServers);
+        const storedRootOrder = getRootOrder();
+        const reconciledRootOrder = reconcileRootOrder(
+          userServers,
+          storedRootOrder
+        );
+        setRootOrder(reconciledRootOrder);
+        setIsLoading(false);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    saveFoldersToLocalStorage(
+      Object.values(servers).filter((item) => item.type === "folder")
+    );
+  }, [servers]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    saveRootOrderToLocalStorage(rootOrder);
+  }, [rootOrder]);
+
   return (
     <ServerSelectionContext
       value={{
         servers,
         rootOrder,
         selectedId,
+        isLoading,
         getServer,
         moveItem,
         createFolder,

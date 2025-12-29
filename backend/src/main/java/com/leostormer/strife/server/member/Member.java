@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Member {
-
+    // TODO: Move to own package and repository, acting as a join table between User and Server
     /**
      * Builds a <code>Member</code> from a <code>User</code>
      * 
