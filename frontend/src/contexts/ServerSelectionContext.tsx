@@ -113,23 +113,29 @@ const saveRootOrderToLocalStorage = (rootOrder: string[]) => {
 const getUserJoinedServers = (
   serversFromApi: Server[]
 ): ServerSelectionContextType["servers"] => {
-  const serverSet = new Set(serversFromApi.map((server) => server.id));
-  const folders = getLocalFolders()
-    .map((folder) => {
-      const filteredServerOrder = folder.serverOrder.filter((id) =>
-        serverSet.has(id)
-      );
-      return { ...folder, serverOrder: filteredServerOrder };
-    })
-    .filter((folder) => folder.serverOrder.length > 0);
-
+  const serverSet = new Set<string>();
   const serverItems: Record<string, ServerItem | Folder> = {};
-  serversFromApi.forEach((server) => {
+
+  for (const server of serversFromApi) {
     serverItems[server.id] = { ...server, type: "server" };
-  });
-  folders.forEach((folder) => {
-    serverItems[folder.id] = folder;
-  });
+    serverSet.add(server.id);
+  }
+
+  for (const folder of getLocalFolders()) {
+    const filteredServerOrder = folder.serverOrder.filter((id) =>
+      serverSet.has(id)
+    );
+
+    if (filteredServerOrder.length === 0) {
+      continue;
+    }
+
+    serverItems[folder.id] = { ...folder, serverOrder: filteredServerOrder };
+    filteredServerOrder.forEach((serverId) => {
+      const serverItem = serverItems[serverId] as ServerItem;
+      serverItems[serverId] = { ...serverItem, folderId: folder.id };
+    });
+  }
 
   return serverItems;
 };
