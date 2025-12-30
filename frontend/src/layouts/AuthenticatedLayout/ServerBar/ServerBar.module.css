@@ -36,6 +36,19 @@
   z-index: 100;
 }
 
+.ghostWrapper {
+  width: 0px;
+  height: 0px;
+  position: relative;
+  margin-top: -8px; /* counter the row gap*/
+  display: flex;
+  justify-content: center;
+}
+
+.ghostWrapper > .droppable {
+  top: 4px;
+}
+
 .listItem:has(.folder) > .droppable {
   height: 28px;
 }
