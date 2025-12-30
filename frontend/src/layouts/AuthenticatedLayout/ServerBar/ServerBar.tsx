@@ -31,6 +31,8 @@ import Draggable, {
 } from "../../../components/dragndrop/Draggable";
 import StyleComposer from "../../../utils/StyleComposer";
 import { DISCOVERY_LAYOUT_PATH, USER_LAYOUT_PATH } from "../../../constants";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const restrictSortableToOriginalPosition: TransformOverride = (transform) => {
   void transform;
@@ -239,6 +241,32 @@ function ServerFolder({
   );
 }
 
+function LoadingServerBar() {
+  return (
+    <nav className={styles.navContainer}>
+      <ul className={styles.list}>
+        <li className={styles.listItem}>
+          <Skeleton width='40px' height='40px' />
+        </li>
+        <div className={styles.separator}></div>
+        {Array(5)
+          .fill(0)
+          .map((_, index) => (
+            <li className={styles.listItem}>
+              <Skeleton key={index} width='40px' height='40px' />
+            </li>
+          ))}
+        <li className={styles.listItem}>
+          <Skeleton width='40px' height='40px' />
+        </li>
+        <li className={styles.listItem}>
+          <Skeleton width='40px' height='40px' />
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
 /**
  * A sidebar with a button to navigate to user Layout path, a button that
  * navigates to the server discovery page, a sortable list of icon buttons
@@ -256,7 +284,10 @@ function ServerBar() {
     isLoading,
   } = useServerSelectionContext();
 
-  // TODO if isLoading show a loading state
+  if (isLoading) {
+    return <LoadingServerBar />;
+  }
+
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<DragType>(null);
   const [isAddServerSelected, setIsAddServerSelected] = useState(false);

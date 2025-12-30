@@ -1,9 +1,6 @@
 import React from "react";
 import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
-import {
-  useServerSelectionContext,
-  type Server,
-} from "../../../contexts/ServerSelectionContext";
+import { useServerSelectionContext } from "../../../contexts/ServerSelectionContext";
 import styles from "./ServerChannelPage.module.css";
 import sharedStyles from "../../../styles/ChannelViewer.module.css";
 
@@ -15,7 +12,7 @@ function ChannelTitleBar() {
 
 function ServerChannelPage() {
   const { getServer, selectedId } = useServerSelectionContext();
-  const { name, icon } = getServer(selectedId as string) as Server;
+  const { name, icon } = selectedId ? getServer(selectedId)! : { name: "" };
 
   usePageNameDispatchContext({
     pageName: name,

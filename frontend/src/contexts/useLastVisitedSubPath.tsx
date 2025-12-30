@@ -5,6 +5,7 @@ type UseLastVisitedPathProps = {
   storageKey: string;
   basePath: string;
   defaultPath: string;
+  isEnabled?: boolean
 };
 
 /**
@@ -14,16 +15,22 @@ type UseLastVisitedPathProps = {
  * @param {string} props.storageKey - The key used to store the last visited path in `localStorage`.
  * @param {string} props.basePath - The entry path that triggers redirection (e.g., '/servers/@me').
  * @param {string} props.defaultPath - The fallback path (e.g., `/servers/@me/friends`).
+ * @param {boolean} [props.isEnabled=true] - Whether the hook is enabled.
  */
 export const useLastVisitedPath = ({
   storageKey,
   basePath,
   defaultPath,
+  isEnabled = true,
 }: UseLastVisitedPathProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    if (!isEnabled) {
+      return;
+    }
+
     const regex = new RegExp(basePath + "$");
     let lastVisitedPath: string;
     const isBasePath = regex.test(location.pathname);
@@ -44,5 +51,5 @@ export const useLastVisitedPath = ({
     if (isBasePath) {
       navigate(lastVisitedPath, { replace: true });
     }
-  }, [location, storageKey, basePath, defaultPath]);
+  }, [location, storageKey, basePath, defaultPath, isEnabled]);
 };
