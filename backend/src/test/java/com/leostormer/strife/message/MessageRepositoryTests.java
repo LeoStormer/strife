@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.AbstractRepositoryTest;
 import com.leostormer.strife.channel.ChannelRepository;
@@ -36,12 +37,20 @@ public class MessageRepositoryTests extends AbstractRepositoryTest {
     @Autowired
     ChannelRepository channelRepository;
 
+    @NonNull
+    @SuppressWarnings("null")
     static ObjectId channelId;
 
+    @NonNull
+    @SuppressWarnings("null")
     static ObjectId conversationId;
 
+    @NonNull
+    @SuppressWarnings("null")
     ObjectId existingDirectMessageId;
 
+    @NonNull
+    @SuppressWarnings("null")
     ObjectId existingChannelMessageId;
 
     @BeforeAll

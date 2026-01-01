@@ -9,6 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.channel.Channel;
 import com.leostormer.strife.user.User;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor()
 public class Message {
     @Id
+    @NonNull
     private ObjectId id;
 
     /**

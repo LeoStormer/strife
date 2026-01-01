@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.bson.types.ObjectId;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.conversation.Conversation;
@@ -20,6 +21,7 @@ import com.leostormer.strife.user.friends.FriendRequestRepository;
 
 public class TestUtils {
 
+    @NonNull
     public static User createUser(String username, String password, UserRepository userRepository) {
         User user = new User();
         user.setUsername(username);
@@ -67,6 +69,7 @@ public class TestUtils {
         userRepository.save(receiver);
     }
 
+    @NonNull
     public static Server createServer(User owner, String serverName, String serverDescription, ServerRepository serverRepository, MemberRepository memberRepository, Role... roles) {
         Server server = new Server();
         server.setName(serverName);
@@ -85,13 +88,17 @@ public class TestUtils {
         return server;
     }
 
+    @NonNull
     public static Member createMember(User user, Server server, MemberRepository memberRepository) {
         return memberRepository.save(Member.from(user, server));
     }
+
+    @NonNull
     public static Member createMember(User user, Server server, MemberRepository memberRepository, Role... roles) {
         return memberRepository.save(Member.from(user, server, roles));
     }
 
+    @NonNull
     public static Member createBannedMember(User user, Server server, String banReason, MemberRepository memberRepository) {
         return memberRepository.save(Member.createBannedMember(user, server, banReason));
     }

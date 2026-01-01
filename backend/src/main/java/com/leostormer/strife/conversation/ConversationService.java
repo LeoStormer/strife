@@ -77,6 +77,7 @@ public class ConversationService {
     }
 
     @Transactional
+    @SuppressWarnings("null")
     public void deleteConversation(ObjectId conversationId) {
         messageRepository.deleteAllByChannel(conversationId);
         conversationRepository.deleteById(conversationId);
@@ -124,6 +125,7 @@ public class ConversationService {
         return messageRepository.insertMessage(sender, conversation, messageContent);
     }
 
+    @SuppressWarnings("null")
     public Message editMessage(User sender, ObjectId conversationId, ObjectId messageId, String messageContent) {
         Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));
@@ -140,6 +142,7 @@ public class ConversationService {
         return messageRepository.updateMessage(messageId, messageContent);
     }
 
+    @SuppressWarnings("null")
     public void deleteMessage(User sender, ObjectId conversationId, ObjectId messageId) {
         Conversation conversation = conversationRepository.findConversationById(conversationId)
                 .orElseThrow(() -> new ResourceNotFoundException(CONVERSATION_NOT_FOUND));

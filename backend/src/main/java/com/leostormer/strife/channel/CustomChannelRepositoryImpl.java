@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import com.leostormer.strife.conversation.Conversation;
@@ -37,6 +38,7 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
     }
 
     @Override
+    @SuppressWarnings("null")
     public List<ServerChannel> getVisibleServerChannels(ObjectId serverId, Member member) {
         if (member.isOwner()) { // Assumes the member is a member of the server
             return findAllByServerId(serverId);
@@ -90,6 +92,7 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
                 Conversation.class);
     }
 
+    @NonNull
     private Criteria containsGivenUsersAndOnlyGivenUsers(ObjectId... userIds) {
         List<Criteria> criteriaList = new ArrayList<>();
         criteriaList.add(Criteria.where("numUsers").is(userIds.length));

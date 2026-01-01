@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
@@ -25,14 +26,24 @@ public class InviteManagerTests extends ServerServiceTestSetup {
 
     private static final int MAX_ALLOWED_USES = 100;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String inviteId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String unlimitedInviteId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String inviteByBannedUserId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String inviteWithNoRemainingUsesId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String expiredInviteId;
 
     @BeforeEach

@@ -63,6 +63,7 @@ public interface ChannelManager extends IUsesServerRepository {
         return channelRepository.getVisibleServerChannels(serverId, member);
     }
 
+    @SuppressWarnings("null")
     default ServerChannel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
             String channelDescription, boolean isPublic) {
         ServerRepository serverRepository = getServerRepository();
@@ -82,6 +83,7 @@ public interface ChannelManager extends IUsesServerRepository {
         return createChannel(server, channelName, channelCategory, channelDescription, isPublic);
     }
 
+    @SuppressWarnings("null")
     default void updateChannelSettings(User commandUser, ObjectId serverId, ObjectId channelId,
             ChannelUpdateOperation operation) {
         ServerRepository serverRepository = getServerRepository();
@@ -116,6 +118,7 @@ public interface ChannelManager extends IUsesServerRepository {
     }
 
     @Transactional
+    @SuppressWarnings("null")
     default void removeChannel(User user, ObjectId serverId, ObjectId... channelIds) {
         Member member = getServerRepository().getMember(serverId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));

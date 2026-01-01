@@ -1,7 +1,6 @@
 package com.leostormer.strife.server;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
@@ -10,11 +9,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.channel.ChannelRepository;
-import com.leostormer.strife.member.Member;
 import com.leostormer.strife.member.MemberRepository;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.server.server_channel.ServerChannel;
@@ -34,32 +33,60 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
     @Autowired
     protected ServerService serverService;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId existingServerId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId channel1Id;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId channel2Id;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId adminOnlyPrivateChannelId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId ownerRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId grandAdministratorRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId moderatorRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId defaultRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User owner;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User moderator;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User basicMemberUser;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User noPermissionsUser;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User nonMemberUser;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User bannedUser;
 
     @BeforeAll
@@ -78,6 +105,7 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
     }
 
     @BeforeEach
+    @SuppressWarnings("null")
     public void setup() {
         Role grandAdministratorRole = new Role(new ObjectId(), "Grand Administrator", 2, Permissions.ALL);
         grandAdministratorRoleId = grandAdministratorRole.getId();

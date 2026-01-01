@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -20,6 +21,7 @@ public class CustomUserRepositoryImpl implements CustomUserRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @NonNull
     private Update getUpdateObject(UserUpdate userUpdate) {
         Update update = new Update();
 

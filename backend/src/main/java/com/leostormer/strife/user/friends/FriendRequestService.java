@@ -74,6 +74,7 @@ public class FriendRequestService {
      *                                     to receiver, or receiver has
      *                                     been blocked
      */
+    @SuppressWarnings("null")
     public FriendRequest acceptFriendRequest(User receiver, ObjectId requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException(FRIEND_REQUEST_NOT_FOUND));
@@ -104,6 +105,7 @@ public class FriendRequestService {
      *                                     blocked by the other user in
      *                                     the request
      */
+    @SuppressWarnings("null")
     public User removeFriendRequest(User user, ObjectId requestId) {
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException(FRIEND_REQUEST_NOT_FOUND));

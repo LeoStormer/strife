@@ -77,6 +77,7 @@ public interface RoleManager extends IUsesServerRepository {
         return mergedList;
     }
 
+    @SuppressWarnings("null")
     default void updateRoles(User user, ObjectId serverId, RoleUpdateOperation operation) {
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)

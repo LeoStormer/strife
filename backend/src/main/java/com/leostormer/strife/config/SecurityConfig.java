@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.lang.NonNull;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -90,12 +91,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory mongoDatabaseFactory) {
+    public MongoTransactionManager mongoTransactionManager(@NonNull MongoDatabaseFactory mongoDatabaseFactory) {
         return new MongoTransactionManager(mongoDatabaseFactory);
     }
 
     @Bean
-    public MongoTemplate mongoTemplate(MongoDatabaseFactory mongoDatabaseFactory) {
+    public MongoTemplate mongoTemplate(@NonNull MongoDatabaseFactory mongoDatabaseFactory) {
         return new MongoTemplate(mongoDatabaseFactory);
     }
 

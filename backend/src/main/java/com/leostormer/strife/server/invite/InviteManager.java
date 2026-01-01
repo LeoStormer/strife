@@ -24,6 +24,7 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
     public InviteRepository getInviteRepository();
 
     @Transactional
+    @SuppressWarnings("null")
     default void joinByInvite(User user, String inviteId) {
         InviteRepository inviteRepository = getInviteRepository();
         MemberService memberService = getMemberService();
@@ -60,6 +61,7 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
         return getInviteRepository().findAllByServer(serverId);
     }
 
+    @SuppressWarnings("null")
     default Invite createInvite(User commandUser, ObjectId serverId, long expiresAfter, int maxUses) {
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)
@@ -75,6 +77,7 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
         return getInviteRepository().save(new Invite(commandUser, server, expiresAfter, maxUses));
     }
 
+    @SuppressWarnings("null")
     default void deleteInvite(User commandUser, ObjectId serverId, String inviteId) {
         Member member = getServerRepository().getMember(serverId, commandUser.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));

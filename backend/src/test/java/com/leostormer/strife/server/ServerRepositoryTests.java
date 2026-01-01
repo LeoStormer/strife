@@ -50,6 +50,7 @@ public class ServerRepositoryTests extends AbstractRepositoryTest {
     }
 
     @BeforeEach
+    @SuppressWarnings("null")
     public void setup() {
         owner = createUser("User1");
         basicMemberUser = createUser("User2");
@@ -131,6 +132,7 @@ public class ServerRepositoryTests extends AbstractRepositoryTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     public void shouldUpdateRoles() {
         Server oldServer = serverRepository.findById(existingServerId).get();
         Map<ObjectId, Role> oldRoles = oldServer.getRoles();
