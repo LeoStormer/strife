@@ -10,13 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.server.IUsesServerRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.server.ServerRepository;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.user.User;
 
@@ -65,10 +65,11 @@ public interface ChannelManager extends IUsesServerRepository {
 
     default ServerChannel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
             String channelDescription, boolean isPublic) {
-        Server server = getServerRepository().findById(serverId)
+        ServerRepository serverRepository = getServerRepository();
+        Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member member = server.getMember(user)
+        Member member = serverRepository.getMember(serverId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -86,7 +87,7 @@ public interface ChannelManager extends IUsesServerRepository {
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
-        Member member = server.getMember(commandUser.getId())
+        Member member = serverRepository.getMember(serverId, commandUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         ChannelRepository channelRepository = getChannelRepository();

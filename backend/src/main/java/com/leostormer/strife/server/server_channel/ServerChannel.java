@@ -6,9 +6,9 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import com.leostormer.strife.channel.Channel;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.user.User;
 
@@ -64,7 +64,7 @@ public class ServerChannel extends Channel {
             permissions |= rolePermissions.getOrDefault(roleId, Permissions.NONE);
         }
 
-        return permissions | userPermissions.getOrDefault(member.getUserId(), Permissions.NONE);
+        return permissions | userPermissions.getOrDefault(member.getUser().getId(), Permissions.NONE);
     }
 
     public void setPermissions(Role role, long permissions) {

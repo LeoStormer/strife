@@ -38,10 +38,14 @@ public class UserController {
 
     @GetMapping("/servers")
     public ResponseEntity<List<ServerView>> getJoinedServers(Principal principal) {
-        // TODO: Implement fetching joined servers
-        return ResponseEntity.ok(List.of());
+        User user = userService.getUser(principal);
+        try {
+            return ResponseEntity.ok(userService.getJoinedServers(user).stream().map(ServerView::new).toList());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
-    
+
     @GetMapping("/{userId}")
     public ResponseEntity<UserView> getUserById(@PathVariable ObjectId userId) {
         Optional<User> optionalUser = userService.getUserById(userId);

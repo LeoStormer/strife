@@ -15,12 +15,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractRepositoryTest;
+import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.channel.ChannelRepository;
+import com.leostormer.strife.member.Member;
+import com.leostormer.strife.member.MemberRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.server.ServerRepository;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
@@ -28,13 +30,13 @@ import com.leostormer.strife.user.UserRepository;
 public class ChannelRepositoryTests extends AbstractRepositoryTest {
     static Server server;
 
-    static User owner;
+    static Member owner;
 
-    static User moderator;
+    static Member moderator;
 
-    static User basicMemberUser;
+    static Member basicMember;
 
-    static User specialMemberUser;
+    static Member specialMember;
 
     static Role moderatorRole;
 
@@ -45,48 +47,34 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
     @Autowired
     ChannelRepository channelRepository;
 
-    private static User createUser(String username, UserRepository userRepository) {
-        User user = new User();
-        user.setUsername(username);
-        return userRepository.save(user);
-    }
-
     @BeforeAll
     public static void setupServer(@Autowired ServerRepository serverRepository,
-            @Autowired UserRepository userRepository) {
-        owner = createUser("owner", userRepository);
-        moderator = createUser("moderator", userRepository);
-        basicMemberUser = createUser("basic-member", userRepository);
-        specialMemberUser = createUser("specialMember", userRepository);
+            @Autowired UserRepository userRepository, @Autowired MemberRepository memberRepository) {
+        User ownerUser = TestUtils.createUser("owner", "", userRepository);
+        User moderatorUser = TestUtils.createUser("moderator", "", userRepository);
+        User basicMemberUser = TestUtils.createUser("basic-member", "", userRepository);
+        User specialMemberUser = TestUtils.createUser("specialMember", "", userRepository);
 
-        Role ownerRole = new Role(new ObjectId(), "Owner", Integer.MAX_VALUE, Permissions.ALL);
         moderatorRole = new Role(new ObjectId(), "Moderator", 1,
                 Permissions.revokePermission(Permissions.ALL, PermissionType.MANAGE_SERVER));
         Role defaultRole = new Role(new ObjectId(), "Member", 0,
                 Permissions.getPermissions(PermissionType.VIEW_CHANNELS, PermissionType.SEND_MESSAGES));
-        server = new Server();
-        server.setName("Test Server");
-        server.setDescription("A server for testing");
-        server.setRoles(Map.of(
-                ownerRole.getId(), ownerRole,
-                moderatorRole.getId(), moderatorRole,
-                defaultRole.getId(), defaultRole));
 
-        Member ownerMember = Member.fromUser(owner, ownerRole);
-        ownerMember.setOwner(true);
-        server.setMembers(List.of(
-                ownerMember,
-                Member.fromUser(moderator, moderatorRole),
-                Member.fromUser(basicMemberUser, defaultRole),
-                Member.fromUser(specialMemberUser)));
-        server = serverRepository.save(server);
+        server = TestUtils.createServer(ownerUser, "Test Server", "A server for testing", serverRepository,
+                memberRepository, moderatorRole, defaultRole);
+
+        owner = memberRepository.findByUserIdAndServerId(ownerUser.getId(), server.getId()).get();
+        moderator = TestUtils.createMember(moderatorUser, server, memberRepository, moderatorRole);
+        basicMember = TestUtils.createMember(basicMemberUser, server, memberRepository, defaultRole);
+        specialMember = TestUtils.createMember(specialMemberUser, server, memberRepository, defaultRole);
     }
 
     @AfterAll
     public static void cleanupServer(@Autowired ServerRepository serverRepository,
-            @Autowired UserRepository userRepository) {
+            @Autowired UserRepository userRepository, @Autowired MemberRepository memberRepository) {
         serverRepository.deleteAll();
         userRepository.deleteAll();
+        memberRepository.deleteAll();
     }
 
     @BeforeEach
@@ -106,7 +94,7 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
 
         ServerChannel specialChannel = ServerChannel.builder().server(server).name("special-channel")
                 .description("A special channel for testing").isPublic(false)
-                .userPermissions(Map.of(specialMemberUser.getId(), Permissions.ALL)).build();
+                .userPermissions(Map.of(specialMember.getUser().getId(), Permissions.ALL)).build();
         specialChannelId = channelRepository.save(specialChannel).getId();
 
     }
@@ -153,19 +141,15 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
     @Test
     public void shouldGetVisibleChannels() {
         ObjectId serverId = server.getId();
-        Member ownerMember = server.getMember(owner).get();
-        List<ServerChannel> ownerView = channelRepository.getVisibleServerChannels(serverId, ownerMember);
+        List<ServerChannel> ownerView = channelRepository.getVisibleServerChannels(serverId, owner);
         assertTrue(ownerView.size() == 5);
 
-        Member moderatorMember = server.getMember(moderator).get();
-        List<ServerChannel> moderatorView = channelRepository.getVisibleServerChannels(serverId, moderatorMember);
+        List<ServerChannel> moderatorView = channelRepository.getVisibleServerChannels(serverId, moderator);
         assertTrue(moderatorView.size() == 4);
 
-        Member basicMember = server.getMember(basicMemberUser).get();
         List<ServerChannel> basicMemberView = channelRepository.getVisibleServerChannels(serverId, basicMember);
         assertTrue(basicMemberView.size() == NUM_PUBLIC_CHANNELS);
 
-        Member specialMember = server.getMember(specialMemberUser).get();
         List<ServerChannel> specialMemberView = channelRepository.getVisibleServerChannels(serverId, specialMember);
         assertTrue(specialMemberView.size() == 4);
         assertTrue(specialMemberView.stream().noneMatch(c -> c.getName().equals("admin-only")));

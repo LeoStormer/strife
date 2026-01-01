@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.bson.types.ObjectId;
 
 import com.leostormer.strife.conversation.Conversation;
-import com.leostormer.strife.server.member.Member;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.server.server_channel.ChannelUpdateOperation;
 import com.leostormer.strife.server.server_channel.ServerChannel;
 

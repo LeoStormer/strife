@@ -14,9 +14,9 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import com.leostormer.strife.conversation.Conversation;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.server_channel.ChannelUpdateOperation;
 import com.leostormer.strife.server.server_channel.ServerChannel;
 
@@ -49,7 +49,7 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
         List<Criteria> hasPermissions = new ArrayList<>();
         hasPermissions.add(Criteria.where("isPublic").is(true));
         hasPermissions
-                .add(Criteria.where("userPermissions." + member.getUserId().toHexString()).bits().anySet(bitPositions));
+                .add(Criteria.where("userPermissions." + member.getUser().getId().toHexString()).bits().anySet(bitPositions));
         member.getRoleIds().forEach(id -> {
             hasPermissions.add(Criteria.where("rolePermissions." + id.toHexString()).bits().anySet(bitPositions));
         });

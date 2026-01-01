@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.MemberRoleUpdateOperation;
 import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.message.MessageView;
 import com.leostormer.strife.server.invite.InviteView;
-import com.leostormer.strife.server.member.MemberRoleUpdateOperation;
 import com.leostormer.strife.server.role.RoleUpdateOperation;
 import com.leostormer.strife.server.server_channel.ChannelUpdateOperation;
 import com.leostormer.strife.server.server_channel.ChannelView;
@@ -295,7 +295,7 @@ public class ServerController {
         User commandUser = userService.getUser(principal);
 
         try {
-            serverService.changeNickName(commandUser, memberId, serverId, newNickname);
+            serverService.changeNickname(commandUser, memberId, serverId, newNickname);
             return ResponseEntity.ok().body("Member nickname changed successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());

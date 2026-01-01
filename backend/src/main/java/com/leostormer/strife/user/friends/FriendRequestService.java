@@ -57,7 +57,7 @@ public class FriendRequestService {
             throw new UnauthorizedActionException("Friend request already exists");
         }
 
-        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).build();
+        FriendRequest friendRequest = new FriendRequest(sender, receiver);
         return friendRequestRepository.save(friendRequest);
     }
 

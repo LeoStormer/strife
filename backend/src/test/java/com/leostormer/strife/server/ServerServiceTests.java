@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.server.member.Member;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.server.server_channel.ServerChannel;
 
 public class ServerServiceTests extends ServerServiceTestSetup {
@@ -107,8 +107,8 @@ public class ServerServiceTests extends ServerServiceTestSetup {
     public void shouldTransferServerOwnerShip() {
         serverService.transferServerOwnership(owner, moderator, existingServerId);
         Server server = serverRepository.findById(existingServerId).get();
-        Member modMember = server.getMember(moderator).get();
-        Member oldOwner = server.getMember(owner).get();
+        Member modMember = serverRepository.getMember(existingServerId, moderator.getId()).get();
+        Member oldOwner = serverRepository.getMember(existingServerId, owner.getId()).get();
         assertEquals(moderator.getId(), server.getOwner().getId());
         assertTrue(modMember.isOwner());
         assertFalse(oldOwner.isOwner());

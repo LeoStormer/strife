@@ -10,24 +10,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.Member;
+import com.leostormer.strife.member.MemberService;
+import com.leostormer.strife.server.IUsesMemberService;
 import com.leostormer.strife.server.IUsesServerRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
-import com.leostormer.strife.server.member.Member;
+import com.leostormer.strife.server.ServerRepository;
 import com.leostormer.strife.user.User;
 
-public interface InviteManager extends IUsesServerRepository {
+public interface InviteManager extends IUsesServerRepository, IUsesMemberService {
     public InviteRepository getInviteRepository();
 
     @Transactional
     default void joinByInvite(User user, String inviteId) {
         InviteRepository inviteRepository = getInviteRepository();
+        MemberService memberService = getMemberService();
         Invite invite = inviteRepository.findById(inviteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invite not found"));
 
         Server server = invite.getServer();
-        Optional<Member> member = server.getMember(user);
+        Optional<Member> member = memberService.getMember(server.getId(), user.getId());
         if (member.isPresent()) { // User is either already a member, or they are banned
             if (member.get().isBanned()) {
                 throw new UnauthorizedActionException(USER_IS_BANNED);
@@ -41,7 +45,7 @@ public interface InviteManager extends IUsesServerRepository {
 
         invite.decrementUsesIfLimited();
         inviteRepository.save(invite);
-        getServerRepository().addMember(server.getId(), Member.fromUser(user));
+        memberService.joinServer(user, server);
     }
 
     default List<Invite> getInvites(User commandUser, ObjectId serverId) {
@@ -57,9 +61,10 @@ public interface InviteManager extends IUsesServerRepository {
     }
 
     default Invite createInvite(User commandUser, ObjectId serverId, long expiresAfter, int maxUses) {
-        Server server = getServerRepository().findById(serverId)
+        ServerRepository serverRepository = getServerRepository();
+        Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
-        Member member = server.getMember(commandUser.getId())
+        Member member = serverRepository.getMember(serverId, commandUser.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
         if (member.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);

@@ -4,12 +4,12 @@ import org.bson.types.ObjectId;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.server.IUsesServerRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.server.ServerRepository;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.user.User;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
@@ -82,7 +82,7 @@ public interface RoleManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member member = server.getMember(user.getId())
+        Member member = serverRepository.getMember(serverId, user.getId())
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (member.isBanned())

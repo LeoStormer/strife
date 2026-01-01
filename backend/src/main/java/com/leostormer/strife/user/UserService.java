@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.leostormer.strife.conversation.ConversationService;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.MemberService;
+import com.leostormer.strife.server.Server;
 import com.leostormer.strife.user.friends.FriendRequest;
 import com.leostormer.strife.user.friends.FriendRequestService;
 
@@ -44,6 +46,12 @@ public class UserService implements UserDetailsService {
     private final ConversationService conversationService;
     @Autowired
     private SecurityContextRepository securityContextRepository;
+    @Autowired
+    private final MemberService memberService;
+
+    public List<Server> getJoinedServers(User user) {
+        return memberService.getServersByUserId(user.getId());
+    }
 
     public User getUser(Principal principal) {
         // currently authenticated principal should always correspond to an

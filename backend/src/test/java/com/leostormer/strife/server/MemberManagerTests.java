@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.server.member.Member;
-import com.leostormer.strife.server.member.MemberRoleUpdateOperation;
+import com.leostormer.strife.member.Member;
+import com.leostormer.strife.member.MemberRoleUpdateOperation;
 
 public class MemberManagerTests extends ServerServiceTestSetup {
     @Test
@@ -162,53 +162,53 @@ public class MemberManagerTests extends ServerServiceTestSetup {
 
     @Test
     public void shouldChangeNicknameOfSelf() {
-        String newNickName = "New Name";
-        serverService.changeNickName(basicMemberUser, basicMemberUser.getId(), existingServerId, newNickName);
+        String newNickname = "New Name";
+        serverService.changeNickname(basicMemberUser, basicMemberUser.getId(), existingServerId, newNickname);
         Member member = serverRepository.getMember(existingServerId, basicMemberUser.getId()).get();
-        assertTrue(member.getNickName().equals(newNickName));
+        assertTrue(member.getNickname().equals(newNickname));
     }
 
     @Test
     public void shouldNotChangeNicknameOfSelfWithoutPermision() {
         String nickname = "New Name";
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(noPermissionsUser, noPermissionsUser.getId(), existingServerId, nickname);
+            serverService.changeNickname(noPermissionsUser, noPermissionsUser.getId(), existingServerId, nickname);
         });
     }
 
     @Test
     public void shouldChangeNicknameOfLowerRankedMember() {
-        String newNickName = "New Name";
-        serverService.changeNickName(moderator, basicMemberUser.getId(), existingServerId, newNickName);
+        String newNickname = "New Name";
+        serverService.changeNickname(moderator, basicMemberUser.getId(), existingServerId, newNickname);
         Member member = serverRepository.getMember(existingServerId, basicMemberUser.getId()).get();
-        assertTrue(member.getNickName().equals(newNickName));
+        assertTrue(member.getNickname().equals(newNickname));
     }
 
     @Test
     public void shouldNotChangeNicknameOfOthersWithoutPermission() {
-        String newNickName = "New Name";
+        String newNickname = "New Name";
 
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(noPermissionsUser, basicMemberUser.getId(), existingServerId, newNickName);
+            serverService.changeNickname(noPermissionsUser, basicMemberUser.getId(), existingServerId, newNickname);
         });
         Member member = serverRepository.getMember(existingServerId, basicMemberUser.getId()).get();
-        assertTrue(member.getNickName().equals(basicMemberUser.getUsername()));
+        assertTrue(member.getNickname().equals(basicMemberUser.getUsername()));
 
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(basicMemberUser, noPermissionsUser.getId(), existingServerId, newNickName);
+            serverService.changeNickname(basicMemberUser, noPermissionsUser.getId(), existingServerId, newNickname);
         });
         Member noPermissionsMember = serverRepository.getMember(existingServerId, noPermissionsUser.getId()).get();
-        assertTrue(noPermissionsMember.getNickName().equals(noPermissionsUser.getUsername()));
+        assertTrue(noPermissionsMember.getNickname().equals(noPermissionsUser.getUsername()));
     }
 
     @Test
     public void shouldNotChangeNicknameOfMemberWithHigherRole() {
-        String newNickName = "New Name";
+        String newNickname = "New Name";
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(moderator, owner.getId(), existingServerId, newNickName);
+            serverService.changeNickname(moderator, owner.getId(), existingServerId, newNickname);
         });
         Member ownerMember = serverRepository.getMember(existingServerId, owner.getId()).get();
-        assertTrue(ownerMember.getNickName().equals(owner.getUsername()));
+        assertTrue(ownerMember.getNickname().equals(owner.getUsername()));
     }
 
     @Test

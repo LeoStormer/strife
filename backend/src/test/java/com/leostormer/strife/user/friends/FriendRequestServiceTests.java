@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
@@ -37,19 +38,9 @@ public class FriendRequestServiceTests extends AbstractIntegrationTest {
     static User user2;
 
     @BeforeAll
-    static void setUp(@Autowired UserService userService) {
-        user1 = new User();
-        user1.setUsername("testuser1");
-        user1.setEmail("testuser1@someEmail.com");
-        user1.setPassword("password123");
-
-        user2 = new User();
-        user2.setUsername("testuser2");
-        user1.setEmail("testuser2@someEmail.com");
-        user2.setPassword("password1234");
-
-        user1 = userService.registerUser(user1);
-        user2 = userService.registerUser(user2);
+    static void setUp(@Autowired UserRepository userRepository) {
+        user1 = TestUtils.createUser("testuser1", "password123", userRepository);
+        user2 = TestUtils.createUser("testuser2", "password1234", userRepository);
     }
 
     @AfterAll
