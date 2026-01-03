@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosRetry from "axios-retry";
 import Cookies from "js-cookie";
 
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL
@@ -12,6 +13,12 @@ const api = axios.create({
   timeout: 5000,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
+});
+
+axiosRetry(api, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  shouldResetTimeout: true,
 });
 
 api.interceptors.request.use((config) => {
