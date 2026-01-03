@@ -85,15 +85,14 @@ const NavItem = <T extends ElementType = "button">({
  */
 function ServerBar() {
   const { isLoading } = useServerSelectionContext();
-
-  if (isLoading) {
-    return <LoadingServerBar />;
-  }
-
   const [isAddServerSelected, setIsAddServerSelected] = useState(false);
   const location = useLocation();
   const isDirectMessagesSelected = location.pathname.includes(USER_LAYOUT_PATH);
   const isDiscoverySelected = location.pathname.includes(DISCOVERY_LAYOUT_PATH);
+
+  if (isLoading) {
+    return <LoadingServerBar />;
+  }
 
   return (
     <nav className={styles.navContainer}>

@@ -52,18 +52,7 @@ export const getServerIdFromPath = (path: string) => {
 };
 
 const getServersFromApi = async (): Promise<Server[]> => {
-  if (process.env.NODE_ENV === "production") {
-    return await api.get("/user/servers");
-  }
-
-  //TODO: Remove after implementing
-  return [
-    { id: "1", name: "Server 1", defaultChannelId: "1" },
-    { id: "2", name: "Server 2", defaultChannelId: "1" },
-    { id: "3", name: "Server 3", defaultChannelId: "1" },
-    { id: "4", name: "Server 4", defaultChannelId: "1" },
-    { id: "5", name: "Server 5", defaultChannelId: "1" },
-  ];
+  return api.get("/api/user/servers").then((response) => response.data);
 };
 
 const FOLDER_STORAGE_KEY = "SERVERBAR_FOLDERS";
@@ -315,6 +304,11 @@ export const ServerSelectionContextProvider = ({
   };
 
   useEffect(() => {
+    // TODO: Handle errors properly
+    // currently errors are just logged to the console
+    // the user does not have any indication that something went wrong
+    // and the server bar remains in a loading state indefinitely
+    // there is currently no way to recover from this state without refreshing the page
     getServersFromApi()
       .then((serversFromApi) => {
         const userServers = getUserJoinedServers(serversFromApi);
