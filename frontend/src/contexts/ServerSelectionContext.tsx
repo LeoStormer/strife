@@ -5,8 +5,9 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
+import { HOME_PAGE_PATH } from "../constants";
 
 export type Server = {
   id: string;
@@ -169,6 +170,7 @@ export const ServerSelectionContextProvider = ({
   const selectedId =
     serverIdFromPath && servers[serverIdFromPath] ? serverIdFromPath : null;
   const [rootOrder, setRootOrder] = useState(() => getRootOrder());
+  const navigate = useNavigate();
 
   const moveItem = (
     activeId: string,
@@ -304,11 +306,6 @@ export const ServerSelectionContextProvider = ({
   };
 
   useEffect(() => {
-    // TODO: Handle errors properly
-    // currently errors are just logged to the console
-    // the user does not have any indication that something went wrong
-    // and the server bar remains in a loading state indefinitely
-    // there is currently no way to recover from this state without refreshing the page
     getServersFromApi()
       .then((serversFromApi) => {
         const userServers = getUserJoinedServers(serversFromApi);
@@ -321,7 +318,10 @@ export const ServerSelectionContextProvider = ({
         setRootOrder(reconciledRootOrder);
         setIsLoading(false);
       })
-      .catch(console.error);
+      .catch(() => {
+        alert("Server experiencing issues please come back later")
+        navigate(HOME_PAGE_PATH)
+      });
   }, []);
 
   useEffect(() => {
