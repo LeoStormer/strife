@@ -120,9 +120,10 @@ function ServerBar() {
           to={DISCOVERY_LAYOUT_PATH}
         />
       </ul>
-      {isAddServerSelected ? (
-        <AddServerModal deselectButton={() => setIsAddServerSelected(false)} />
-      ) : null}
+      <AddServerModal
+        isOpen={isAddServerSelected}
+        onClose={() => setIsAddServerSelected(false)}
+      />
     </nav>
   );
 }

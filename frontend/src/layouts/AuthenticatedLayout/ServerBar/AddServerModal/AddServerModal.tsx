@@ -1,34 +1,59 @@
-import { useState, type MouseEventHandler } from "react";
+import { useState, type JSX, type MouseEventHandler } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import styles from "./AddServerModal.module.css";
 import Modal from "../../../../components/Modal";
-
-const templates = [
-  "Gaming",
-  "Friends",
-  "Study Group",
-  "School Club",
-  "Local Community",
-  "Artists & Creators",
-] as const;
-
-type ServerCreationOptions = {
-  serverName: string;
-  chosenTemplate: (typeof templates)[number] | "None";
-  expectedSize: "small" | "large";
-};
+import api from "../../../../api";
+import type { ModalProps } from "../../../../components/Modal/Modal";
+import { Link } from "react-router-dom";
+import { SERVER_DISCOVERY_PATH } from "../../../../constants";
 
 function Header({ title, subheader }: { title: string; subheader: string }) {
   return (
-    <div className={styles.header}>
+    <header className={styles.header}>
       <h2 className={styles.headerTitle}>{title}</h2>
       <p className={styles.subheader}>{subheader} </p>
-    </div>
+    </header>
   );
 }
 
-function LandingContent() {
+const serverCreationSchema = z.object({
+  serverName: z.string().max(100).nonempty("This field is required"),
+});
+
+type ServerCreationForm = z.infer<typeof serverCreationSchema>;
+
+type SwappableFormProps = Pick<JSX.IntrinsicElements["form"], "inert"> & {
+  swapForm: VoidFunction;
+  closeModal?: VoidFunction;
+};
+
+function ServerCreationForm({ swapForm, ...formProps }: SwappableFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ServerCreationForm>({
+    resolver: zodResolver(serverCreationSchema),
+  });
+
+  const onSubmit: SubmitHandler<ServerCreationForm> = (data) => {
+    console.log(data);
+
+    // api.post(`/api/server?serverName=${data.serverName}`).then((server) => {
+
+    // }).catch(err => {
+    //   console.log(err);
+    // })
+  };
+
   return (
-    <>
+    <form
+      className={styles.form}
+      onSubmit={handleSubmit(onSubmit)}
+      {...formProps}
+    >
       <Header
         title='Create Your Server'
         subheader={
@@ -36,52 +61,115 @@ function LandingContent() {
           " Make yours and start talking."
         }
       />
-      <div className={styles.scrollable}>
-        <button key={'No Template'} className={styles.button}>Create My Own</button>
-        <h4 key={'Subheader'} className={styles.subheader}>Start from a template</h4>
-        {templates.map((template: string) => (
-          <button key={template} className={styles.button}>{template}</button>
-        ))}
-      </div>
+      <label htmlFor='serverName'>Server Name</label>
+      <input type='text' {...register("serverName")} />
+      {errors.serverName ? errors.serverName.message : null}
+      <button type='submit' className={styles.button}>
+        {isSubmitting ? "Creating Server..." : "Create Server"}
+      </button>
       <h3>Have an invite already?</h3>
-      <button className={styles.button}>Join A Server</button>
-    </>
+      <button type='button' className={styles.button} onClick={swapForm}>
+        Join A Server
+      </button>
+    </form>
   );
 }
 
-function JoinServerContent() {
+const inviteRegex =
+  /^(?:https:\/\/strife\.com\/)?([a-f0-9]{24}|[a-z0-9-]{1,25})$/;
+const joinServerSchema = z.object({
+  invite: z
+    .string()
+    .nonempty("This field is required")
+    .refine(
+      (s) => {
+        return inviteRegex.test(s);
+      },
+      { error: "Please enter a valid invite" },
+    ),
+});
+
+type JoinServerForm = z.infer<typeof joinServerSchema>;
+
+function JoinServerForm({
+  swapForm,
+  closeModal,
+  ...formProps
+}: SwappableFormProps) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<JoinServerForm>({
+    resolver: zodResolver(joinServerSchema),
+  });
+
+  const onSubmit: SubmitHandler<JoinServerForm> = (data) => {
+    const inviteId = data.invite.match(inviteRegex)?.[1];
+    console.log(inviteId);
+
+    // api.post(`/api/server/join-by-invite?inviteId=${inviteId}`).then(() => {
+
+    // }).catch(err => {
+    //   console.log(err)
+    // })
+  };
+
   return (
-    <>
+    <form
+      className={styles.form}
+      onSubmit={handleSubmit(onSubmit)}
+      {...formProps}
+    >
       <Header
         title='Join a Server'
         subheader='Enter an invite below to join an existing server'
       />
-      <label>Invite link</label>
-      <input type='text' required />
-      <p>Invites should look like</p>
-      <span>example</span>
-      <span>invite link example</span>
-      <span>custom invite link example</span>
-      <button>
+      <label htmlFor='invite'>Invite link</label>
+      <input type='text' {...register("invite")} />
+      {errors.invite ? errors.invite.message : null}
+      <Link to={SERVER_DISCOVERY_PATH} onClick={closeModal}>
         <h3>Dont have an invite?</h3>
         <p>Check out discoverable communities in server discovery</p>
+      </Link>
+      <button type='button' onClick={swapForm}>
+        Back
       </button>
-      <button>Back</button> <button>Join Server</button>
-    </>
+      <button type='submit'>
+        {isSubmitting ? "Joining..." : "Join Server"}
+      </button>
+    </form>
   );
 }
 
 function AddServerModal({
-  deselectButton,
-}: {
-  deselectButton: MouseEventHandler;
-}) {
-  // TODO: Look up how to make multi-stage forms
+  isOpen,
+  onClose,
+}: Pick<ModalProps, "isOpen" | "onClose">) {
+  const [activeForm, setActiveForm] = useState<"create" | "join">("create");
+
+  const closeModal = () => {
+    onClose?.();
+    setTimeout(() => setActiveForm("create"), 200);
+  };
+
   return (
-    <Modal className={styles.background} onClick={deselectButton}>
-      <div className={styles.container} onClick={(e) => e.stopPropagation()}>
-        <LandingContent />
-      </div>
+    <Modal
+      data-selected-form={activeForm}
+      className={styles.container}
+      isOpen={isOpen}
+      onClose={closeModal}
+    >
+      <ServerCreationForm
+        swapForm={() => setActiveForm("join")}
+        closeModal={closeModal}
+        inert={activeForm === "join"}
+      />
+      <JoinServerForm
+        swapForm={() => setActiveForm("create")}
+        closeModal={closeModal}
+        inert={activeForm === "create"}
+      />
     </Modal>
   );
 }
