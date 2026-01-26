@@ -8,6 +8,7 @@ import api from "../../../../api";
 import type { ModalProps } from "../../../../components/Modal/Modal";
 import { Link } from "react-router-dom";
 import { SERVER_DISCOVERY_PATH } from "../../../../constants";
+import Icon from "../../../../components/Icon";
 
 function Header({ title, subheader }: { title: string; subheader: string }) {
   return (
@@ -129,6 +130,7 @@ function JoinServerForm({
       <input type='text' {...register("invite")} />
       {errors.invite ? errors.invite.message : null}
       <Link to={SERVER_DISCOVERY_PATH} onClick={closeModal}>
+        <Icon name="discover" />
         <h3>Dont have an invite?</h3>
         <p>Check out discoverable communities in server discovery</p>
       </Link>

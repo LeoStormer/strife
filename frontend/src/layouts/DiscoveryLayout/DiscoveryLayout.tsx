@@ -10,7 +10,7 @@ const PAGE_NAME = "Discovery";
 function DiscoveryLayout() {
   usePageNameDispatchContext({
     pageName: PAGE_NAME,
-    iconProps: { type: "svg", name: "compass" },
+    iconProps: { type: "svg", name: "discover" },
   });
 
   useLastVisitedPath({

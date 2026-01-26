@@ -116,7 +116,7 @@ function ServerBar() {
           as={Link}
           tooltipText='Discover'
           isSelected={isDiscoverySelected}
-          iconName='compass'
+          iconName='discover'
           to={DISCOVERY_LAYOUT_PATH}
         />
       </ul>

@@ -17,10 +17,7 @@
 <symbol fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16" id="chevron-up">
   <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708z"></path>
 </symbol>
-<symbol fill="currentColor" class="bi bi-compass" viewBox="0 0 16 16" id="compass">
-  <path d="M8 16.016a7.5 7.5 0 0 0 1.962-14.74A1 1 0 0 0 9 0H7a1 1 0 0 0-.962 1.276A7.5 7.5 0 0 0 8 16.016m6.5-7.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0"></path>
-  <path d="m6.94 7.44 4.95-2.83-2.83 4.95-4.949 2.83 2.828-4.95z"></path>
-</symbol>
+<symbol viewBox="0 0 24 24" id="discover"><path fill="currentColor" d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10s10-4.486 10-10S17.514 2 12 2m3 13l-8 2l2-8l8-2z"></path><circle cx="12" cy="12" r="2" fill="currentColor"></circle></symbol>
 <symbol fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16" id="facebook">
   <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"></path>
 </symbol>

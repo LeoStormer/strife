@@ -6,7 +6,7 @@ export type IconName =
 	| "chevron-left"
 	| "chevron-right"
 	| "chevron-up"
-	| "compass"
+	| "discover"
 	| "facebook"
 	| "folder-fill"
 	| "gear-fill"
