@@ -8,8 +8,6 @@ import {
 import LoadingPage from "../components/pageComponents/LoadingPage";
 import api from "../api";
 
-type VoidFunc = () => void;
-
 export type User = {
   id: string;
   username: string;
@@ -20,7 +18,7 @@ export type User = {
 type UserContextType = {
   user: User | null;
   login: (userData: User) => void;
-  logout: VoidFunc;
+  logout: VoidFunction;
 };
 
 export const UserContext = createContext<UserContextType>({
@@ -49,7 +47,7 @@ const getStoredUserData = (): User | null => {
 };
 
 type UseAuthStatusProps = {
-  onRequestFinished: VoidFunc;
+  onRequestFinished: VoidFunction;
   logout: UserContextType["logout"];
 };
 
