@@ -16,7 +16,7 @@ import Draggable, {
   type TransformOverride,
 } from "../../../components/dragndrop/Draggable";
 import Droppable from "../../../components/dragndrop/Droppable";
-import Modal from "../../../components/Modal";
+import Portal from "../../../components/Portal";
 import Icon from "../../../components/Icon";
 import ServerIcon from "../../../components/ServerIcon";
 import {
@@ -308,7 +308,7 @@ function ServerSortableArea() {
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     }),
-    useSensor(TouchSensor)
+    useSensor(TouchSensor),
   );
 
   const serverListItems = rootOrder.map((itemId) => {
@@ -327,7 +327,7 @@ function ServerSortableArea() {
     }
     const { type, ...folder } = item;
     const serverList = folder.serverOrder.map(
-      (serverId) => getServer(serverId)!
+      (serverId) => getServer(serverId)!,
     );
     return (
       <ServerFolder
@@ -349,7 +349,7 @@ function ServerSortableArea() {
 
     if (item.type === "folder") {
       const serverItems = item.serverOrder.map(
-        (serverId) => servers[serverId] as Server
+        (serverId) => servers[serverId] as Server,
       );
       return <ServerIconDisplayGrid servers={serverItems} />;
     }
@@ -372,11 +372,11 @@ function ServerSortableArea() {
       <div className={styles.ghostWrapper}>
         <Mover moverId='Last' sourceId='last' dragType={dragType} />
       </div>
-      <Modal style={{ pointerEvents: "none" }}>
+      <Portal style={{ pointerEvents: "none" }}>
         <DragOverlay modifiers={[snapCenterToCursor]}>
           <div className={styles.dragOverlay}>{draggingServerIcon}</div>
         </DragOverlay>
-      </Modal>
+      </Portal>
     </DndContext>
   );
 }

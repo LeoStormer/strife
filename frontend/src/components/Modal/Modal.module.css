@@ -1,0 +1,31 @@
+.backdrop {
+  background-color: var(--transparent-black);
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.backdrop:has(> .container.closed) {
+  visibility: hidden;
+}
+
+.container {
+  --animation-duration: 0.2s;
+  --animation-style: ease;
+  transform: scale(1, 1);
+  transition:
+    transform var(--animation-duration) var(--animation-style),
+    visibility var(--animation-duration) allow-discrete,
+    opacity var(--animation-duration) var(--animation-style);
+}
+
+.container.closed {
+  transform: scale(0.6, 0.6);
+  opacity: 0;
+}

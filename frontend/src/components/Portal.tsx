@@ -4,14 +4,14 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-const Modal: FC<JSX.IntrinsicElements["div"]> = (props) => {
+const Portal: FC<JSX.IntrinsicElements["div"]> = (props) => {
   const modalRoot = document.getElementById("modal-root");
 
   if (!modalRoot) {
-    throw new Error("Modal root cant be found");
+    throw new Error("Portal root cant be found");
   }
 
   return createPortal(<div {...props} />, modalRoot);
 };
 
-export default Modal;
+export default Portal;
