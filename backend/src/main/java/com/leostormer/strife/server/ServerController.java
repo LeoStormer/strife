@@ -207,9 +207,8 @@ public class ServerController {
         }
     }
 
-    @PostMapping("/{serverId}/join-by-invite")
-    public ResponseEntity<String> joinServerByInvite(Principal principal, @PathVariable ObjectId serverId,
-            @RequestParam String inviteId) {
+    @PostMapping("/join-by-invite")
+    public ResponseEntity<String> joinServerByInvite(Principal principal, @RequestParam String inviteId) {
         User user = userService.getUser(principal);
         try {
             serverService.joinByInvite(user, inviteId);
