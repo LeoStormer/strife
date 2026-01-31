@@ -1,10 +1,10 @@
-
 :root {
-  --accent-color: #D00000;
+  --accent-color: #d00000;
+  --accent-color-darker: #a30000;
   --on-accent-color: #f5d9d9;
   --on-accent-color-dark: #ffb3b3;
   --on-accent-color-darker: #ff7777;
-  --transparent-black: #00000080;
+  --transparent-black: #000000bf;
   --darken: #0000001a;
   --darken-medium: #00000026;
   --darken-strong: #00000033;
@@ -13,22 +13,28 @@
   --brighten-strong: #ffffff33;
 }
 
-[data-theme = 'light'] {
+[data-theme="light"] {
   --background-color: #ffdcdc;
   --on-background-color: #000000;
   --on-background-contrast: var(--darken);
   --on-background-contrast-medium: var(--darken-medium);
   --on-background-contrast-strong: var(--darken-strong);
   --contrast-mix-color: black;
-  --border-highlight-color: color-mix(in srgb, var(--background-color) 80%, var(--contrast-mix-color) 20%);
 }
 
-[data-theme = 'dark'] {
+[data-theme="dark"] {
   --background-color: #200000;
   --on-background-color: #f5d9d9;
   --on-background-contrast: var(--brighten);
   --on-background-contrast-medium: var(--brighten-medium);
   --on-background-contrast-strong: var(--brighten-strong);
   --contrast-mix-color: white;
-  --border-highlight-color: color-mix(in srgb, var(--background-color) 80%, var(--contrast-mix-color) 20%);
+}
+
+[data-theme] {
+  --border-highlight-color: color-mix(
+    in srgb,
+    var(--background-color) 80%,
+    var(--contrast-mix-color) 20%
+  );
 }

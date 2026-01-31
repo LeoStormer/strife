@@ -18,11 +18,13 @@
 .container {
   --animation-duration: 0.2s;
   --animation-style: ease;
-  transform: scale(1, 1);
-  transition:
+  --base-transition:
     transform var(--animation-duration) var(--animation-style),
     visibility var(--animation-duration) allow-discrete,
     opacity var(--animation-duration) var(--animation-style);
+  --active-transition: var(--base-transition);
+  transform: scale(1, 1);
+  transition: var(--active-transition);
 }
 
 .container.closed {

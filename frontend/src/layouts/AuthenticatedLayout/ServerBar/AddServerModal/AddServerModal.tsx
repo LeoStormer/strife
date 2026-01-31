@@ -129,17 +129,27 @@ function JoinServerForm({
       <label htmlFor='invite'>Invite link</label>
       <input type='text' {...register("invite")} />
       {errors.invite ? errors.invite.message : null}
-      <Link to={SERVER_DISCOVERY_PATH} onClick={closeModal}>
-        <Icon name="discover" />
+      <Link
+        className={styles.link}
+        to={SERVER_DISCOVERY_PATH}
+        onClick={closeModal}
+        draggable={false}
+      >
+        <div className={styles.discoverIcon}>
+          <Icon name='discover' />
+        </div>
         <h3>Dont have an invite?</h3>
-        <p>Check out discoverable communities in server discovery</p>
+        <p>Check out discoverable communities in Server Discovery</p>
+        <Icon name='chevron-right' className={styles.chevronIcon} />
       </Link>
-      <button type='button' onClick={swapForm}>
-        Back
-      </button>
-      <button type='submit'>
-        {isSubmitting ? "Joining..." : "Join Server"}
-      </button>
+      <div className={styles.spaceBetween}>
+        <button type='button' className={styles.backButton} onClick={swapForm}>
+          Back
+        </button>
+        <button type='submit' className={styles.joinButton}>
+          {isSubmitting ? "Joining..." : "Join Server"}
+        </button>
+      </div>
     </form>
   );
 }
@@ -157,8 +167,8 @@ function AddServerModal({
 
   return (
     <Modal
+      id={styles.addServerModalContainer}
       data-selected-form={activeForm}
-      className={styles.container}
       isOpen={isOpen}
       onClose={closeModal}
     >
