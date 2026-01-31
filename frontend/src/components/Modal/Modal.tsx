@@ -2,6 +2,7 @@ import { useRef, type JSX, type MouseEventHandler } from "react";
 import Portal from "../Portal";
 import styles from "./Modal.module.css";
 import StyleComposer from "../../utils/StyleComposer";
+import Icon from "../Icon";
 
 export type ModalProps = JSX.IntrinsicElements["div"] & {
   isOpen?: boolean | undefined;
@@ -12,6 +13,7 @@ function Modal({
   isOpen = true,
   onClose,
   className,
+  children,
   ...containerProps
 }: ModalProps) {
   const mouseDownOnBackdrop = useRef(false);
@@ -50,7 +52,16 @@ function Modal({
           e.stopPropagation();
           containerProps?.onMouseUp?.(e);
         }}
-      />
+      >
+        {children}
+        <button
+          className={styles.closeButton}
+          onClick={onClose}
+          aria-label='Close Modal'
+        >
+          <Icon name='close' />
+        </button>
+      </div>
     </Portal>
   );
 }

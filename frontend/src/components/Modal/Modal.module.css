@@ -25,9 +25,36 @@
   --active-transition: var(--base-transition);
   transform: scale(1, 1);
   transition: var(--active-transition);
+  position: relative;
 }
 
 .container.closed {
   transform: scale(0.6, 0.6);
   opacity: 0;
+}
+
+.closeButton {
+  position: absolute;
+  padding: 3px;
+  top: 20px;
+  right: 24px;
+  background-color: transparent;
+  border-style: none;
+  border-radius: 4px;
+  font-size: 24px;
+  color: var(--on-background-color);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.closeButton:hover {
+  background-color: var(--on-background-contrast);
+  color: color-mix(in srgb, var(--on-background-color) 40%, var(--contrast-mix-color) 60%)
+}
+
+.closeButton > svg {
+  width: 1em;
+  height: 1em;
 }
