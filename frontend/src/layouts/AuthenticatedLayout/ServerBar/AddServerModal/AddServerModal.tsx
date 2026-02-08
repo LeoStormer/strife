@@ -30,7 +30,7 @@ type SwappableFormProps = Pick<JSX.IntrinsicElements["form"], "inert"> & {
   closeModal?: VoidFunction;
 };
 
-function ServerCreationForm({ swapForm, ...formProps }: SwappableFormProps) {
+function ServerCreationForm({ swapForm, closeModal, ...formProps }: SwappableFormProps) {
   const {
     register,
     handleSubmit,
@@ -42,11 +42,15 @@ function ServerCreationForm({ swapForm, ...formProps }: SwappableFormProps) {
   const onSubmit: SubmitHandler<ServerCreationForm> = (data) => {
     console.log(data);
 
-    // api.post(`/api/server?serverName=${data.serverName}`).then((server) => {
-
-    // }).catch(err => {
-    //   console.log(err);
-    // })
+    api
+    .post(`/api/server?serverName=${data.serverName}`)
+    .then((server) => {
+      console.log("Server created successfully", server);
+      closeModal?.();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
   };
 
   return (
@@ -109,11 +113,15 @@ function JoinServerForm({
     const inviteId = data.invite.match(inviteRegex)?.[1];
     console.log(inviteId);
 
-    // api.post(`/api/server/join-by-invite?inviteId=${inviteId}`).then(() => {
-
-    // }).catch(err => {
-    //   console.log(err)
-    // })
+    api
+      .post(`/api/server/join-by-invite?inviteId=${inviteId}`)
+      .then(() => {
+        console.log("Server joined successfully");
+        closeModal?.();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
