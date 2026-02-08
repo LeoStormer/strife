@@ -12,7 +12,6 @@ import { HOME_PAGE_PATH } from "../constants";
 export type Server = {
   id: string;
   name: string;
-  defaultChannelId: string;
   icon?: string;
   description?: string;
 };
