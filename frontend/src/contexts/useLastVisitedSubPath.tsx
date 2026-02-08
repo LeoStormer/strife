@@ -4,8 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 type UseLastVisitedPathProps = {
   storageKey: string;
   basePath: string;
-  defaultPath: string;
-  isEnabled?: boolean
+  defaultPath?: string | ((signal: AbortSignal) => Promise<string>) | undefined;
+  isEnabled?: boolean;
 };
 
 /**
@@ -27,29 +27,53 @@ export const useLastVisitedPath = ({
   const location = useLocation();
 
   useEffect(() => {
-    if (!isEnabled) {
+    if (!isEnabled || !location.pathname.includes(basePath)) {
       return;
     }
 
     const regex = new RegExp(basePath + "$");
-    let lastVisitedPath: string;
     const isBasePath = regex.test(location.pathname);
 
-    if (!location.pathname.includes(basePath)) {
+    if (!isBasePath) {
+      // just record current path as the last visited path and return
+      try {
+        localStorage.setItem(storageKey, location.pathname);
+      } catch (error) {
+        console.log(error);
+      }
       return;
     }
 
-    try {
-      lastVisitedPath = localStorage.getItem(storageKey) ?? defaultPath;
-      if (!isBasePath) {
-        localStorage.setItem(storageKey, location.pathname);
+    const controller = new AbortController();
+    const getTargetPath = async () => {
+      // get last visited sub path from storage
+      try {
+        const storedPath = localStorage.getItem(storageKey);
+        if (storedPath) {
+          return storedPath;
+        }
+      } catch (error) {
+        console.warn(error);
       }
-    } catch (error) {
-      lastVisitedPath = defaultPath;
-    }
 
-    if (isBasePath) {
-      navigate(lastVisitedPath, { replace: true });
-    }
+      // get the default path
+      if (typeof defaultPath === "function") {
+        return await defaultPath(controller.signal);
+      }
+
+      return defaultPath;
+    };
+
+    getTargetPath()
+      .then((targetPath) => {
+        if (targetPath && targetPath !== location.pathname) {
+          navigate(targetPath, { replace: true });
+        }
+      })
+      .catch(console.warn);
+
+    return () => {
+      controller.abort();
+    };
   }, [location, storageKey, basePath, defaultPath, isEnabled]);
 };
