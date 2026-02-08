@@ -53,6 +53,16 @@ public interface CustomChannelRepository {
     public List<ServerChannel> getVisibleServerChannels(ObjectId serverId, Member member);
 
     /**
+     * Returns the first <code>ServerChannel</code>'s that is visible to the given
+     * member of a server.
+     * 
+     * @param serverId the id of the server
+     * @param member
+     * @return the list of channels
+     */
+    public ServerChannel getFirstVisibleServerChannel(ObjectId serverId, Member member);
+
+    /**
      * Finds the <code>Conversation</code> with the given id.
      * 
      * @param channelId

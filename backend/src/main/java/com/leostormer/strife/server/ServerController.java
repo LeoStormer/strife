@@ -125,6 +125,21 @@ public class ServerController {
         }
     }
 
+    @GetMapping("/{serverId}/defaultChannel")
+    public ResponseEntity<ChannelView> getDefaultChannel(Principal principal, @PathVariable ObjectId serverId) {
+        User user = userService.getUser(principal);
+        try {
+            ChannelView channel = new ChannelView(serverService.getDefaultChannel(user, serverId));
+            return ResponseEntity.ok().body(channel);
+        } catch (UnauthorizedActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @PostMapping("/{serverId}/channels")
     public ResponseEntity<ChannelView> addChannel(Principal principal, @PathVariable ObjectId serverId,
             @RequestParam String name, @RequestParam String category, @RequestParam String description,

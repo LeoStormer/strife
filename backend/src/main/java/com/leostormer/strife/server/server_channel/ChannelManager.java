@@ -63,6 +63,21 @@ public interface ChannelManager extends IUsesServerRepository {
         return channelRepository.getVisibleServerChannels(serverId, member);
     }
 
+    default ServerChannel getDefaultChannel(User user, ObjectId serverId) {
+        Member member = getServerRepository().getMember(serverId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
+
+        ChannelRepository channelRepository = getChannelRepository();
+
+        if (member.isBanned())
+            throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        if (!Permissions.hasPermission(member.getPermissions(), PermissionType.VIEW_CHANNELS))
+            throw new UnauthorizedActionException("User is not authorized to view channels");
+
+        return channelRepository.getFirstVisibleServerChannel(serverId, member);
+    }
+
     @SuppressWarnings("null")
     default ServerChannel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
             String channelDescription, boolean isPublic) {
