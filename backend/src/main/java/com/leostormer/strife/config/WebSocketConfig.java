@@ -2,6 +2,7 @@ package com.leostormer.strife.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.converter.DefaultContentTypeResolver;
@@ -18,6 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    @NonNull
+    private final String[] ALLOWED_ORIGINS;
+
+    public WebSocketConfig(@Value("${app.websocket.allowed-origins}") @NonNull String[] allowedOrigins) {
+        this.ALLOWED_ORIGINS = allowedOrigins;
+    }
+
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
@@ -27,7 +36,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                //.setAllowedOrigins("*")
+                .setAllowedOrigins(ALLOWED_ORIGINS)
                 .withSockJS();
     }
 

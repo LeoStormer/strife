@@ -14,3 +14,9 @@ spring:
     mongodb:
       database: ${MONGO_DATABASE}
       uri: mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER}
+
+app:
+  websocket:
+    allowed-origins: http://localhost:3000
+  cors:
+    allowed-origins: http://localhost:3000
