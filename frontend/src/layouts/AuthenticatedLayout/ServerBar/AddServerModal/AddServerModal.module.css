@@ -3,7 +3,7 @@
     var(--base-transition),
     height var(--animation-duration) var(--animation-style);
   width: 440px;
-  height: 412px;
+  height: 440px;
   background-color: var(--background-color);
   border-radius: 16px;
   border-width: 1px;
