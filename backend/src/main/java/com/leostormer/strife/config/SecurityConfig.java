@@ -2,6 +2,7 @@ package com.leostormer.strife.config;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
@@ -33,6 +34,13 @@ import org.springframework.web.cors.CorsConfiguration;
 @EnableTransactionManagement
 public class SecurityConfig {
 
+    @NonNull
+    private final String[] ALLOWED_ORIGINS;
+
+    public SecurityConfig(@Value("${app.cors.allowed-origins}") @NonNull String[] allowedOrigins) {
+        ALLOWED_ORIGINS = allowedOrigins;
+    }
+
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -52,7 +60,7 @@ public class SecurityConfig {
                 .cors(cors -> {
                     cors.configurationSource(request -> {
                         CorsConfiguration configuration = new CorsConfiguration();
-                        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));// TODO: update for production
+                        configuration.setAllowedOrigins(Arrays.asList(ALLOWED_ORIGINS));
                         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                         configuration.setAllowedHeaders(Arrays.asList("*")); // Allow all headers
                         configuration.setAllowCredentials(true); // Allow sending cookies, needed for JSESSIONID
