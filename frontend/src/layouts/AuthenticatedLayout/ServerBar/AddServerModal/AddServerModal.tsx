@@ -167,10 +167,15 @@ function AddServerModal({
   onClose,
 }: Pick<ModalProps, "isOpen" | "onClose">) {
   const [activeForm, setActiveForm] = useState<"create" | "join">("create");
+  const [count, setCount] = useState(0);
+  const forceRemount = () => {
+    setCount(previous => previous + 1);
+  }
 
   const closeModal = () => {
     onClose?.();
     setTimeout(() => setActiveForm("create"), 200);
+    forceRemount();
   };
 
   return (
@@ -179,6 +184,7 @@ function AddServerModal({
       data-selected-form={activeForm}
       isOpen={isOpen}
       onClose={closeModal}
+      key={`${styles.addServerModalContainer}${count}`}
     >
       <ServerCreationForm
         swapForm={() => setActiveForm("join")}
