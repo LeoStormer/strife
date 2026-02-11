@@ -61,6 +61,8 @@ services:
       - mongo-network
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/strife?replicaSet=rs0
+      - APP_WEBSOCKET_ALLOWED_ORIGINS=http://frontend:3000
+      - APP_CORS_ALLOWED_ORIGINS=http://frontend:3000
 
   frontend:
     build: ./frontend
@@ -72,6 +74,7 @@ services:
       - mongo-network
     environment:
       - NEXT_PUBLIC_BACKEND_API_URL=http://backend:8080
+      - NEXT_PUBLIC_WEBSOCKET_URL=http://backend:8080/ws
 
 networks:
   mongo-network:

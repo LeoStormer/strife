@@ -6,6 +6,7 @@ import { useUserContext } from "../../contexts/UserContext";
 import { ServerSelectionContextProvider } from "../../contexts/ServerSelectionContext";
 import { PageNameContextProvider } from "../../contexts/PageNameContext";
 import styles from "./AuthenticatedLayout.module.css";
+import WebsocketContextProvider from "../../contexts/WebsocketContext";
 
 /**
  * The main parent route after a user has authenticated. Adds a top
@@ -23,14 +24,16 @@ function AuthenticatedLayout() {
 
   return (
     <div className={styles.container}>
-      <PageNameContextProvider>
-        <ServerSelectionContextProvider>
-          <TopBar />
-          <ServerBar />
-          <Outlet />
-        </ServerSelectionContextProvider>
-      </PageNameContextProvider>
-      <UserStatusController />
+      <WebsocketContextProvider>
+        <PageNameContextProvider>
+          <ServerSelectionContextProvider>
+            <TopBar />
+            <ServerBar />
+            <Outlet />
+          </ServerSelectionContextProvider>
+        </PageNameContextProvider>
+        <UserStatusController />
+      </WebsocketContextProvider>
     </div>
   );
 }
