@@ -7,7 +7,12 @@ import {
   useRef,
   type PropsWithChildren,
 } from "react";
-import { Client, ReconnectionTimeMode, type Message, type StompSubscription } from "@stomp/stompjs";
+import {
+  Client,
+  ReconnectionTimeMode,
+  type Message,
+  type StompSubscription,
+} from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
 type WebsocketContextType = {
@@ -34,13 +39,26 @@ if (!WEBSOCKET_URL) {
 function WebsocketContextProvider({ children }: PropsWithChildren) {
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<Record<string, StompSubscription>>({});
+  const desiredSubscriptionsRef = useRef<
+    Record<string, (message: Message) => void>
+  >({});
 
   useEffect(() => {
     const client = new Client({
       webSocketFactory: () => new SockJS(WEBSOCKET_URL!),
       reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL,
       reconnectDelay: 1000,
-      onConnect: () => console.log("Websocket Connected"),
+      onConnect: () => {
+        console.log("Websocket Connected");
+        subscriptionsRef.current = {};
+
+        for (const [destination, callback] of Object.entries(
+          desiredSubscriptionsRef.current,
+        )) {
+          const subscription = client.subscribe(destination, callback);
+          subscriptionsRef.current[destination] = subscription;
+        }
+      },
       onStompError: (error) => {
         const errorMessage = error.headers["message"] || "Unknown Error";
         console.log(`Websocket Error: ${errorMessage}`);
@@ -58,9 +76,15 @@ function WebsocketContextProvider({ children }: PropsWithChildren) {
 
   const subscribe = useCallback(
     (destination: string, callback: (message: Message) => void) => {
+      desiredSubscriptionsRef.current[destination] = callback;
+
       const client = clientRef.current;
       if (!client?.connected) {
         return;
+      }
+
+      if (subscriptionsRef.current[destination]) {
+        subscriptionsRef.current[destination].unsubscribe();
       }
 
       const subscription = client.subscribe(destination, callback);
@@ -74,6 +98,7 @@ function WebsocketContextProvider({ children }: PropsWithChildren) {
     if (subscription) {
       subscription.unsubscribe();
       delete subscriptionsRef.current[destination];
+      delete desiredSubscriptionsRef.current[destination];
     }
   }, []);
 
