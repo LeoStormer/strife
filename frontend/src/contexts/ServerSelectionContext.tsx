@@ -8,6 +8,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
 import { HOME_PAGE_PATH } from "../constants";
+import { useWebsocketContext } from "./WebsocketContext";
 
 export type Server = {
   id: string;
@@ -32,8 +33,9 @@ type MoveItem = {
   (activeId: string, overId: string, targetFolderId?: string | undefined): void;
 };
 
+type ServerItemOrFolderRecord = Record<string, ServerItem | Folder>;
 type ServerSelectionContextType = {
-  servers: Record<string, ServerItem | Folder>;
+  servers: ServerItemOrFolderRecord;
   rootOrder: string[];
   isLoading: boolean;
   selectedId: string | null;
@@ -100,8 +102,8 @@ const saveRootOrderToLocalStorage = (rootOrder: string[]) => {
 };
 
 const getUserJoinedServers = (
-  serversFromApi: Server[]
-): ServerSelectionContextType["servers"] => {
+  serversFromApi: Server[],
+): ServerItemOrFolderRecord => {
   const serverSet = new Set<string>();
   const serverItems: Record<string, ServerItem | Folder> = {};
 
@@ -112,7 +114,7 @@ const getUserJoinedServers = (
 
   for (const folder of getLocalFolders()) {
     const filteredServerOrder = folder.serverOrder.filter((id) =>
-      serverSet.has(id)
+      serverSet.has(id),
     );
 
     if (filteredServerOrder.length === 0) {
@@ -130,18 +132,18 @@ const getUserJoinedServers = (
 };
 
 const reconcileRootOrder = (
-  servers: ServerSelectionContextType["servers"],
-  rootOrder: string[]
+  servers: ServerItemOrFolderRecord,
+  rootOrder: string[],
 ) => {
   const cleanedRootOrder = rootOrder.filter((id) => servers[id] != undefined);
   const alreadyOrdered = new Set(cleanedRootOrder);
   const serversInFolders = new Set(
     Object.values(servers)
       .filter((item) => item.type === "folder")
-      .flatMap((item) => item.serverOrder)
+      .flatMap((item) => item.serverOrder),
   );
   const newServers = Object.keys(servers).filter(
-    (id) => !(alreadyOrdered.has(id) || serversInFolders.has(id))
+    (id) => !(alreadyOrdered.has(id) || serversInFolders.has(id)),
   );
   return [...cleanedRootOrder, ...newServers];
 };
@@ -149,10 +151,15 @@ const reconcileRootOrder = (
 export const ServerSelectionContextProvider = ({
   children,
 }: PropsWithChildren) => {
-  const [servers, setServers] = useState<ServerSelectionContextType["servers"]>(
-    {}
-  );
+  const [servers, setServers] = useState<ServerItemOrFolderRecord>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [rootOrder, setRootOrder] = useState(() => getRootOrder());
+  const { subscribe, unsubscribe } = useWebsocketContext();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const serverIdFromPath = getServerIdFromPath(location.pathname);
+  const selectedId =
+    serverIdFromPath && servers[serverIdFromPath] ? serverIdFromPath : null;
 
   const getServer = (serverId: string) => {
     const item = servers[serverId];
@@ -164,17 +171,10 @@ export const ServerSelectionContextProvider = ({
     return null;
   };
 
-  const location = useLocation();
-  const serverIdFromPath = getServerIdFromPath(location.pathname);
-  const selectedId =
-    serverIdFromPath && servers[serverIdFromPath] ? serverIdFromPath : null;
-  const [rootOrder, setRootOrder] = useState(() => getRootOrder());
-  const navigate = useNavigate();
-
   const moveItem = (
     activeId: string,
     overId: string,
-    targetFolderId?: string
+    targetFolderId?: string,
   ) => {
     const activeItem = servers[activeId];
     const overItem = servers[overId];
@@ -285,7 +285,7 @@ export const ServerSelectionContextProvider = ({
             newServers[oldFolder.id] = {
               ...oldFolder,
               serverOrder: oldFolder.serverOrder.filter(
-                (id) => id !== serverId
+                (id) => id !== serverId,
               ),
             };
           }
@@ -299,7 +299,7 @@ export const ServerSelectionContextProvider = ({
     const folderChildren = new Set(serverOrder);
     let newRootOrder = rootOrder.toSpliced(index, 0, folder.id);
     newRootOrder = newRootOrder.filter(
-      (id) => !(folderChildren.has(id) || emptyFolders.has(id))
+      (id) => !(folderChildren.has(id) || emptyFolders.has(id)),
     );
     setRootOrder(newRootOrder);
   };
@@ -312,14 +312,14 @@ export const ServerSelectionContextProvider = ({
         const storedRootOrder = getRootOrder();
         const reconciledRootOrder = reconcileRootOrder(
           userServers,
-          storedRootOrder
+          storedRootOrder,
         );
         setRootOrder(reconciledRootOrder);
         setIsLoading(false);
       })
       .catch(() => {
-        alert("Server experiencing issues please come back later")
-        navigate(HOME_PAGE_PATH)
+        alert("Server experiencing issues please come back later");
+        navigate(HOME_PAGE_PATH);
       });
   }, []);
 
@@ -328,7 +328,7 @@ export const ServerSelectionContextProvider = ({
       return;
     }
     saveFoldersToLocalStorage(
-      Object.values(servers).filter((item) => item.type === "folder")
+      Object.values(servers).filter((item) => item.type === "folder"),
     );
   }, [servers]);
 
@@ -338,6 +338,14 @@ export const ServerSelectionContextProvider = ({
     }
     saveRootOrderToLocalStorage(rootOrder);
   }, [rootOrder]);
+
+  useEffect(() => {
+    const destination = "/queue/server-joined";
+    subscribe(destination, (message) => {
+      console.log(message.body);
+    })
+    return () => unsubscribe(destination);
+  }, [subscribe, unsubscribe])
 
   return (
     <ServerSelectionContext
@@ -361,7 +369,7 @@ export const useServerSelectionContext = () => {
 
   if (!context) {
     throw new Error(
-      "useServerSelectionContext must be called from a descendant of a ServerSelectionContextProvider"
+      "useServerSelectionContext must be called from a descendant of a ServerSelectionContextProvider",
     );
   }
 
