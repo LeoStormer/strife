@@ -5,12 +5,13 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type PropsWithChildren,
 } from "react";
 import {
   Client,
   ReconnectionTimeMode,
-  type Message,
+  type messageCallbackType,
   type StompSubscription,
 } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
@@ -18,16 +19,18 @@ import SockJS from "sockjs-client";
 type WebsocketContextType = {
   subscribe: (
     destination: string,
-    callback: (message: Message) => void,
+    callback: messageCallbackType,
   ) => void;
   unsubscribe: (destination: string) => void;
   send: (destination: string, body: Record<string, any>) => void;
+  isConnected: boolean;
 };
 
 const WebsocketContext = createContext<WebsocketContextType>({
   subscribe: () => {},
   unsubscribe: () => {},
   send: () => {},
+  isConnected: false,
 });
 
 const WEBSOCKET_URL = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
@@ -40,8 +43,9 @@ function WebsocketContextProvider({ children }: PropsWithChildren) {
   const clientRef = useRef<Client | null>(null);
   const subscriptionsRef = useRef<Record<string, StompSubscription>>({});
   const desiredSubscriptionsRef = useRef<
-    Record<string, (message: Message) => void>
+    Record<string, messageCallbackType>
   >({});
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const client = new Client({
@@ -58,10 +62,15 @@ function WebsocketContextProvider({ children }: PropsWithChildren) {
           const subscription = client.subscribe(destination, callback);
           subscriptionsRef.current[destination] = subscription;
         }
+        setIsConnected(true);
       },
       onStompError: (error) => {
         const errorMessage = error.headers["message"] || "Unknown Error";
         console.log(`Websocket Error: ${errorMessage}`);
+      },
+      onWebSocketClose: () => {
+        console.log("Websocket Disconnected");
+        setIsConnected(false);
       },
     });
 
@@ -75,7 +84,7 @@ function WebsocketContextProvider({ children }: PropsWithChildren) {
   }, []);
 
   const subscribe = useCallback(
-    (destination: string, callback: (message: Message) => void) => {
+    (destination: string, callback: messageCallbackType) => {
       desiredSubscriptionsRef.current[destination] = callback;
 
       const client = clientRef.current;
@@ -112,8 +121,8 @@ function WebsocketContextProvider({ children }: PropsWithChildren) {
   }, []);
 
   const value = useMemo<WebsocketContextType>(
-    () => ({ subscribe, unsubscribe, send }),
-    [subscribe, unsubscribe, send],
+    () => ({ subscribe, unsubscribe, send, isConnected }),
+    [subscribe, unsubscribe, send, isConnected],
   );
 
   return <WebsocketContext value={value}>{children}</WebsocketContext>;
