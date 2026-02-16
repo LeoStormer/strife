@@ -2,14 +2,14 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import Cookies from "js-cookie";
 
-const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL
 
-if (!BACKEND_BASE_URL) {
-  throw new Error("BACKEND_BASE_URL is not defined.")
+if (!BACKEND_API_URL) {
+  throw new Error("BACKEND_API_URL is not defined.")
 }
 
 const api = axios.create({
-  baseURL: BACKEND_BASE_URL,
+  baseURL: BACKEND_API_URL,
   timeout: 5000,
   headers: { "Content-Type": "application/json" },
   withCredentials: true,

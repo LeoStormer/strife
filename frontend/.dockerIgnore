@@ -1,4 +1,43 @@
+# Dependencies - already handled by 'npm ci' in the Dockerfile
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+
+# Build Outputs - prevent local builds from being copied
+.next
+out
 build
-.dockerIgnore
+dist
+
+# Environment Variables - protect sensitive keys
 .env
+.env.local
+.env.production
+.env.development
+.env*.local
+
+# Git & IDEs
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Docker Files - no need to copy these into the image
+Dockerfile
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Testing & Documentation
+coverage
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
+README.md
+docs

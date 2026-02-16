@@ -18,19 +18,18 @@
     "react-loading-skeleton": "^3.5.0",
     "react-router-dom": "7.13.0",
     "sockjs-client": "^1.6.1",
-    "web-vitals": "^5.1.0",
     "zod": "^4.3.6"
   },
   "scripts": {
     "dev": "next dev",
     "generate-svg-sprite": "npx tsx ./build-spritesheet.mts",
     "build": "next build",
-    "start": "npx serve@latest ./build"
+    "lint": "next lint"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "next/core-web-vitals",
+      "next/jest"
     ]
   },
   "browserslist": {
