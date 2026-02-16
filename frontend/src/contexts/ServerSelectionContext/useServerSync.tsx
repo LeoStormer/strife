@@ -11,7 +11,7 @@ import api from "../../api";
 import type { ServerManager } from "./useServerManager";
 
 const getServersFromApi = async (): Promise<Server[]> => {
-  return api.get("/api/user/servers").then((response) => response.data);
+  return api.get("/user/servers").then((response) => response.data);
 };
 
 const getLocalFolders = (): Folder[] => {

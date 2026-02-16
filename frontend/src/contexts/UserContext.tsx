@@ -59,7 +59,7 @@ type UseAuthStatusProps = {
 const useAuthStatus = ({ onRequestFinished, logout }: UseAuthStatusProps) => {
   useEffect(() => {
     api
-      .get("/api/user/auth-status")
+      .get("/user/auth-status")
       .then((response) => {
         if (response.data === false) {
           console.log("User not authenticated, logging out");

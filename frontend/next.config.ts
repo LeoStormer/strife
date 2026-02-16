@@ -9,7 +9,7 @@ const devConfig: NextConfig = { // Mimic the behavior of a reverse proxy in deve
         return [
             {
                 source: '/api/:path*',
-                destination: 'http://localhost:8080/:path*', // Your Spring Boot port
+                destination: 'http://localhost:8080/api/:path*', // Your Spring Boot port
             },
             {
                 source: '/ws/:path*',

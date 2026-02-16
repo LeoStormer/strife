@@ -19,7 +19,7 @@ function LoginPage() {
     const formdata = new FormData(e.currentTarget);
     const payload = Object.fromEntries(formdata.entries());
     try {
-      const response = await api.post("/api/user/login", payload);
+      const response = await api.post("/user/login", payload);
       login(response.data);
       navigate(FRIENDS_PAGE_PATH, { replace: true });
     } catch (error: unknown) {

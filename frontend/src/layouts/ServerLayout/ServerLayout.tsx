@@ -14,7 +14,7 @@ function ServerLayout() {
   const basePath = `/servers/${serverId}`;
   const defaultPath = useCallback(
     async (signal: AbortSignal) => {
-      const { data } = await api.get(`/api/server/${serverId}/defaultChannel`, {
+      const { data } = await api.get(`/server/${serverId}/defaultChannel`, {
         signal,
       });
       return `${basePath}/${data.id}`;

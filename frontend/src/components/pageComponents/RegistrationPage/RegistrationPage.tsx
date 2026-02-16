@@ -19,7 +19,7 @@ function RegristrationPage() {
     const formdata = new FormData(e.currentTarget);
     const payload = Object.fromEntries(formdata.entries());
     try {
-      const response = await api.post("/api/user/register", payload);
+      const response = await api.post("/user/register", payload);
       if (response.status === HttpStatusCode.Created) {
         alert(
           "Account successfully created but an error occured while logging in. " +
