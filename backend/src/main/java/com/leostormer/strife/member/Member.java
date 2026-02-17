@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 import org.springframework.lang.NonNull;
@@ -22,6 +23,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@CompoundIndex(name = "server_user_idx", def = "{'server': 1, 'user': 1}", unique = true)
+@CompoundIndex(name = "server_user_isBanned_idx", def = "{'server': 1, 'user': 1, 'isBanned': 1}", unique = true)
+@CompoundIndex(name = "user_isBanned_idx", def = "{'user': 1, 'isBanned': 1}")
 public class Member {
     /**
      * Builds a <code>Member</code> from a <code>User</code>
