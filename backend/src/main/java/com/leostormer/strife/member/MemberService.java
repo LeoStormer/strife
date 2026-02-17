@@ -24,6 +24,10 @@ public class MemberService {
         memberRepository.saveAll(List.of(members));
     }
     
+    public boolean isMember(ObjectId userId, ObjectId serverId) {
+        return memberRepository.isMember(userId, serverId);
+    }
+
     public Optional<Member> getMember(ObjectId userId, ObjectId serverId) {
         return memberRepository.findByUserIdAndServerId(userId, serverId);
     }

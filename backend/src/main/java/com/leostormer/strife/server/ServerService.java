@@ -57,12 +57,14 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
     }
 
     @SuppressWarnings("null")
-    public void joinServer(User user, ObjectId serverId) {
+    public Server joinServer(User user, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
         memberService.joinServer(user, server);
+        return server;
     }
+
     @SuppressWarnings("null")
     public void leaveServer(User user, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
@@ -245,7 +247,7 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
 
     public void updateServerDetails(User commandUser, ObjectId serverId, @Nullable String name,
             @Nullable String description) {
-        Member member = serverRepository.getMember(serverId, commandUser.getId())
+        Member member = memberService.getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -314,7 +316,7 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
 
     public List<Message> getMessages(User user, ObjectId serverId, ObjectId channelId,
             MessageSearchOptions searchOptions) {
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -353,7 +355,7 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
 
     @SuppressWarnings("null")
     public Message editMessage(User user, ObjectId serverId, ObjectId messageId, String newContent) {
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned()) {
@@ -371,7 +373,7 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
     }
     @SuppressWarnings("null")
     public void deleteMessage(User user, ObjectId serverId, ObjectId channelId, ObjectId messageId) {
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned()) {

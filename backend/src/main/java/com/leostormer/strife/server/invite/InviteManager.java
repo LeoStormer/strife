@@ -25,20 +25,20 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
 
     @Transactional
     @SuppressWarnings("null")
-    default void joinByInvite(User user, String inviteId) {
+    default Server joinByInvite(User user, String inviteId) {
         InviteRepository inviteRepository = getInviteRepository();
         MemberService memberService = getMemberService();
         Invite invite = inviteRepository.findById(inviteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invite not found"));
 
         Server server = invite.getServer();
-        Optional<Member> member = memberService.getMember(server.getId(), user.getId());
+        Optional<Member> member = memberService.getMember(user.getId(), server.getId());
         if (member.isPresent()) { // User is either already a member, or they are banned
             if (member.get().isBanned()) {
                 throw new UnauthorizedActionException(USER_IS_BANNED);
             }
 
-            return;
+            return server;
         }
 
         if (invite.isExpired() || !invite.hasRemainingUses())
@@ -47,10 +47,11 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
         invite.decrementUsesIfLimited();
         inviteRepository.save(invite);
         memberService.joinServer(user, server);
+        return server;
     }
 
     default List<Invite> getInvites(User commandUser, ObjectId serverId) {
-        Member member = getServerRepository().getMember(serverId, commandUser.getId())
+        Member member = getMemberService().getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
         if (member.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
@@ -66,7 +67,7 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
-        Member member = serverRepository.getMember(serverId, commandUser.getId())
+        Member member = getMemberService().getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
         if (member.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
@@ -79,7 +80,7 @@ public interface InviteManager extends IUsesServerRepository, IUsesMemberService
 
     @SuppressWarnings("null")
     default void deleteInvite(User commandUser, ObjectId serverId, String inviteId) {
-        Member member = getServerRepository().getMember(serverId, commandUser.getId())
+        Member member = getMemberService().getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
         if (member.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);

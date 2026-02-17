@@ -1,13 +1,11 @@
 package com.leostormer.strife.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.BiPredicate;
 
 import org.bson.types.ObjectId;
@@ -93,35 +91,11 @@ public class ServerRepositoryTests extends AbstractRepositoryTest {
     }
 
     @Test
-    public void shouldGetMember() {
-        Optional<Member> user1Member = serverRepository.getMember(existingServerId, owner.getId());
-        Optional<Member> user2Member = serverRepository.getMember(existingServerId, basicMemberUser.getId());
-        Optional<Member> user3Member = serverRepository.getMember(existingServerId, nonMemberUser.getId());
-        Optional<Member> user4Member = serverRepository.getMember(existingServerId, bannedUser.getId());
-
-        assertTrue(user1Member.isPresent());
-        assertEquals(user1Member.get().getNickname(), owner.getUsername());
-        assertTrue(user1Member.get().isOwner());
-
-        assertTrue(user2Member.isPresent());
-        assertEquals(user2Member.get().getNickname(), basicMemberUser.getUsername());
-        assertFalse(user2Member.get().isOwner());
-
-        assertFalse(user3Member.isPresent());
-
-        // A banned user still has a member record
-        assertTrue(user4Member.isPresent());
-        assertEquals(user4Member.get().getNickname(), bannedUser.getUsername());
-        assertFalse(user4Member.get().isOwner());
-        assertTrue(user4Member.get().isBanned());
-    }
-
-    @Test
     public void shouldGetIsMember() {
-        boolean user1IsMember = serverRepository.isMember(existingServerId, owner.getId());
-        boolean user2IsMember = serverRepository.isMember(existingServerId, basicMemberUser.getId());
-        boolean user3IsMember = serverRepository.isMember(existingServerId, nonMemberUser.getId());
-        boolean user4IsMember = serverRepository.isMember(existingServerId, bannedUser.getId());
+        boolean user1IsMember = memberRepository.isMember(owner.getId(), existingServerId);
+        boolean user2IsMember = memberRepository.isMember(basicMemberUser.getId(), existingServerId);
+        boolean user3IsMember = memberRepository.isMember(nonMemberUser.getId(), existingServerId);
+        boolean user4IsMember = memberRepository.isMember(bannedUser.getId(), existingServerId);
 
         assertTrue(user1IsMember);
         assertTrue(user2IsMember);

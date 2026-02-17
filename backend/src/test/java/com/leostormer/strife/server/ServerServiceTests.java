@@ -107,8 +107,8 @@ public class ServerServiceTests extends ServerServiceTestSetup {
     public void shouldTransferServerOwnerShip() {
         serverService.transferServerOwnership(owner, moderator, existingServerId);
         Server server = serverRepository.findById(existingServerId).get();
-        Member modMember = serverRepository.getMember(existingServerId, moderator.getId()).get();
-        Member oldOwner = serverRepository.getMember(existingServerId, owner.getId()).get();
+        Member modMember = memberService.getMember(moderator.getId(), existingServerId).get();
+        Member oldOwner = memberService.getMember(owner.getId(), existingServerId).get();
         assertEquals(moderator.getId(), server.getOwner().getId());
         assertTrue(modMember.isOwner());
         assertFalse(oldOwner.isOwner());

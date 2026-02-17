@@ -11,7 +11,9 @@ import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.member.Member;
+import com.leostormer.strife.member.MemberService;
 import com.leostormer.strife.message.MessageRepository;
+import com.leostormer.strife.server.IUsesMemberService;
 import com.leostormer.strife.server.IUsesServerRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
@@ -22,7 +24,7 @@ import com.leostormer.strife.user.User;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
-public interface ChannelManager extends IUsesServerRepository {
+public interface ChannelManager extends IUsesServerRepository, IUsesMemberService {
     public ChannelRepository getChannelRepository();
     public MessageRepository getMessageRepository();
 
@@ -49,7 +51,7 @@ public interface ChannelManager extends IUsesServerRepository {
     }
 
     default List<ServerChannel> getChannels(User user, ObjectId serverId) {
-        Member member = getServerRepository().getMember(serverId, user.getId())
+        Member member = getMemberService().getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         ChannelRepository channelRepository = getChannelRepository();
@@ -64,7 +66,7 @@ public interface ChannelManager extends IUsesServerRepository {
     }
 
     default ServerChannel getDefaultChannel(User user, ObjectId serverId) {
-        Member member = getServerRepository().getMember(serverId, user.getId())
+        Member member = getMemberService().getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         ChannelRepository channelRepository = getChannelRepository();
@@ -85,7 +87,7 @@ public interface ChannelManager extends IUsesServerRepository {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = getMemberService().getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -104,7 +106,9 @@ public interface ChannelManager extends IUsesServerRepository {
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
-        Member member = serverRepository.getMember(serverId, commandUser.getId())
+
+        MemberService memberService = getMemberService();
+        Member member = memberService.getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         ChannelRepository channelRepository = getChannelRepository();
@@ -126,7 +130,7 @@ public interface ChannelManager extends IUsesServerRepository {
 
         Map<ObjectId, Long> userPermissions = operation.getUserPermissions();
         if (userPermissions != null
-                && userPermissions.keySet().stream().anyMatch(userId -> !serverRepository.isMember(serverId, userId)))
+                && userPermissions.keySet().stream().anyMatch(userId -> !memberService.isMember(userId, serverId)))
             throw new ResourceNotFoundException(USER_NOT_MEMBER);
 
         channelRepository.updateServerChannelSettings(channelId, operation);
@@ -135,7 +139,7 @@ public interface ChannelManager extends IUsesServerRepository {
     @Transactional
     @SuppressWarnings("null")
     default void removeChannel(User user, ObjectId serverId, ObjectId... channelIds) {
-        Member member = getServerRepository().getMember(serverId, user.getId())
+        Member member = getMemberService().getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned()) {

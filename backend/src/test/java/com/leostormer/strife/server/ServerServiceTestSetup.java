@@ -15,6 +15,7 @@ import com.leostormer.strife.AbstractIntegrationTest;
 import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.member.MemberRepository;
+import com.leostormer.strife.member.MemberService;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.server.server_channel.ServerChannel;
 import com.leostormer.strife.user.User;
@@ -32,6 +33,9 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
 
     @Autowired
     protected ServerService serverService;
+
+    @Autowired
+    protected MemberService memberService;
 
     @NonNull
     @SuppressWarnings("null")
@@ -154,5 +158,6 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
     public void cleanup() {
         channelRepository.deleteAll();
         serverRepository.deleteAll();
+        memberRepository.deleteAll();
     }
 }
