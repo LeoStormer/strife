@@ -19,12 +19,14 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Override
     public Optional<Member> findByUserIdAndServerId(ObjectId userId, ObjectId serverId) {
         Query query = new Query(Criteria.where("server").is(serverId).and("user").is(userId));
         return Optional.ofNullable(mongoTemplate
                 .findOne(query, Member.class));
     }
 
+    @Override
     public boolean existsByUserIdAndServerId(ObjectId userId, ObjectId serverId) {
         Query query = new Query(Criteria.where("server").is(serverId).and("user").is(userId));
         return mongoTemplate.exists(query, Member.class);
@@ -34,7 +36,9 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
     public List<Server> findServersByUserId(ObjectId userId) {
         Aggregation aggregation = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("user").is(userId).and("isBanned").is(false)),
-                Aggregation.lookup("servers", "server", "_id", "server"));
+                Aggregation.lookup("servers", "server", "_id", "serverDetails"),
+                Aggregation.unwind("serverDetails"),
+                Aggregation.replaceRoot("serverDetails"));
 
         return mongoTemplate.aggregate(aggregation, Member.class, Server.class).getMappedResults();
     }
