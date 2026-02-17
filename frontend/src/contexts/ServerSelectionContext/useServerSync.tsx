@@ -126,7 +126,7 @@ function useServerSync({ overwriteState, addServer, removeServer }: Props) {
 
   // subscribe to server updates
   useEffect(() => {
-    const destination = "/queue/server-updates";
+    const destination = "/user/queue/server-updates";
     subscribe(destination, (message) => {
       const update = JSON.parse(message.body) as UpdateMessage;
       if (update.type === "SERVER_ADDED") {

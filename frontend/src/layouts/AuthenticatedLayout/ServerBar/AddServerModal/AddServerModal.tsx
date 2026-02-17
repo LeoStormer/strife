@@ -40,12 +40,10 @@ function ServerCreationForm({ swapForm, closeModal, ...formProps }: SwappableFor
   });
 
   const onSubmit: SubmitHandler<ServerCreationForm> = (data) => {
-    console.log(data);
-
     api
-    .post(`/api/server?serverName=${data.serverName}`)
-    .then((server) => {
-      console.log("Server created successfully", server);
+    .post(`/server?serverName=${data.serverName}`)
+    .then(() => {
+      console.log("Server created successfully");
       closeModal?.();
     })
     .catch((err) => {
@@ -114,7 +112,7 @@ function JoinServerForm({
     console.log(inviteId);
 
     api
-      .post(`/api/server/join-by-invite?inviteId=${inviteId}`)
+      .post(`/server/join-by-invite?inviteId=${inviteId}`)
       .then(() => {
         console.log("Server joined successfully");
         closeModal?.();

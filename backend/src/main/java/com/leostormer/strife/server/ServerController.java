@@ -47,13 +47,26 @@ public class ServerController {
     @Autowired
     private final SimpMessagingTemplate messagingTemplate;
 
+    @SuppressWarnings("null")
+    private void notifyServerAdded(Principal principal, ServerView serverView) {
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/server-updates",
+                ServerUpdateMessage.serverAdded(serverView));
+    }
+
+    @SuppressWarnings("null")
+    private void notifyServerRemoved(Principal principal, ObjectId serverId) {
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/server-updates",
+                ServerUpdateMessage.serverRemoved(serverId.toHexString()));
+    }
+
     @PostMapping("")
     public ResponseEntity<ServerView> createServer(Principal principal, @RequestParam String serverName,
-            @RequestParam String serverDescription) {
+            @RequestParam(required = false) String serverDescription) {
         User owner = userService.getUser(principal);
         try {
-            return ResponseEntity.ok()
-                    .body(new ServerView(serverService.createServer(owner, serverName, serverDescription)));
+            ServerView serverView = new ServerView(serverService.createServer(owner, serverName, serverDescription));
+            notifyServerAdded(principal, serverView);
+            return ResponseEntity.ok().body(serverView);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -211,7 +224,8 @@ public class ServerController {
     public ResponseEntity<String> joinServer(Principal principal, @PathVariable ObjectId serverId) {
         User user = userService.getUser(principal);
         try {
-            serverService.joinServer(user, serverId);
+            ServerView serverView = new ServerView(serverService.joinServer(user, serverId));
+            notifyServerAdded(principal, serverView);
             return ResponseEntity.ok().body("Joined server successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -226,7 +240,8 @@ public class ServerController {
     public ResponseEntity<String> joinServerByInvite(Principal principal, @RequestParam String inviteId) {
         User user = userService.getUser(principal);
         try {
-            serverService.joinByInvite(user, inviteId);
+            ServerView serverView = new ServerView(serverService.joinByInvite(user, inviteId));
+            notifyServerAdded(principal, serverView);
             return ResponseEntity.ok().body("Joined server Successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -259,6 +274,7 @@ public class ServerController {
 
         try {
             serverService.kickMember(commandUser, memberId, serverId);
+            notifyServerRemoved(principal, serverId);
             return ResponseEntity.ok().body("Member kicked successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -276,6 +292,7 @@ public class ServerController {
 
         try {
             serverService.banMember(commandUser, memberId, serverId, banReason);
+            notifyServerRemoved(principal, serverId);
             return ResponseEntity.ok().body("Member banned successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
