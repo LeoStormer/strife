@@ -6,7 +6,8 @@
     "module": "esnext",
     "target": "esnext",
     "types": [
-      "node"
+      "node",
+      "vitest/globals",
     ],
     // Other Outputs
     "sourceMap": true,

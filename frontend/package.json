@@ -24,7 +24,8 @@
     "dev": "next dev",
     "generate-svg-sprite": "npx tsx ./build-spritesheet.mts",
     "build": "next build",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest"
   },
   "eslintConfig": {
     "extends": [
@@ -55,9 +56,14 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/sockjs-client": "^1.5.4",
+    "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
     "fs-extra": "^11.3.2",
     "glob": "^13.0.0",
+    "jsdom": "^28.1.0",
     "node-html-parser": "^7.0.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.0.18"
   }
 }
