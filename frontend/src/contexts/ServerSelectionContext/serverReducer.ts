@@ -24,7 +24,7 @@ export type State = {
   rootOrder: string[];
 };
 
-type ServerManagerAction =
+export type ServerManagerAction =
   | { type: 'OVERWRITE'; servers: ServerItemOrFolderRecord; rootOrder: string[] }
   | { type: 'ADD_SERVER'; server: Server }
   | { type: 'REMOVE_SERVER'; serverId: string }
