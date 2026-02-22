@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
@@ -26,6 +27,8 @@ public class ServerMessageTests extends ServerServiceTestSetup {
     @Autowired
     MessageRepository messageRepository;
 
+    @NonNull
+    @SuppressWarnings("null")
     ObjectId basicMemberMessageId;
 
     static final int NUM_MESSAGES_CHANNEL_2 = 10;

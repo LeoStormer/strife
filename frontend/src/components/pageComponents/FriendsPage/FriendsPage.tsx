@@ -1,4 +1,3 @@
-import React from "react";
 import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
 import styles from "./FriendsPage.module.css";
 import FriendList from "./FriendList";
@@ -8,7 +7,10 @@ import FriendFilterBar from "./FriendFilterBar";
 const PAGE_NAME = "Friends";
 
 function FriendsPage() {
-  usePageNameDispatchContext({ pageName: PAGE_NAME });
+  usePageNameDispatchContext({
+    pageName: PAGE_NAME,
+    iconProps: { type: "svg", name: "person-greeting" },
+  });
 
   return (
     <div className={styles.container}>

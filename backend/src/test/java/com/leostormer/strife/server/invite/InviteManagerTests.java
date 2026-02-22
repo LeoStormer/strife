@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
@@ -25,14 +26,24 @@ public class InviteManagerTests extends ServerServiceTestSetup {
 
     private static final int MAX_ALLOWED_USES = 100;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String inviteId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String unlimitedInviteId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String inviteByBannedUserId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String inviteWithNoRemainingUsesId;
 
+    @NonNull
+    @SuppressWarnings("null")
     private String expiredInviteId;
 
     @BeforeEach
@@ -60,7 +71,7 @@ public class InviteManagerTests extends ServerServiceTestSetup {
     @Transactional
     public void shouldJoinByInvite() {
         serverService.joinByInvite(nonMemberUser, inviteId);
-        assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertTrue(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
         Invite invite = inviteRepository.findById(inviteId).get();
         assertEquals(MAX_ALLOWED_USES - 1, invite.getRemainingUses());
     }
@@ -69,14 +80,14 @@ public class InviteManagerTests extends ServerServiceTestSetup {
     @Transactional
     public void shouldJoinByInviteEvenIfInviteCreatorHasSinceBeenBanned() {
         serverService.joinByInvite(nonMemberUser, inviteByBannedUserId);
-        assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertTrue(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
     }
 
     @Test
     @Transactional
     public void shouldJoinByInviteWithUnlimitedUses() {
         serverService.joinByInvite(nonMemberUser, unlimitedInviteId);
-        assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertTrue(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
         Invite invite = inviteRepository.findById(unlimitedInviteId).get();
         assertEquals(Invite.UNLIMITED_USES, invite.getRemainingUses());
     }
@@ -86,7 +97,7 @@ public class InviteManagerTests extends ServerServiceTestSetup {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.joinByInvite(bannedUser, inviteId);
         });
-        assertFalse(serverRepository.isMember(existingServerId, bannedUser.getId()));
+        assertFalse(memberRepository.isMember(bannedUser.getId(), existingServerId));
     }
 
     @Test
@@ -94,7 +105,7 @@ public class InviteManagerTests extends ServerServiceTestSetup {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.joinByInvite(nonMemberUser, expiredInviteId);
         });
-        assertFalse(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertFalse(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
     }
 
     @Test
@@ -102,7 +113,7 @@ public class InviteManagerTests extends ServerServiceTestSetup {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.joinByInvite(nonMemberUser, inviteWithNoRemainingUsesId);
         });
-        assertFalse(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertFalse(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
     }
 
     @Test

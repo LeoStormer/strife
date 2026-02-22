@@ -1,16 +1,43 @@
-import React, { useContext } from "react";
-import PageNameContext from "../../../contexts/PageNameContext";
+import { useContext } from "react";
+import PageNameContext, {
+  type DynamicIconProps,
+} from "../../../contexts/PageNameContext";
 import styles from "./TopBar.module.css";
+import Icon from "../../../components/Icon";
+import { Link } from "react-router-dom";
+import ServerIcon from "../../../components/ServerIcon";
+
+const DynamicIcon = (props: DynamicIconProps) => {
+  if (props.type === "svg") {
+    const {type, ...iconProps} = props;
+    return <Icon {...iconProps} />;
+  }
+
+  if (props.type === "serverIcon") {
+    const {type, ...iconProps} = props;
+    return <ServerIcon {...iconProps} />;
+  }
+
+  return null;
+};
 
 function TopBar() {
-  const pageName = useContext(PageNameContext);
-
+  const { iconProps, pageName } = useContext(PageNameContext);
   return (
-    <div className={styles.container}>
-      {`Page Name = ${pageName}`}
-      <button>Inbox</button>
-      <button>Help</button>
-    </div>
+    <header className={styles.container}>
+      {iconProps ? (
+        <DynamicIcon {...iconProps} className={styles.pageIcon} />
+      ) : null}
+      <p className={styles.pageTitle}>{pageName}</p>
+      <div className={styles.iconButtonContainer}>
+        <button className={styles.iconButton}>
+          <Icon name='inbox-fill' />
+        </button>
+        <Link to='#' className={styles.iconButton}>
+          <Icon name='question-circle-fill' />
+        </Link>
+      </div>
+    </header>
   );
 }
 

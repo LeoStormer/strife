@@ -1,17 +1,17 @@
-import {type SVGProps} from 'react'
-import type { IconName } from '../../../types/name'
+import type { JSX } from "react";
+import type { IconName } from "../../../types/name";
 
-type IconProps = SVGProps<SVGSVGElement> & {
-  name: IconName,
-}
+export type IconProps = JSX.IntrinsicElements["svg"] & {
+  name: IconName;
+};
 
-function Icon({ name, className, ...svgProps }: IconProps) {
-  const href = `/icons/sprite.svg#${name}` 
+function Icon({ name, ...svgProps }: IconProps) {
+  const href = `/icons/sprite.svg#${name}`;
   return (
-    <svg className={className} {...svgProps}>
-      <use href={href}/>
+    <svg {...svgProps}>
+      <use href={href} />
     </svg>
-  )
+  );
 }
 
-export default Icon
+export default Icon;

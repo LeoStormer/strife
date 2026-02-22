@@ -4,12 +4,13 @@ import org.bson.types.ObjectId;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.Member;
+import com.leostormer.strife.server.IUsesMemberService;
 import com.leostormer.strife.server.IUsesServerRepository;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.server.ServerRepository;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.user.User;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
@@ -23,7 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public interface RoleManager extends IUsesServerRepository {
+public interface RoleManager extends IUsesServerRepository, IUsesMemberService {
     static final Comparator<Role> ascendingOrder = (r1, r2) -> Integer.compare(r1.getPriority(), r2.getPriority());
 
     private RoleUpdateOperation sanitizeOperation(Map<ObjectId, Role> serverRoles, RoleUpdateOperation operation) {
@@ -77,12 +78,13 @@ public interface RoleManager extends IUsesServerRepository {
         return mergedList;
     }
 
+    @SuppressWarnings("null")
     default void updateRoles(User user, ObjectId serverId, RoleUpdateOperation operation) {
         ServerRepository serverRepository = getServerRepository();
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
 
-        Member member = server.getMember(user.getId())
+        Member member = getMemberService().getMember(user.getId(), serverId)
                 .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
 
         if (member.isBanned())

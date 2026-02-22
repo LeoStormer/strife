@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.leostormer.strife.conversation.ConversationService;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.MemberService;
+import com.leostormer.strife.server.Server;
 import com.leostormer.strife.user.friends.FriendRequest;
 import com.leostormer.strife.user.friends.FriendRequestService;
 
@@ -44,6 +46,12 @@ public class UserService implements UserDetailsService {
     private final ConversationService conversationService;
     @Autowired
     private SecurityContextRepository securityContextRepository;
+    @Autowired
+    private final MemberService memberService;
+
+    public List<Server> getJoinedServers(User user) {
+        return memberService.getServersByUserId(user.getId());
+    }
 
     public User getUser(Principal principal) {
         // currently authenticated principal should always correspond to an
@@ -51,14 +59,17 @@ public class UserService implements UserDetailsService {
         return userRepository.findOneByEmail(principal.getName()).get();
     }
 
+    @SuppressWarnings("null")
     public Optional<User> getUserById(ObjectId userId) {
         return userRepository.findById(userId);
     }
 
+    @SuppressWarnings("null")
     public List<User> getUsersById(List<ObjectId> userIds) {
         return userRepository.findAllById(userIds);
     }
 
+    @SuppressWarnings("null")
     public boolean doesUserExist(ObjectId userId) {
         return userRepository.existsById(userId);
     }
@@ -79,6 +90,7 @@ public class UserService implements UserDetailsService {
         return friendRequestService.getAllPendingFriendRequests(user);
     }
 
+    @SuppressWarnings("null")
     public FriendRequest sendFriendRequest(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot send a friend request to yourself");
@@ -103,6 +115,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
+    @SuppressWarnings("null")
     public void blockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot block yourself");
@@ -119,6 +132,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
+    @SuppressWarnings("null")
     public void unblockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot unblock yourself");

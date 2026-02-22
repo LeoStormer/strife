@@ -12,8 +12,12 @@ function ChannelTitleBar() {
 
 function ServerChannelPage() {
   const { getServer, selectedId } = useServerSelectionContext();
-  const pageName = getServer(selectedId as string)?.name as string;
-  usePageNameDispatchContext({ pageName });
+  const { name, icon } = selectedId ? getServer(selectedId)! : { name: "" };
+
+  usePageNameDispatchContext({
+    pageName: name,
+    iconProps: { type: "serverIcon", serverName: name, serverIconImage: icon },
+  });
 
   return (
     <div className={sharedStyles.container}>

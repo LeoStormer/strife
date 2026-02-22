@@ -5,6 +5,7 @@ import java.time.Instant;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.user.User;
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Invite {
     @Id
+    @NonNull
     private String id;
 
     @NotNull
@@ -62,6 +64,7 @@ public class Invite {
         return expiresAt.isBefore(Instant.now());
     }
     
+    @SuppressWarnings("null")
     public Invite(User inviter, Server server, long expiresAfterSeconds, int maxUses, int remainingUses) {
         this.server = server;
         this.inviter = inviter;

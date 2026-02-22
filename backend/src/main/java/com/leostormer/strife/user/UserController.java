@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.server.ServerView;
 import com.leostormer.strife.user.friends.FriendRequestView;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +35,16 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class UserController {
     @Autowired
     private final UserService userService;
+
+    @GetMapping("/servers")
+    public ResponseEntity<List<ServerView>> getJoinedServers(Principal principal) {
+        User user = userService.getUser(principal);
+        try {
+            return ResponseEntity.ok(userService.getJoinedServers(user).stream().map(ServerView::new).toList());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserView> getUserById(@PathVariable ObjectId userId) {

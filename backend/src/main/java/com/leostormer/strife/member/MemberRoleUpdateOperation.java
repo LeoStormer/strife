@@ -1,4 +1,4 @@
-package com.leostormer.strife.server.member;
+package com.leostormer.strife.member;
 
 import java.util.List;
 

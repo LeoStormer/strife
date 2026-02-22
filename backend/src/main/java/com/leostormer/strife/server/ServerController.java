@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.MemberRoleUpdateOperation;
 import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.message.MessageView;
 import com.leostormer.strife.server.invite.InviteView;
-import com.leostormer.strife.server.member.MemberRoleUpdateOperation;
 import com.leostormer.strife.server.role.RoleUpdateOperation;
 import com.leostormer.strife.server.server_channel.ChannelUpdateOperation;
 import com.leostormer.strife.server.server_channel.ChannelView;
@@ -47,13 +47,26 @@ public class ServerController {
     @Autowired
     private final SimpMessagingTemplate messagingTemplate;
 
+    @SuppressWarnings("null")
+    private void notifyServerAdded(Principal principal, ServerView serverView) {
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/server-updates",
+                ServerUpdateMessage.serverAdded(serverView));
+    }
+
+    @SuppressWarnings("null")
+    private void notifyServerRemoved(Principal principal, ObjectId serverId) {
+        messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/server-updates",
+                ServerUpdateMessage.serverRemoved(serverId.toHexString()));
+    }
+
     @PostMapping("")
     public ResponseEntity<ServerView> createServer(Principal principal, @RequestParam String serverName,
-            @RequestParam String serverDescription) {
+            @RequestParam(required = false) String serverDescription) {
         User owner = userService.getUser(principal);
         try {
-            return ResponseEntity.ok()
-                    .body(new ServerView(serverService.createServer(owner, serverName, serverDescription)));
+            ServerView serverView = new ServerView(serverService.createServer(owner, serverName, serverDescription));
+            notifyServerAdded(principal, serverView);
+            return ResponseEntity.ok().body(serverView);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -116,6 +129,21 @@ public class ServerController {
             List<ChannelView> channels = serverService.getChannels(user, serverId).stream().map(ChannelView::new)
                     .toList();
             return ResponseEntity.ok().body(channels);
+        } catch (UnauthorizedActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{serverId}/defaultChannel")
+    public ResponseEntity<ChannelView> getDefaultChannel(Principal principal, @PathVariable ObjectId serverId) {
+        User user = userService.getUser(principal);
+        try {
+            ChannelView channel = new ChannelView(serverService.getDefaultChannel(user, serverId));
+            return ResponseEntity.ok().body(channel);
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (ResourceNotFoundException e) {
@@ -196,7 +224,8 @@ public class ServerController {
     public ResponseEntity<String> joinServer(Principal principal, @PathVariable ObjectId serverId) {
         User user = userService.getUser(principal);
         try {
-            serverService.joinServer(user, serverId);
+            ServerView serverView = new ServerView(serverService.joinServer(user, serverId));
+            notifyServerAdded(principal, serverView);
             return ResponseEntity.ok().body("Joined server successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -207,12 +236,12 @@ public class ServerController {
         }
     }
 
-    @PostMapping("/{serverId}/join-by-invite")
-    public ResponseEntity<String> joinServerByInvite(Principal principal, @PathVariable ObjectId serverId,
-            @RequestParam String inviteId) {
+    @PostMapping("/join-by-invite")
+    public ResponseEntity<String> joinServerByInvite(Principal principal, @RequestParam String inviteId) {
         User user = userService.getUser(principal);
         try {
-            serverService.joinByInvite(user, inviteId);
+            ServerView serverView = new ServerView(serverService.joinByInvite(user, inviteId));
+            notifyServerAdded(principal, serverView);
             return ResponseEntity.ok().body("Joined server Successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -245,6 +274,7 @@ public class ServerController {
 
         try {
             serverService.kickMember(commandUser, memberId, serverId);
+            notifyServerRemoved(principal, serverId);
             return ResponseEntity.ok().body("Member kicked successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -262,6 +292,7 @@ public class ServerController {
 
         try {
             serverService.banMember(commandUser, memberId, serverId, banReason);
+            notifyServerRemoved(principal, serverId);
             return ResponseEntity.ok().body("Member banned successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -295,7 +326,7 @@ public class ServerController {
         User commandUser = userService.getUser(principal);
 
         try {
-            serverService.changeNickName(commandUser, memberId, serverId, newNickname);
+            serverService.changeNickname(commandUser, memberId, serverId, newNickname);
             return ResponseEntity.ok().body("Member nickname changed successfully");
         } catch (UnauthorizedActionException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());

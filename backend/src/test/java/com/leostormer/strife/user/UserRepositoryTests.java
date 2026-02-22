@@ -10,12 +10,22 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import com.leostormer.strife.AbstractRepositoryTest;
+import com.leostormer.strife.TestUtils;
+import com.leostormer.strife.channel.ChannelRepository;
+import com.leostormer.strife.user.friends.FriendRequestRepository;
 
 public class UserRepositoryTests extends AbstractRepositoryTest {
-    
+
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    FriendRequestRepository friendRequestRepository;
+
+    @Autowired
+    ChannelRepository conversationRepository;
 
     private ObjectId user1Id;
     private ObjectId user2Id;
@@ -23,36 +33,20 @@ public class UserRepositoryTests extends AbstractRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        User user1 = new User();
-        user1.setUsername("user1");
-        user1.setPassword("password123");
-        
-        User user2 = new User();
-        user2.setUsername("user2");
-        user2.setPassword("anyPassword");
-        
-        User user3 = new User();
-        user3.setUsername("user3");
-        user3.setPassword("myPassword");
-
-        user1 = userRepository.save(user1);
-        user2 = userRepository.save(user2);
-        user3 = userRepository.save(user3);
+        User user1 = TestUtils.createUser("user1", "somePassword", userRepository);
         user1Id = user1.getId();
+
+        User user2 = TestUtils.createUser("user2", "anyPassword", userRepository);
         user2Id = user2.getId();
+
+        User user3 = TestUtils.createUser("user3", "myPassword", userRepository);
         user3Id = user3.getId();
 
-        user1.getFriends().add(user2.getId());
-
-        user2.getFriends().add(user1.getId());
-        user2.getBlockedUsers().add(user3.getId());
-
-        user3.getBlockedUsers().add(user1.getId());
-        user3.getBlockedUsers().add(user2.getId());
-
-        userRepository.saveAll(List.of(user1, user2, user3));
+        TestUtils.createAcceptedFriendship(user1, user2, userRepository, friendRequestRepository);
+        TestUtils.createBlockedRelationship(user2, user3, true, userRepository, conversationRepository);
+        TestUtils.createBlockedRelationship(user3, user1, userRepository, conversationRepository);
     }
-    
+
     @AfterEach
     void clearDatabase() {
         userRepository.deleteAll();
@@ -70,6 +64,7 @@ public class UserRepositoryTests extends AbstractRepositoryTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     void shouldUpdateUserDetails() {
         String newName = "AwesomeNewName";
         User user = userRepository.findById(user1Id).get();

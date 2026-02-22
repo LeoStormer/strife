@@ -1,40 +1,38 @@
-.background {
-  background-color: rgba(0, 0, 0, 0.5);
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.container {
-  width: 500px;
-  height: 600px;
+#addServerModalContainer {
+  --active-transition:
+    var(--base-transition),
+    height var(--animation-duration) var(--animation-style);
+  width: 440px;
+  height: 440px;
   background-color: var(--background-color);
   border-radius: 16px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border-highlight-color);
   color: var(--on-background-color);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  justify-content: start;
   align-items: center;
+  column-gap: 48px;
   box-sizing: border-box;
   padding: 20px;
-  padding-left: 30px;
-  padding-right: 30px;
+  padding-left: 24px;
+  padding-right: 24px;
+  overflow: hidden;
 }
 
-.container > * {
-  width: 100%;
+#addServerModalContainer[data-selected-form="join"] {
+  height: 390px;
+}
+
+#addServerModalContainer[data-selected-form="join"] > .form {
+  transform: translateX(calc(-100% - 48px));
 }
 
 .header {
-  height: 120px;
   margin-bottom: 30px;
   box-sizing: border-box;
+  margin: 0px;
 }
 
 .header > * {
@@ -53,28 +51,151 @@
   text-align: center;
 }
 
-.scrollable {
+.form {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  height: 100%;
-  overflow-y: scroll;
+  row-gap: 8px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  width: 100%;
 }
 
-.scrollable::-webkit-scrollbar {
-  /* Make the scrollbar itself very thin */
-  width: 6px;
+.form > h3 {
+  margin-bottom: 0px;
 }
 
-.scrollable::-webkit-scrollbar-thumb {
-  /* Style the draggable part */
-  background-color: var(--on-background-color); /* Semi-transparent color */
-  border-radius: 3px;
+.form > label {
+  align-self: flex-start;
+}
+
+.form > input {
+  width: 100%;
+  height: 60px;
+  box-sizing: border-box;
+  background-color: var(--darken-strong);
+  color: var(--on-background-color);
+  border-style: solid;
+  border-color: var(--border-highlight-color);
+  border-radius: 10px;
+  padding: 0px;
+}
+
+.form > input:focus {
+  outline: none;
+  border-color: var(--accent-color);
 }
 
 .button {
   width: 100%;
-  min-height: 60px;
+  height: 60px;
   border-radius: 10px;
-  margin-bottom: 5px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: var(--border-highlight-color);
+  background-color: var(--on-background-contrast);
+  padding: 0px;
+  color: var(--on-background-color);
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: var(--on-background-contrast-medium);
+}
+
+.link {
+  display: grid;
+  grid-template-columns: [icon-start] 52px [icon-end content-start] 1fr [content-end chevron-start] 36px [chevron-end];
+  grid-template-rows: [icon-start heading-start] 26px [heading-end content-start] 26px [content-end icon-end];
+  color: var(--on-background-color);
+  text-decoration: none;
+  background-color: var(--darken-strong);
+  border-radius: 8px;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.link:hover {
+  background-color: var(--on-background-contrast);
+}
+
+.link:active {
+  background-color: var(--on-background-contrast-strong);
+}
+
+.discoverIcon {
+  grid-area: icon;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.discoverIcon > svg {
+  width: 26px;
+  height: 26px;
+}
+
+.chevronIcon {
+  grid-column: chevron;
+  grid-row: icon;
+  width: 20px;
+  height: 20px;
+}
+
+.link h3 {
+  grid-column: content;
+  grid-row: heading;
+  margin: 0px;
+  font-size: 16px;
+  align-self: start;
+}
+
+.link p {
+  grid-area: content;
+  margin: 0px;
+  font-size: 12px;
+  align-self: end;
+}
+
+.spaceBetween {
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.backButton {
+  border-style: none;
+  background-color: transparent;
+  color: var(--accent-color);
+  cursor: pointer;
+}
+
+.backButton:hover {
+  text-decoration: underline;
+}
+
+.joinButton {
+  width: 112px;
+  height: 40px;
+  border-radius: 8px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--accent-color) 80%, white 20%);
+  background-color: var(--accent-color);
+  color: var(--on-accent-color);
+  transition: background-color 0.2s ease-in;
+  cursor: pointer;
+}
+
+.joinButton:hover {
+  background-color: var(--accent-color-darker);
 }

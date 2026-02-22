@@ -31,6 +31,7 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
+    @SuppressWarnings("null")
     public List<Message> getMessages(ObjectId channelId, MessageSearchOptions searchOptions) {
         Criteria criteria = Criteria.where("channel").is(channelId)
                 .and("timestamp");
@@ -56,6 +57,7 @@ public class CustomMessageRepositoryImpl implements CustomMessageRepository {
     }
 
     @Override
+    @SuppressWarnings("null")
     public void deleteAllByChannel(ObjectId... channelIds) {
         mongoTemplate.remove(
                 new Query(Criteria.where("channel").in((Object[]) channelIds)), Message.class);

@@ -9,14 +9,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
-import com.leostormer.strife.server.member.Member;
-import com.leostormer.strife.server.member.MemberRoleUpdateOperation;
+import com.leostormer.strife.member.Member;
+import com.leostormer.strife.member.MemberRoleUpdateOperation;
 
 public class MemberManagerTests extends ServerServiceTestSetup {
     @Test
     public void shouldJoinServer() {
         serverService.joinServer(nonMemberUser, existingServerId);
-        assertTrue(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertTrue(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
     }
 
     @Test
@@ -29,9 +29,9 @@ public class MemberManagerTests extends ServerServiceTestSetup {
     @Test
     public void shouldLeaveServer() {
         serverService.leaveServer(moderator, existingServerId);
-        assertFalse(serverRepository.isMember(existingServerId, moderator.getId()));
+        assertFalse(memberRepository.isMember(moderator.getId(), existingServerId));
         serverService.leaveServer(noPermissionsUser, existingServerId);
-        assertFalse(serverRepository.isMember(existingServerId, noPermissionsUser.getId()));
+        assertFalse(memberRepository.isMember(noPermissionsUser.getId(), existingServerId));
     }
 
     @Test
@@ -39,7 +39,7 @@ public class MemberManagerTests extends ServerServiceTestSetup {
         assertThrows(UnauthorizedActionException.class, () -> {
             serverService.leaveServer(owner, existingServerId);
         });
-        assertTrue(serverRepository.isMember(existingServerId, owner.getId()));
+        assertTrue(memberRepository.isMember(owner.getId(), existingServerId));
     }
 
     @Test
@@ -52,9 +52,9 @@ public class MemberManagerTests extends ServerServiceTestSetup {
     @Test
     public void shouldKickMember() {
         serverService.kickMember(moderator, noPermissionsUser.getId(), existingServerId);
-        assertFalse(serverRepository.isMember(existingServerId, noPermissionsUser.getId()));
+        assertFalse(memberRepository.isMember(noPermissionsUser.getId(), existingServerId));
         serverService.kickMember(owner, moderator.getId(), existingServerId);
-        assertFalse(serverRepository.isMember(existingServerId, moderator.getId()));
+        assertFalse(memberRepository.isMember(moderator.getId(), existingServerId));
     }
 
     @Test
@@ -95,12 +95,12 @@ public class MemberManagerTests extends ServerServiceTestSetup {
     @Test
     public void shouldBanMember() {
         serverService.banMember(moderator, noPermissionsUser.getId(), existingServerId, "Test Reason");
-        assertFalse(serverRepository.isMember(existingServerId, noPermissionsUser.getId()));
+        assertFalse(memberRepository.isMember(noPermissionsUser.getId(), existingServerId));
         serverService.banMember(owner, moderator.getId(), existingServerId, "Test Reason");
-        assertFalse(serverRepository.isMember(existingServerId, moderator.getId()));
+        assertFalse(memberRepository.isMember(moderator.getId(), existingServerId));
         serverService.banMember(owner, nonMemberUser.getId(), existingServerId, "I don't like you");
         // can ban users not in the server
-        assertFalse(serverRepository.isMember(existingServerId, nonMemberUser.getId()));
+        assertFalse(memberRepository.isMember(nonMemberUser.getId(), existingServerId));
     }
 
     @Test
@@ -141,7 +141,7 @@ public class MemberManagerTests extends ServerServiceTestSetup {
     @Test
     public void shouldUnbanMember() {
         serverService.unbanMember(moderator, bannedUser.getId(), existingServerId);
-        assertTrue(serverRepository.getMember(existingServerId, bannedUser.getId()).isEmpty());
+        assertTrue(memberRepository.findByUserIdAndServerId(bannedUser.getId(), existingServerId).isEmpty());
     }
 
     @Test
@@ -162,66 +162,66 @@ public class MemberManagerTests extends ServerServiceTestSetup {
 
     @Test
     public void shouldChangeNicknameOfSelf() {
-        String newNickName = "New Name";
-        serverService.changeNickName(basicMemberUser, basicMemberUser.getId(), existingServerId, newNickName);
-        Member member = serverRepository.getMember(existingServerId, basicMemberUser.getId()).get();
-        assertTrue(member.getNickName().equals(newNickName));
+        String newNickname = "New Name";
+        serverService.changeNickname(basicMemberUser, basicMemberUser.getId(), existingServerId, newNickname);
+        Member member = memberService.getMember(basicMemberUser.getId(), existingServerId).get();
+        assertTrue(member.getNickname().equals(newNickname));
     }
 
     @Test
     public void shouldNotChangeNicknameOfSelfWithoutPermision() {
         String nickname = "New Name";
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(noPermissionsUser, noPermissionsUser.getId(), existingServerId, nickname);
+            serverService.changeNickname(noPermissionsUser, noPermissionsUser.getId(), existingServerId, nickname);
         });
     }
 
     @Test
     public void shouldChangeNicknameOfLowerRankedMember() {
-        String newNickName = "New Name";
-        serverService.changeNickName(moderator, basicMemberUser.getId(), existingServerId, newNickName);
-        Member member = serverRepository.getMember(existingServerId, basicMemberUser.getId()).get();
-        assertTrue(member.getNickName().equals(newNickName));
+        String newNickname = "New Name";
+        serverService.changeNickname(moderator, basicMemberUser.getId(), existingServerId, newNickname);
+        Member member = memberService.getMember(basicMemberUser.getId(), existingServerId).get();
+        assertTrue(member.getNickname().equals(newNickname));
     }
 
     @Test
     public void shouldNotChangeNicknameOfOthersWithoutPermission() {
-        String newNickName = "New Name";
+        String newNickname = "New Name";
 
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(noPermissionsUser, basicMemberUser.getId(), existingServerId, newNickName);
+            serverService.changeNickname(noPermissionsUser, basicMemberUser.getId(), existingServerId, newNickname);
         });
-        Member member = serverRepository.getMember(existingServerId, basicMemberUser.getId()).get();
-        assertTrue(member.getNickName().equals(basicMemberUser.getUsername()));
+        Member member = memberService.getMember(basicMemberUser.getId(), existingServerId).get();
+        assertTrue(member.getNickname().equals(basicMemberUser.getUsername()));
 
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(basicMemberUser, noPermissionsUser.getId(), existingServerId, newNickName);
+            serverService.changeNickname(basicMemberUser, noPermissionsUser.getId(), existingServerId, newNickname);
         });
-        Member noPermissionsMember = serverRepository.getMember(existingServerId, noPermissionsUser.getId()).get();
-        assertTrue(noPermissionsMember.getNickName().equals(noPermissionsUser.getUsername()));
+        Member noPermissionsMember = memberService.getMember(noPermissionsUser.getId(), existingServerId).get();
+        assertTrue(noPermissionsMember.getNickname().equals(noPermissionsUser.getUsername()));
     }
 
     @Test
     public void shouldNotChangeNicknameOfMemberWithHigherRole() {
-        String newNickName = "New Name";
+        String newNickname = "New Name";
         assertThrows(UnauthorizedActionException.class, () -> {
-            serverService.changeNickName(moderator, owner.getId(), existingServerId, newNickName);
+            serverService.changeNickname(moderator, owner.getId(), existingServerId, newNickname);
         });
-        Member ownerMember = serverRepository.getMember(existingServerId, owner.getId()).get();
-        assertTrue(ownerMember.getNickName().equals(owner.getUsername()));
+        Member ownerMember = memberService.getMember(owner.getId(), existingServerId).get();
+        assertTrue(ownerMember.getNickname().equals(owner.getUsername()));
     }
 
     @Test
     public void shouldUpdateRolesOfMember() {
         MemberRoleUpdateOperation operation = new MemberRoleUpdateOperation(List.of(defaultRoleId), List.of());
         serverService.updateMemberRoles(moderator, noPermissionsUser.getId(), existingServerId, operation);
-        Member noPermissionsMember = serverRepository.getMember(existingServerId, noPermissionsUser.getId()).get();
+        Member noPermissionsMember = memberService.getMember(noPermissionsUser.getId(), existingServerId).get();
         assertTrue(noPermissionsMember.getRoleIds().stream().anyMatch(id -> id.equals(defaultRoleId)));
 
         MemberRoleUpdateOperation operation2 = new MemberRoleUpdateOperation(List.of(defaultRoleId),
                 List.of(moderatorRoleId));
         serverService.updateMemberRoles(owner, moderator.getId(), existingServerId, operation2);
-        Member moderatorMember = serverRepository.getMember(existingServerId, moderator.getId()).get();
+        Member moderatorMember = memberService.getMember(moderator.getId(), existingServerId).get();
         assertTrue(moderatorMember.getRoleIds().stream().anyMatch(id -> id.equals(defaultRoleId)));
         assertTrue(moderatorMember.getRoleIds().stream().noneMatch(id -> id.equals(moderatorRoleId)));
     }

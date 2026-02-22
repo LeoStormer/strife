@@ -11,12 +11,13 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import com.leostormer.strife.conversation.Conversation;
+import com.leostormer.strife.member.Member;
 import com.leostormer.strife.server.PermissionType;
 import com.leostormer.strife.server.Permissions;
-import com.leostormer.strife.server.member.Member;
 import com.leostormer.strife.server.server_channel.ChannelUpdateOperation;
 import com.leostormer.strife.server.server_channel.ServerChannel;
 
@@ -36,29 +37,44 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
         return mongoTemplate.find(new Query(Criteria.where("server").is(serverId)), ServerChannel.class);
     }
 
-    @Override
-    public List<ServerChannel> getVisibleServerChannels(ObjectId serverId, Member member) {
-        if (member.isOwner()) { // Assumes the member is a member of the server
-            return findAllByServerId(serverId);
+    @NonNull
+    @SuppressWarnings("null")
+    private Criteria getServerVisibilityCriiteria(ObjectId serverId, Member member) {
+        Criteria isServerCriteria = Criteria.where("server").is(serverId);
+        if (member.isOwner()) {
+            return isServerCriteria;
         }
 
-        Criteria isServerCriteria = Criteria.where("server").is(serverId);
         List<Integer> bitPositions = Permissions.getBitPositions(PermissionType.VIEW_CHANNELS,
                 PermissionType.ADMINISTRATOR);
 
         List<Criteria> hasPermissions = new ArrayList<>();
         hasPermissions.add(Criteria.where("isPublic").is(true));
         hasPermissions
-                .add(Criteria.where("userPermissions." + member.getUserId().toHexString()).bits().anySet(bitPositions));
+                .add(Criteria.where("userPermissions." + member.getUser().getId().toHexString()).bits()
+                        .anySet(bitPositions));
         member.getRoleIds().forEach(id -> {
             hasPermissions.add(Criteria.where("rolePermissions." + id.toHexString()).bits().anySet(bitPositions));
         });
 
-        Criteria critera = new Criteria().andOperator(isServerCriteria,
+        return new Criteria().andOperator(isServerCriteria,
                 new Criteria().orOperator(hasPermissions));
+    }
+
+    @Override
+    public List<ServerChannel> getVisibleServerChannels(ObjectId serverId, Member member) {
+        Criteria critera = getServerVisibilityCriiteria(serverId, member);
         Query query = new Query(critera);
 
         return mongoTemplate.find(query, ServerChannel.class);
+    }
+
+    @Override
+    public ServerChannel getFirstVisibleServerChannel(ObjectId serverId, Member member) {
+        Criteria critera = getServerVisibilityCriiteria(serverId, member);
+        Query query = new Query(critera);
+
+        return mongoTemplate.findOne(query, ServerChannel.class);
     }
 
     @Override
@@ -90,6 +106,7 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
                 Conversation.class);
     }
 
+    @NonNull
     private Criteria containsGivenUsersAndOnlyGivenUsers(ObjectId... userIds) {
         List<Criteria> criteriaList = new ArrayList<>();
         criteriaList.add(Criteria.where("numUsers").is(userIds.length));
@@ -124,6 +141,6 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
     public void unlockDirectConversation(ObjectId userId, ObjectId otherUserId) {
         Query query = new Query(containsGivenUsersAndOnlyGivenUsers(userId, otherUserId));
         Update update = Update.update("locked", false);
-        mongoTemplate.updateFirst(query, update, Conversation.class);    
+        mongoTemplate.updateFirst(query, update, Conversation.class);
     }
 }

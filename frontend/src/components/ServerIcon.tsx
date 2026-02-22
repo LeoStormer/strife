@@ -1,3 +1,5 @@
+import type { JSX } from "react";
+
 function getInitials(serverName: string) {
   return serverName
     .split(" ")
@@ -5,18 +7,30 @@ function getInitials(serverName: string) {
     .join("");
 }
 
-type ServerIconProps = {
-  serverIconImage: string | undefined;
-  serverName: string;
-};
+type ImageProps = {
+  serverIconImage: string;
+  serverName?: string | undefined;
+} & Omit<JSX.IntrinsicElements["img"], "src">;
 
-function ServerIcon({ serverIconImage, serverName }: ServerIconProps) {
-  const icon = serverIconImage ? (
-    <img src={serverIconImage} alt=''></img>
-  ) : (
-    <label>{getInitials(serverName)}</label>
-  );
-  return <>{icon}</>;
+type ParagraphProps = {
+  serverIconImage: "" | undefined;
+  serverName: string;
+} & JSX.IntrinsicElements["p"];
+
+export type ServerIconProps = ImageProps | ParagraphProps;
+
+function isImageProps(props: ServerIconProps): props is ImageProps {
+  return props.serverIconImage != undefined && props.serverIconImage !== "";
+}
+
+function ServerIcon(props: ServerIconProps) {
+  if (isImageProps(props)) {
+    const { serverIconImage, serverName, ...imgProps } = props;
+    return <img src={serverIconImage} {...imgProps} />;
+  } else {
+    const { serverIconImage, serverName, ...pProps } = props;
+    return <p {...pProps}>{getInitials(serverName)}</p>;
+  }
 }
 
 export default ServerIcon;

@@ -1,6 +1,55 @@
 .container {
   grid-row: 1;
   grid-column: span 4;
-  /* background-color: var(--background-color); */
-  background-color: green;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 9px;
+  color: var(--on-background-color);
+}
+
+.pageTitle {
+  margin: 0px;
+  text-align: center;
+  line-height: 100%;
+}
+
+.pageIcon {
+  width: 24px;
+  height: 24px;
+  margin: 0px;
+}
+
+p.pageIcon {
+  background-color: var(--on-background-contrast);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.iconButtonContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 24px;
+  position: absolute;
+  height: 100%;
+  right: 16px;
+  top: 0px;
+}
+
+.iconButton {
+  all: unset;
+}
+
+.iconButton:hover {
+  color: color-mix(in srgb, var(--on-background-color) 40%, white 60%);
+}
+
+.iconButton > svg {
+  width: 20px;
+  height: 20px;
 }

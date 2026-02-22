@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "app.websocket.allowed-origins",
+    "type": "java.lang.String",
+    "description": "The allowed origins for websocket connections. Should be a comma separated list of origins."
+  },
+  {
+    "name": "app.cors.allowed-origins",
+    "type": "java.lang.String",
+    "description": "The allowed origins for http connections. Should be a comma separated list of origins."
+  }
+]}

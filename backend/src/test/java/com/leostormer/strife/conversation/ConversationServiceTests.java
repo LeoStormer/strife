@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.message.Message;
@@ -24,7 +25,6 @@ import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 import com.leostormer.strife.user.UserService;
-import com.leostormer.strife.user.friends.FriendRequest;
 import com.leostormer.strife.user.friends.FriendRequestRepository;
 
 public class ConversationServiceTests extends AbstractIntegrationTest {
@@ -62,42 +62,17 @@ public class ConversationServiceTests extends AbstractIntegrationTest {
 
     @BeforeEach
     void setupRequests() {
-        user1 = new User();
-        user1.setUsername("User1");
-        user1.setPassword("password123");
-        user2 = new User();
-        user2.setUsername("User2");
-        user2.setPassword("password456");
-        user3 = new User();
-        user3.setUsername("User3");
-        user3.setPassword("password789");
-        user4 = new User();
-        user4.setUsername("User4");
-        user4.setPassword("password1234");
+        user1 = TestUtils.createUser("User1", "password123", userRepository);
+        user2 = TestUtils.createUser("User2", "password456", userRepository);
+        user3 = TestUtils.createUser("User3", "password789", userRepository);
+        user4 = TestUtils.createUser("User4", "password1234", userRepository);
 
-        user1 = userRepository.save(user1);
-        user2 = userRepository.save(user2);
-        user3 = userRepository.save(user3);
-        user4 = userRepository.save(user4);
+        TestUtils.createAcceptedFriendship(user1, user2, userRepository, friendRequestRepository);
 
-        FriendRequest user1AndUser2AreFriends = FriendRequest.builder().sender(user1).receiver(user2).accepted(true)
-                .build();
-        user1.getFriends().add(user2.getId());
-        user2.getFriends().add(user1.getId());
+        TestUtils.createBlockedRelationship(user3, user1, userRepository, conversationRepository);
 
-        Conversation user3AndUser1ConversationBlocked = new Conversation(true, List.of(user3, user1),
-                List.of(false, false));
-        user3.getBlockedUsers().add(user1.getId());
+        TestUtils.createAcceptedFriendship(user1, user4, userRepository, friendRequestRepository);
 
-        FriendRequest user1AndUser4AreFriends = FriendRequest.builder().sender(user1).receiver(user4).accepted(true)
-                .build();
-        user1.getFriends().add(user4.getId());
-        user4.getFriends().add(user1.getId());
-        userRepository.saveAll(List.of(user1, user2, user3, user4));
-
-        friendRequestRepository.saveAll(List.of(user1AndUser2AreFriends, user1AndUser4AreFriends));
-
-        conversationRepository.save(user3AndUser1ConversationBlocked);
         conversation1 = conversationRepository.save(new Conversation(user1, user2));
         conversation2 = conversationRepository.save(new Conversation(user2, user3));
     }

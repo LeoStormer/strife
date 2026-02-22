@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.leostormer.strife.AbstractRepositoryTest;
+import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 
@@ -25,26 +26,11 @@ public class FriendRequestRepositoryTests extends AbstractRepositoryTest {
 
     @BeforeAll
     static void setUpUsers(@Autowired UserRepository userRepository) {
-        User user1 = new User();
-        user1.setUsername("user1");
-        user1.setPassword("password123");
-        User user2 = new User();
-        user2.setUsername("user2");
-        user2.setPassword("password1234");
-
-        User user3 = new User();
-        user3.setUsername("user3");
-        user3.setPassword("password12345");
-
-        User user4 = new User();
-        user4.setUsername("user4");
-        user4.setPassword("password123456");
-
-        User user5 = new User();
-        user5.setUsername("user5");
-        user5.setPassword("password1234567");
-
-        userRepository.saveAll(List.of(user1, user2, user3, user4, user5));
+        TestUtils.createUser("user1", "password123", userRepository);
+        TestUtils.createUser("user2", "password1234", userRepository);
+        TestUtils.createUser("user3", "password12345", userRepository);
+        TestUtils.createUser("user4", "password123456", userRepository);
+        TestUtils.createUser("user5", "password1234567", userRepository);
     }
 
     @BeforeEach
@@ -54,20 +40,9 @@ public class FriendRequestRepositoryTests extends AbstractRepositoryTest {
         User user3 = userRepository.findOneByUsername("user3").get();
         User user4 = userRepository.findOneByUsername("user4").get();
 
-        friendRequestRepository.saveAll(List.of(
-                FriendRequest.builder()
-                        .sender(user1)
-                        .receiver(user2)
-                        .build(),
-                FriendRequest.builder()
-                        .sender(user1)
-                        .receiver(user3)
-                        .accepted(true)
-                        .build(),
-                FriendRequest.builder()
-                        .sender(user4)
-                        .receiver(user1)
-                        .build()));
+        TestUtils.createPendingFriendship(user1, user2, friendRequestRepository);
+        TestUtils.createAcceptedFriendship(user1, user3, userRepository, friendRequestRepository);
+        TestUtils.createPendingFriendship(user4, user1, friendRequestRepository);
     }
 
     @AfterEach

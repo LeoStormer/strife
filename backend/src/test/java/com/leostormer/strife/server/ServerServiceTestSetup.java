@@ -9,10 +9,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.channel.ChannelRepository;
-import com.leostormer.strife.server.member.Member;
+import com.leostormer.strife.member.MemberRepository;
+import com.leostormer.strife.member.MemberService;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.server.server_channel.ServerChannel;
 import com.leostormer.strife.user.User;
@@ -26,50 +29,78 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
     protected ChannelRepository channelRepository;
 
     @Autowired
+    protected MemberRepository memberRepository;
+
+    @Autowired
     protected ServerService serverService;
 
+    @Autowired
+    protected MemberService memberService;
+
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId existingServerId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId channel1Id;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId channel2Id;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId adminOnlyPrivateChannelId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId ownerRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId grandAdministratorRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId moderatorRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected ObjectId defaultRoleId;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User owner;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User moderator;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User basicMemberUser;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User noPermissionsUser;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User nonMemberUser;
 
+    @NonNull
+    @SuppressWarnings("null")
     protected static User bannedUser;
-
-    private static User createUser(String userName, UserRepository userRepository) {
-        User user = new User();
-        user.setUsername(userName);
-        return userRepository.save(user);
-    }
 
     @BeforeAll
     public static void setupUsers(@Autowired UserRepository userRepository) {
-        owner = createUser("owner", userRepository);
-        moderator = createUser("moderator", userRepository);
-        basicMemberUser = createUser("basicUser", userRepository);
-        noPermissionsUser = createUser("noPermissions", userRepository);
-        nonMemberUser = createUser("nonMember", userRepository);
-        bannedUser = createUser("bannedUser", userRepository);
+        owner = TestUtils.createUser("owner", "", userRepository);
+        moderator = TestUtils.createUser("moderator", "", userRepository);
+        basicMemberUser = TestUtils.createUser("basicUser", "", userRepository);
+        noPermissionsUser = TestUtils.createUser("noPermissions", "", userRepository);
+        nonMemberUser = TestUtils.createUser("nonMember", "", userRepository);
+        bannedUser = TestUtils.createUser("bannedUser", "", userRepository);
     }
 
     @AfterAll
@@ -78,51 +109,33 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
     }
 
     @BeforeEach
+    @SuppressWarnings("null")
     public void setup() {
-        Server existingServer = new Server();
-        existingServer.setName("TestServer");
-        existingServer.setDescription("A test Server");
-        existingServer.setOwner(owner);
-
-        Role ownerRole = new Role(new ObjectId(), "Owner", Integer.MAX_VALUE, Permissions.ALL);
-        existingServer.getRoles().put(ownerRole.getId(), ownerRole);
-        ownerRoleId = ownerRole.getId();
-
         Role grandAdministratorRole = new Role(new ObjectId(), "Grand Administrator", 2, Permissions.ALL);
-        existingServer.getRoles().put(grandAdministratorRole.getId(), grandAdministratorRole);
         grandAdministratorRoleId = grandAdministratorRole.getId();
 
         Role moderatorRole = new Role(new ObjectId(), "Moderator", 1,
                 Permissions.revokePermission(Permissions.ALL,
                         PermissionType.ADMINISTRATOR, PermissionType.MANAGE_SERVER));
-        existingServer.getRoles().put(moderatorRole.getId(), moderatorRole);
         moderatorRoleId = moderatorRole.getId();
 
         Role defaultRole = new Role(new ObjectId(), "Member", 0,
-                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS, PermissionType.CHANGE_NICKNAME));
-        existingServer.getRoles().put(defaultRole.getId(), defaultRole);
+                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS,
+                        PermissionType.CHANGE_NICKNAME));
         defaultRoleId = defaultRole.getId();
 
-        Member ownerMember = Member.fromUser(owner, ownerRole);
-        ownerMember.setOwner(true);
-        existingServer.getMembers().add(ownerMember);
+        Server existingServer = TestUtils.createServer(owner, "TestServer", "A test Server", serverRepository, memberRepository,
+                grandAdministratorRole, moderatorRole, defaultRole);
 
-        Member moderatorMember = Member.fromUser(moderator, moderatorRole);
-        existingServer.getMembers().add(moderatorMember);
-
-        Member basicMember = Member.fromUser(basicMemberUser, defaultRole);
-        existingServer.getMembers().add(basicMember);
-
-        Member noPermissionMember = Member.fromUser(noPermissionsUser);
-        existingServer.getMembers().add(noPermissionMember);
-
-        Member bannedMember = Member.fromUser(bannedUser);
-        bannedMember.setBanned(true);
-        bannedMember.setBanReason("Because i can");
-        existingServer.getMembers().add(bannedMember);
-
-        existingServer = serverRepository.save(existingServer);
+        Role ownerRole = existingServer.getRoles().values().stream().filter(r -> r.getPriority() == Integer.MAX_VALUE)
+                .findFirst().get();
+        ownerRoleId = ownerRole.getId();
         existingServerId = existingServer.getId();
+
+        TestUtils.createMember(moderator, existingServer, memberRepository, moderatorRole);
+        TestUtils.createMember(basicMemberUser, existingServer, memberRepository, defaultRole);
+        TestUtils.createMember(noPermissionsUser, existingServer, memberRepository);
+        TestUtils.createBannedMember(bannedUser, existingServer, "Because i can", memberRepository);
 
         channel1Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
                 .description("A general channel.").name("general").build()).getId();
@@ -145,5 +158,6 @@ public class ServerServiceTestSetup extends AbstractIntegrationTest {
     public void cleanup() {
         channelRepository.deleteAll();
         serverRepository.deleteAll();
+        memberRepository.deleteAll();
     }
 }

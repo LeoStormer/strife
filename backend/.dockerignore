@@ -1,0 +1,22 @@
+# Ignore build artifacts
+target/
+*.jar
+*.war
+
+# Ignore local environment/secrets
+.env
+.env.local
+
+# Ignore IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Ignore version control
+.git
+.gitignore
+
+# Ignore Docker files
+dockerfile
+.dockerignore

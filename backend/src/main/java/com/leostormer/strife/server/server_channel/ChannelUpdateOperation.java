@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.lang.NonNull;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public class ChannelUpdateOperation {
     private Map<ObjectId, Long> userPermissions;
     private Map<ObjectId, Long> rolePermissions;
 
+    @NonNull
     public Update toUpdateObject() {
         Update update = new Update();
         if (name != null)

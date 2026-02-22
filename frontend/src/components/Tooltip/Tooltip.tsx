@@ -1,6 +1,6 @@
-import { useLayoutEffect, useRef, useState, type RefObject } from "react";
-import styles from "./ToolTip.module.css";
-import Modal from "../Modal";
+import { useLayoutEffect, useRef, type RefObject } from "react";
+import styles from "./Tooltip.module.css";
+import Portal from "../Portal";
 import StyleComposer from "../../utils/StyleComposer";
 
 export type TailStyle = "up" | "down" | "left" | "right" | "none";
@@ -31,7 +31,7 @@ const TAIL_STYLE_MAP: Record<TailStyle, string | undefined> = {
 const getTop = (
   renderDirection: RenderDirection,
   tooltipRect: DOMRect,
-  targetRect: DOMRect
+  targetRect: DOMRect,
 ) => {
   if (renderDirection === "right" || renderDirection === "left") {
     return window.scrollY + targetRect.top;
@@ -48,7 +48,7 @@ const getTop = (
 const getLeft = (
   renderDirection: RenderDirection,
   tooltipRect: DOMRect,
-  targetRect: DOMRect
+  targetRect: DOMRect,
 ) => {
   if (renderDirection === "right") {
     return window.scrollX + targetRect.right + TAIL_LENGTH;
@@ -98,23 +98,20 @@ function Tooltip({
     tooltipRef.current.style.left = `${left}px`;
   }, [text, tailStyle, renderDirection, targetRef, isVisible]);
 
-  const modalClass = StyleComposer(styles.container, {
-    [styles.hidden as string]: !isVisible
-  })
+  const PortalClass = StyleComposer(styles.container, {
+    [styles.hidden as string]: !isVisible,
+  });
 
   const bubbleClass = StyleComposer(styles.bubble, {
     [TAIL_STYLE_MAP[tailStyle] as string]: true,
   });
 
   return (
-    <Modal
-      ref={tooltipRef}
-      className={modalClass}
-    >
+    <Portal ref={tooltipRef} className={PortalClass}>
       <div className={bubbleClass}>
         <p className={styles.content}>{text}</p>
       </div>
-    </Modal>
+    </Portal>
   );
 }
 

@@ -14,9 +14,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.leostormer.strife.AbstractIntegrationTest;
+import com.leostormer.strife.TestUtils;
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.conversation.Conversation;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
@@ -40,64 +42,39 @@ public class UserServiceTests extends AbstractIntegrationTest {
     @Autowired
     UserService userService;
 
+    @NonNull
+    @SuppressWarnings("null")
     private ObjectId user1Id;
+
+    @NonNull
+    @SuppressWarnings("null")
     private ObjectId user2Id;
+
+    @NonNull
+    @SuppressWarnings("null")
     private ObjectId user3Id;
+
+    @NonNull
+    @SuppressWarnings("null")
     private ObjectId user4Id;
+
+    @NonNull
+    @SuppressWarnings("null")
     private ObjectId user5Id;
 
-    private void createPendingFriendship(User sender, User receiver) {
-        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver).build();
-        friendRequestRepository.save(friendRequest);
-    }
-
-    private void createAcceptedFriendship(User sender, User receiver) {
-        FriendRequest friendRequest = FriendRequest.builder().sender(sender).receiver(receiver)
-                .accepted(true).build();
-        friendRequestRepository.save(friendRequest);
-        sender.getFriends().add(receiver.getId());
-        receiver.getFriends().add(sender.getId());
-        userRepository.saveAll(List.of(sender, receiver));
-    }
-
-    private void createBlockedRelationship(User sender, User receiver) {
-        Optional<Conversation> result = conversationRepository.findConversationByUserIds(sender.getId(), receiver.getId());
-        if (result.isPresent() && !result.get().isLocked()) {
-            Conversation conversation = result.get();
-            conversation.setLocked(true);
-            conversationRepository.save(conversation);
-        }
-        sender.getBlockedUsers().add(receiver.getId());
-        userRepository.save(sender);
-    }
-
     @BeforeEach
+    @SuppressWarnings("null")
     void setUp() {
-        User user1 = new User();
-        user1.setUsername("user1");
-        user1.setPassword("password123");
-        user1 = userRepository.save(user1);
+        User user1 = TestUtils.createUser("user1", "password123", userRepository);
 
-        User user2 = new User();
-        user2.setUsername("user2");
-        user2.setPassword("password456");
-        user2 = userRepository.save(user2);
+        User user2 = TestUtils.createUser("user2", "password456", userRepository);
 
-        User user3 = new User();
-        user3.setUsername("user3");
-        user3.setPassword("password789");
-        user3 = userRepository.save(user3);
+        User user3 = TestUtils.createUser("user3", "password789", userRepository);
 
-        User user4 = new User();
-        user4.setUsername("user4");
-        user4.setPassword("password101112");
-        user4 = userRepository.save(user4);
-        
+        User user4 = TestUtils.createUser("user4", "password101112", userRepository);
+
         // no pre-existing relationships
-        User user5 = new User();
-        user5.setUsername("user4");
-        user5.setPassword("password101112");
-        user5 = userRepository.save(user5);
+        User user5 = TestUtils.createUser("user5", "password101112", userRepository);
 
         user1Id = user1.getId();
         user2Id = user2.getId();
@@ -105,16 +82,16 @@ public class UserServiceTests extends AbstractIntegrationTest {
         user4Id = user4.getId();
         user5Id = user5.getId();
 
-        createAcceptedFriendship(user1, user2);
-        createAcceptedFriendship(user2, user3);
+        TestUtils.createAcceptedFriendship(user1, user2, userRepository, friendRequestRepository);
+        TestUtils.createAcceptedFriendship(user2, user3, userRepository, friendRequestRepository);
 
         // Pending
-        createPendingFriendship(user2, user4);
+        TestUtils.createPendingFriendship(user2, user4, friendRequestRepository);
 
         // Blocked
-        createBlockedRelationship(user4, user1);
-        createBlockedRelationship(user1, user3);
-        createBlockedRelationship(user3, user4);
+        TestUtils.createBlockedRelationship(user4, user1, userRepository, conversationRepository);
+        TestUtils.createBlockedRelationship(user1, user3, userRepository, conversationRepository);
+        TestUtils.createBlockedRelationship(user3, user4, userRepository, conversationRepository);
     }
 
     @AfterEach
@@ -142,6 +119,7 @@ public class UserServiceTests extends AbstractIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     void shouldUpdateUserDetails() {
         User user1 = userRepository.findById(user1Id).get();
         UserUpdate userUpdate = new UserUpdate();

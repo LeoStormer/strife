@@ -7,19 +7,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.leostormer.strife.channel.ChannelRepository;
 import com.leostormer.strife.exceptions.ResourceNotFoundException;
 import com.leostormer.strife.exceptions.UnauthorizedActionException;
+import com.leostormer.strife.member.Member;
+import com.leostormer.strife.member.MemberRoleUpdateOperation;
+import com.leostormer.strife.member.MemberService;
 import com.leostormer.strife.message.Message;
 import com.leostormer.strife.message.MessageRepository;
 import com.leostormer.strife.message.MessageSearchOptions;
 import com.leostormer.strife.server.invite.InviteManager;
 import com.leostormer.strife.server.invite.InviteRepository;
-import com.leostormer.strife.server.member.Member;
-import com.leostormer.strife.server.member.MemberManager;
 import com.leostormer.strife.server.role.Role;
 import com.leostormer.strife.server.role.RoleManager;
 import com.leostormer.strife.server.server_channel.ChannelManager;
@@ -31,7 +35,7 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class ServerService implements MemberManager, RoleManager, ChannelManager, InviteManager {
+public class ServerService implements RoleManager, ChannelManager, InviteManager {
     @Autowired
     private final ServerRepository serverRepository;
 
@@ -44,9 +48,173 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
     @Autowired
     private final InviteRepository inviteRepository;
 
+    @Autowired
+    private final MemberService memberService;
+
     @Override
     public long getPermissions(ServerChannel channel, Member member) {
         return (channel.isPublic() || member.isOwner()) ? member.getPermissions() : channel.getPermissions(member);
+    }
+
+    @SuppressWarnings("null")
+    public Server joinServer(User user, ObjectId serverId) {
+        Server server = serverRepository.findById(serverId)
+                .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
+
+        memberService.joinServer(user, server);
+        return server;
+    }
+
+    @SuppressWarnings("null")
+    public void leaveServer(User user, ObjectId serverId) {
+        Server server = serverRepository.findById(serverId)
+                .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
+
+        memberService.leaveServer(user, server);
+    }
+
+    @SuppressWarnings("null")
+    public void kickMember(User commandUser, ObjectId userToKickId, ObjectId serverId) {
+        if (!serverRepository.existsById(serverId)) {
+            throw new ResourceNotFoundException(SERVER_NOT_FOUND);
+        }
+
+        Member commandMember = memberService.getMember(commandUser.getId(), serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        Member memberToKick = memberService.getMember(userToKickId, serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (commandMember.isBanned() || memberToKick.isBanned())
+            throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        if (!(commandMember.getRolePriority() > memberToKick.getRolePriority()
+                && Permissions.hasPermission(commandMember.getPermissions(), PermissionType.KICK_MEMBERS)))
+            throw new UnauthorizedActionException("User is not authorized to kick this member");
+
+        memberService.removeMember(userToKickId, serverId);
+    }
+
+    @SuppressWarnings("null")
+    public void banMember(User commandUser, ObjectId userToBanId, ObjectId serverId, String banReason) {
+        if (!serverRepository.existsById(serverId)) {
+            throw new ResourceNotFoundException(SERVER_NOT_FOUND);
+        }
+
+        Member commandMember = memberService.getMember(commandUser.getId(), serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (commandMember.isBanned())
+            throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        Optional<Member> memberToBan = memberService.getMember(userToBanId, serverId);
+
+        if (memberToBan.isPresent() && !(commandMember.getRolePriority() > memberToBan.get().getRolePriority()
+                && Permissions.hasPermission(commandMember.getPermissions(), PermissionType.BAN_MEMBERS))) {
+            throw new UnauthorizedActionException("User is not authorized to ban this member");
+        }
+
+        memberService.banMember(userToBanId, serverId, banReason);
+    }
+
+    @SuppressWarnings("null")
+    public void unbanMember(User commandUser, ObjectId bannedUserId, ObjectId serverId) {
+        if (!serverRepository.existsById(serverId)) {
+            throw new ResourceNotFoundException(SERVER_NOT_FOUND);
+        }
+
+        Member commandMember = memberService.getMember(commandUser.getId(), serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (commandMember.isBanned())
+            throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        if (!Permissions.hasPermission(commandMember.getPermissions(), PermissionType.BAN_MEMBERS))
+            throw new UnauthorizedActionException("User is not authorized to unban members");
+
+        memberService.unbanMember(bannedUserId, serverId);
+    }
+
+    @SuppressWarnings("null")
+    public void changeNickname(User commandUser, ObjectId userToChangeId, ObjectId serverId, String newName) {
+        if (!serverRepository.existsById(serverId)) {
+            throw new ResourceNotFoundException(SERVER_NOT_FOUND);
+        }
+
+        Member commandUsingMember = memberService.getMember(commandUser.getId(), serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        Member memberToUpdate = memberService.getMember(userToChangeId, serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (commandUsingMember.isBanned() || memberToUpdate.isBanned())
+            throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        long permissions = commandUsingMember.getPermissions();
+        if (!((commandUser.getId().equals(userToChangeId)
+                && Permissions.hasAnyPermissions(permissions, PermissionType.CHANGE_NICKNAME,
+                        PermissionType.MANAGE_NICKNAMES))
+                || (Permissions.hasPermission(permissions, PermissionType.MANAGE_NICKNAMES)
+                        && commandUsingMember.getRolePriority() > memberToUpdate.getRolePriority())))
+            throw new UnauthorizedActionException("User is not authorized to change nicknames in this server");
+
+        memberService.changeNickname(userToChangeId, serverId, newName);
+    }
+
+    private static List<ObjectId> sanitizeRoleList(Map<ObjectId, Role> validRoles, List<ObjectId> roleList,
+            Comparator<ObjectId> ordering) {
+        return roleList == null ? List.of()
+                : roleList.stream().filter(id -> validRoles.containsKey(id)).sorted(ordering).toList();
+    }
+
+    @SuppressWarnings("null")
+    public void updateMemberRoles(User roleGiver, ObjectId roleReceiverId, ObjectId serverId,
+            MemberRoleUpdateOperation operation) {
+        Server server = serverRepository.findById(serverId)
+                .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
+
+        Member roleGiverMember = memberService.getMember(roleGiver.getId(), serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (!Permissions.hasPermission(roleGiverMember.getPermissions(), PermissionType.MANAGE_ROLES))
+            throw new UnauthorizedActionException("User is not authorized to manage roles in this server");
+
+        Member memberToUpdate = memberService.getMember(roleReceiverId, serverId)
+                .orElseThrow(() -> new UnauthorizedActionException(USER_NOT_MEMBER));
+
+        if (roleGiverMember.isBanned() || memberToUpdate.isBanned())
+            throw new UnauthorizedActionException(USER_IS_BANNED);
+
+        Map<ObjectId, Role> roles = server.getRoles();
+        Comparator<ObjectId> orderByDescendingPriority = (id1, id2) -> roles.get(id1)
+                .compareTo(roles.get(id2));
+
+        List<ObjectId> rolesToAdd = sanitizeRoleList(roles, operation.getRolesToAdd(), orderByDescendingPriority);
+        List<ObjectId> rolesToRemove = sanitizeRoleList(roles, operation.getRolesToRemove(), orderByDescendingPriority);
+
+        int highestRolePriority = roleGiverMember.isOwner() ? Integer.MAX_VALUE
+                : roles.get(roleGiverMember.getRoleIds().get(0)).getPriority();
+        int highestAddPriority = rolesToAdd.isEmpty() ? 0 : roles.get(rolesToAdd.get(0)).getPriority();
+        int highestRemovePriority = rolesToRemove.isEmpty() ? 0 : roles.get(rolesToRemove.get(0)).getPriority();
+
+        if (highestAddPriority >= highestRolePriority || highestRemovePriority >= highestRolePriority)
+            throw new UnauthorizedActionException(
+                    "User is not authorized to grant or revoke roles greater than / equal to their highest role");
+
+        List<ObjectId> roleIds = Stream
+                .concat(memberToUpdate.getRoleIds().stream().filter(id -> !rolesToRemove.contains(id)),
+                        rolesToAdd.stream())
+                .distinct()
+                .sorted(orderByDescendingPriority).toList();
+
+        memberToUpdate.setRoleIds(roleIds);
+        long permissions = roleIds.stream().reduce(
+                Permissions.NONE,
+                (accumulator, id) -> accumulator | roles.get(id).getPermissions(),
+                (accumulator, accumulator2) -> accumulator | accumulator2);
+
+        int rolePriority = roleIds.size() > 0 ? roles.get(roleIds.get(0)).getPriority() : 0;
+        memberService.updateMemberRoles(roleReceiverId, serverId, rolePriority, permissions, roleIds);
     }
 
     @Transactional
@@ -62,10 +230,11 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
                 Permissions.getPermissions(PermissionType.SEND_MESSAGES,
                         PermissionType.VIEW_CHANNELS, PermissionType.CHANGE_NICKNAME));
         server.getRoles().put(defaultRole.getId(), defaultRole);
-        Member ownerMember = Member.fromUser(owner, ownerRole, defaultRole);
-        ownerMember.setOwner(true);
-        server.getMembers().add(ownerMember);
         server = serverRepository.save(server);
+
+        Member ownerMember = Member.from(owner, server, ownerRole, defaultRole);
+        ownerMember.setOwner(true);
+        memberService.save(ownerMember);
 
         String defaultChannelName = "general";
         String defaultChannelCategory = "General";
@@ -78,7 +247,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
 
     public void updateServerDetails(User commandUser, ObjectId serverId, @Nullable String name,
             @Nullable String description) {
-        Member member = serverRepository.getMember(serverId, commandUser.getId())
+        Member member = memberService.getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -93,6 +262,8 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         serverRepository.updateServerDetails(serverId, name, description);
     }
 
+    @Transactional
+    @SuppressWarnings("null")
     public void transferServerOwnership(User commandUser, User newOwner, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -100,13 +271,13 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         if (!commandUser.getId().equals(server.getOwner().getId()))
             throw new UnauthorizedActionException("User is not authorized to transfer server ownership");
 
-        Member newOwnerMember = server.getMember(newOwner.getId())
+        Member newOwnerMember = memberService.getMember(newOwner.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (newOwnerMember.isBanned())
             throw new UnauthorizedActionException(USER_IS_BANNED);
 
-        Member oldOwner = server.getMember(commandUser.getId())
+        Member oldOwner = memberService.getMember(commandUser.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         Map<ObjectId, Role> serverRoles = server.getRoles();
@@ -121,12 +292,14 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         newOwnerMember.setOwner(true);
         newOwnerMember.setPermissions(Permissions.combinePermissions(
                 newOwnerMember.getRoleIds().stream().map(id -> serverRoles.get(id).getPermissions()).toList()));
+        memberService.save(oldOwner, newOwnerMember);
 
         server.setOwner(newOwner);
         serverRepository.save(server);
     }
 
     @Transactional
+    @SuppressWarnings("null")
     public void deleteServer(User owner, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -143,7 +316,7 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
 
     public List<Message> getMessages(User user, ObjectId serverId, ObjectId channelId,
             MessageSearchOptions searchOptions) {
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned())
@@ -159,11 +332,13 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         return messages;
     }
 
+    @SuppressWarnings("null")
     public Message sendMessage(User user, ObjectId serverId, ObjectId channelId, String content) {
-        Server server = serverRepository.findById(serverId)
-                .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
+        if (!serverRepository.existsById(serverId)) {
+            throw new ResourceNotFoundException(SERVER_NOT_FOUND);
+        }
 
-        Member member = server.getMember(user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned()) {
@@ -178,8 +353,9 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
         return messageRepository.insertMessage(user, channel, content);
     }
 
+    @SuppressWarnings("null")
     public Message editMessage(User user, ObjectId serverId, ObjectId messageId, String newContent) {
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned()) {
@@ -195,9 +371,9 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
 
         return messageRepository.updateMessage(messageId, newContent);
     }
-
+    @SuppressWarnings("null")
     public void deleteMessage(User user, ObjectId serverId, ObjectId channelId, ObjectId messageId) {
-        Member member = serverRepository.getMember(serverId, user.getId())
+        Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
 
         if (member.isBanned()) {
@@ -233,5 +409,10 @@ public class ServerService implements MemberManager, RoleManager, ChannelManager
     @Override
     public MessageRepository getMessageRepository() {
         return messageRepository;
+    }
+
+    @Override
+    public MemberService getMemberService() {
+        return memberService;
     }
 }
