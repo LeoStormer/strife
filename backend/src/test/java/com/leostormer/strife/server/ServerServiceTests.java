@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import com.leostormer.strife.server.server_channel.ServerChannel;
 
 public class ServerServiceTests extends ServerServiceTestSetup {
     @Test
+    @Transactional
     public void shouldCreateServer() {
         String serverName = "New Server";
         String serverDescription = "A New Server";
@@ -25,6 +27,11 @@ public class ServerServiceTests extends ServerServiceTestSetup {
         assertEquals(server.getName(), serverName);
         assertEquals(server.getDescription(), serverDescription);
         assertEquals(server.getOwner().getId(), owner.getId());
+
+        Optional<Member> member = memberRepository.findByUserIdAndServerId(owner.getId(), server.getId());
+        assertTrue(member.isPresent());
+        assertTrue(member.get().isOwner());
+        assertTrue(Permissions.hasPermission(member.get().getPermissions(), PermissionType.ADMINISTRATOR));
     }
 
     @Test
