@@ -234,7 +234,7 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
 
         Member ownerMember = Member.from(owner, server, ownerRole, defaultRole);
         ownerMember.setOwner(true);
-        memberService.joinServer(owner, server);
+        memberService.save(ownerMember);
 
         String defaultChannelName = "general";
         String defaultChannelCategory = "General";
