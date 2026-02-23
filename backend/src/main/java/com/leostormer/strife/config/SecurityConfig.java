@@ -79,8 +79,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/user/register",
                                 "/api/user/login",
-                                "/api/user/auth-status",
-                                "/api/user/logout",
                                 "/error")
                         .permitAll()
                         .anyRequest()
