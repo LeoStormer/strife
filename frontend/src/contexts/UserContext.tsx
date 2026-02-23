@@ -1,12 +1,13 @@
 import {
   createContext,
   type PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
-import LoadingPage from "../components/pageComponents/LoadingPage";
 import api from "../api";
+import { HttpStatusCode, isAxiosError, isCancel } from "axios";
 
 export type User = {
   id: string;
@@ -15,19 +16,43 @@ export type User = {
   createdDate: Date;
 };
 
+export type LoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type RegistrationRequest = {
+  email: string;
+  username: string;
+  password: string;
+};
+
 type UserContextType = {
+  isLoading: boolean;
   user: User | null;
-  login: (userData: User) => void;
+  login: (request: LoginRequest) => Promise<void>;
+  register: (request: RegistrationRequest) => Promise<void>;
   logout: VoidFunction;
 };
 
 export const UserContext = createContext<UserContextType>({
+  isLoading: false,
   user: null,
-  login: (userData: User) => {},
+  login: (request: LoginRequest) => Promise.resolve(),
+  register: (request: RegistrationRequest) => Promise.resolve(),
   logout: () => {},
 });
 
+const mapResponseDataToUser = (data: any): User => {
+  return {
+    ...data,
+    createdDate: new Date(data.createdDate),
+  };
+};
+
 const LOCAL_STORAGE_KEY = "strife_user_data";
+export const REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR =
+  "REGISTRATION_SUCCESS_BUT_LOGIN_FAILED";
 
 const getStoredUserData = (): User | null => {
   try {
@@ -46,44 +71,31 @@ const getStoredUserData = (): User | null => {
   return null;
 };
 
-type UseAuthStatusProps = {
-  onRequestFinished: VoidFunction;
-  logout: UserContextType["logout"];
-};
-
-/**
- * Chechs the authentication status of the user in the backend by making an API call.
- * @param onRequestFinished - Callback function to be called when the auth status check is complete success or fail
- * @param logout - function to log the user out locally if they are not authenticated
- */
-const useAuthStatus = ({ onRequestFinished, logout }: UseAuthStatusProps) => {
+const useAuthenticationInterceptor = (logout: VoidFunction) => {
   useEffect(() => {
-    api
-      .get("/user/auth-status")
-      .then((response) => {
-        if (response.data === false) {
-          console.log("User not authenticated, logging out");
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          console.log("User Session Expired, logging out");
           logout();
         }
-      })
-      .catch(() => {
-        logout();
-      })
-      .finally(() => {
-        onRequestFinished();
-      });
-  }, []);
+        return Promise.reject(error);
+      },
+    );
+
+    return () => {
+      api.interceptors.response.eject(interceptor);
+    };
+  }, [logout]);
 };
 
-export const UserContextProvider = ({ children }: PropsWithChildren) => {
-  const [user, setUser] = useState<User | null>(getStoredUserData);
-  const [isLoading, setIsLoading] = useState(true);
-  const login = (userData: User) => setUser(userData);
-  const logout = () => setUser(null);
-
-  useAuthStatus({ onRequestFinished: () => setIsLoading(false), logout });
-
+const useUserPersistence = (user: User | null, isLoading: boolean) => {
   useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
     try {
       if (user) {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
@@ -93,13 +105,84 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
     } catch (error) {
       console.error("Error occurred while accessing localStorage:", error);
     }
-  }, [user]);
+  }, [user, isLoading]);
+};
 
-  if (isLoading === true) {
-    return <LoadingPage />;
-  }
+export const UserContextProvider = ({ children }: PropsWithChildren) => {
+  const storedUserData = getStoredUserData();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(storedUserData !== null);
 
-  return <UserContext value={{ user, login, logout }}>{children}</UserContext>;
+  // Inside UserContextProvider:
+  const register = useCallback(async (request: RegistrationRequest) => {
+    const response = await api.post<User>("/user/register", request);
+
+    if (response.status === HttpStatusCode.Created) {
+      throw new Error(REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR);
+    }
+
+    setUser(mapResponseDataToUser(response.data));
+  }, []);
+
+  const login = useCallback(async (request: LoginRequest) => {
+    const response = await api.post<User>("/user/login", request);
+    setUser(mapResponseDataToUser(response.data));
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/user/logout");
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 401) {
+        console.warn("Session was already expired on the server.");
+        return; // Swallow 401 as it's an expected state for a logout
+      }
+
+      throw error;
+    } finally {
+      // Always clear local state
+      setUser(null);
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const storedUser = getStoredUserData();
+    if (storedUser) {
+      // verify with backend that the stored user data is still valid before setting user state
+      api
+        .get("/user/auth-status", { signal: controller.signal })
+        .then(() => {
+          // session is valid, set user state from localStorage
+          setUser(storedUser);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          // interceptor alread handles logging out on 401, so we just stop loading and let it do its thing
+          if (isCancel(error)) {
+            return;
+          }
+
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
+  useUserPersistence(user, isLoading);
+  useAuthenticationInterceptor(logout);
+
+  return (
+    <UserContext value={{ user, register, login, logout, isLoading }}>
+      {children}
+    </UserContext>
+  );
 };
 
 export const useUserContext = () => useContext(UserContext);

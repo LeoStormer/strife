@@ -7,6 +7,7 @@ import { ServerSelectionContextProvider } from "../../contexts/ServerSelectionCo
 import { PageNameContextProvider } from "../../contexts/PageNameContext";
 import styles from "./AuthenticatedLayout.module.css";
 import WebsocketContextProvider from "../../contexts/WebsocketContext";
+import LoadingPage from "../../components/pageComponents/LoadingPage";
 
 /**
  * The main parent route after a user has authenticated. Adds a top
@@ -16,7 +17,11 @@ import WebsocketContextProvider from "../../contexts/WebsocketContext";
  * logged in.
  */
 function AuthenticatedLayout() {
-  const { user } = useUserContext();
+  const { user, isLoading } = useUserContext();
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
 
   if (user === null) {
     return <Navigate to={"/login"} replace />;
