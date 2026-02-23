@@ -61,6 +61,7 @@ services:
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/strife?replicaSet=rs0
       - APP_WEBSOCKET_ALLOWED_ORIGINS=http://localhost
       - APP_CORS_ALLOWED_ORIGINS=http://localhost
+      - SPRING_SESSION_TIMEOUT=7d
 
   frontend:
     build: 

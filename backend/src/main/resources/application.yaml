@@ -14,6 +14,8 @@ spring:
     mongodb:
       database: ${MONGO_DATABASE}
       uri: mongodb+srv://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_CLUSTER}
+  session:
+    timeout: 7d
 
 app:
   websocket:
