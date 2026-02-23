@@ -199,12 +199,9 @@ public class UserController {
     }
 
     @GetMapping("/auth-status")
-    public ResponseEntity<Boolean> checkLoginStatus(Principal principal) {
-        if (principal != null) {
-            return ResponseEntity.ok(true);
-        }
-
-        return ResponseEntity.ok(false);
+    public ResponseEntity<Void> checkLoginStatus() {
+        // If the user is not authenticated, Spring Security will automatically return a 401 Unauthorized response
+        return ResponseEntity.ok().build();
     }
 
 }
