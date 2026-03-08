@@ -46,7 +46,7 @@ p.pageIcon {
 }
 
 .iconButton:hover {
-  color: color-mix(in srgb, var(--on-background-color) 40%, white 60%);
+  color: var(--text-highlight-color);
 }
 
 .iconButton > svg {

@@ -37,4 +37,9 @@
     var(--background-color) 80%,
     var(--contrast-mix-color) 20%
   );
+  --text-highlight-color: color-mix(
+    in srgb,
+    var(--on-background-color) 40%,
+    var(--contrast-mix-color) 60%
+  );
 }

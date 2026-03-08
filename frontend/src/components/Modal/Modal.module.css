@@ -51,7 +51,7 @@
 
 .closeButton:hover {
   background-color: var(--on-background-contrast);
-  color: color-mix(in srgb, var(--on-background-color) 40%, var(--contrast-mix-color) 60%)
+  color: var(--text-highlight-color)
 }
 
 .closeButton > svg {
