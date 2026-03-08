@@ -8,6 +8,7 @@ export type IconName =
 	| "chevron-up"
 	| "close"
 	| "discover"
+	| "error-circle"
 	| "facebook"
 	| "folder-fill"
 	| "gear-fill"
