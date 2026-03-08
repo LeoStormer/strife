@@ -27,10 +27,14 @@ type ServerCreationForm = z.infer<typeof serverCreationSchema>;
 
 type SwappableFormProps = Pick<JSX.IntrinsicElements["form"], "inert"> & {
   swapForm: VoidFunction;
-  closeModal?: VoidFunction;
+  closeModal: VoidFunction;
 };
 
-function ServerCreationForm({ swapForm, closeModal, ...formProps }: SwappableFormProps) {
+function ServerCreationForm({
+  swapForm,
+  closeModal,
+  ...formProps
+}: SwappableFormProps) {
   const {
     register,
     handleSubmit,
@@ -41,14 +45,14 @@ function ServerCreationForm({ swapForm, closeModal, ...formProps }: SwappableFor
 
   const onSubmit: SubmitHandler<ServerCreationForm> = (data) => {
     api
-    .post(`/server?serverName=${data.serverName}`)
-    .then(() => {
-      console.log("Server created successfully");
-      closeModal?.();
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+      .post(`/server?serverName=${data.serverName}`)
+      .then(() => {
+        console.log("Server created successfully");
+        closeModal();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
@@ -115,7 +119,7 @@ function JoinServerForm({
       .post(`/server/join-by-invite?inviteId=${inviteId}`)
       .then(() => {
         console.log("Server joined successfully");
-        closeModal?.();
+        closeModal();
       })
       .catch((err) => {
         console.log(err);
@@ -167,13 +171,15 @@ function AddServerModal({
   const [activeForm, setActiveForm] = useState<"create" | "join">("create");
   const [count, setCount] = useState(0);
   const forceRemount = () => {
-    setCount(previous => previous + 1);
-  }
+    setCount((previous) => previous + 1);
+  };
 
   const closeModal = () => {
     onClose?.();
-    setTimeout(() => setActiveForm("create"), 200);
-    forceRemount();
+    setTimeout(() => {
+      setActiveForm("create");
+      forceRemount();
+    }, 200);
   };
 
   return (
