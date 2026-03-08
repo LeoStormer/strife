@@ -1,7 +1,6 @@
 
 .container {
-    grid-row: 2;
-    grid-column: 3;
+    grid-area: content;
     background-color: aqua;
     display: grid;
     grid-template-rows: 48px 1fr;

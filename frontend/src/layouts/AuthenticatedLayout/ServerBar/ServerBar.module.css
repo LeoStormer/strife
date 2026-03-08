@@ -1,6 +1,6 @@
 .navContainer {
-  grid-row: 2;
-  grid-column: 1;
+  grid-row: content;
+  grid-column: serverbar;
 }
 
 .list {

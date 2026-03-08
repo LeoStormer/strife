@@ -1,6 +1,6 @@
 .container {
-  grid-row: 1;
-  grid-column: span 4;
+  grid-row: topbar;
+  grid-column: full-width;
   position: relative;
   display: flex;
   align-items: center;
