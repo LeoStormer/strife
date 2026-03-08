@@ -1,0 +1,85 @@
+.button {
+  background-color: var(--on-background-contrast);
+  color: var(--on-background-color);
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  height: calc(100% - 16px);
+  box-sizing: border-box;
+}
+
+.button:hover {
+  background-color: var(--on-background-contrast-medium);
+  cursor: pointer;
+}
+
+a.button {
+  background-color: transparent;
+  height: 40px;
+  display: flex;
+  padding-left: 10px;
+  align-items: center;
+  text-decoration: none;
+  gap: 12px;
+}
+
+a.button > svg {
+  height: 1.5em;
+  width: 1.5em;
+}
+
+.separator {
+  width: 100%;
+  height: 1px;
+  background-color: var(--on-background-contrast);
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.conversationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.conversationHeader p {
+  margin: 0px;
+  line-height: 100%;
+}
+
+.conversationHeader:hover p {
+  color: var(--text-highlight-color);
+}
+
+.createConversationButton {
+  padding: 0px;
+  border-width: 0px;
+  background-color: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--on-background-color);
+}
+
+.createConversationButton:hover svg {
+  color: var(--text-highlight-color);
+}
+
+.createConversationButton > svg {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.button.conversationLink {
+  display: grid;
+  grid-template-columns: [profile-start] 28px [profile-end content-start] 1fr [content-end];
+  grid-template-rows: 100%;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}

@@ -1,0 +1,41 @@
+.profileDisplayGrid {
+  display: grid;
+  grid-column: profile;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profileDisplayGrid:has(> :only-child) {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.profileDisplayGrid:has(> :nth-child(2)) {
+  grid-template-columns: repeat(2, 50%);
+  grid-template-rows: repeat(2, 50%);
+}
+
+.profileDisplayGrid > * {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.profileDisplaySkeleton {
+  grid-column: profile;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.profileDisplaySkeleton > * {
+  height: 100%;
+  width: 100%;
+}
+
+.error {
+  color: red;
+}
