@@ -15,7 +15,7 @@ function FriendsPage() {
 
   return (
     <ThreePanelContentGrid
-      titleActions={<FriendFilterBar />}
+      titlePanel={<FriendFilterBar />}
       sidePanel={<ActivityFeed />}
       isSidePanelOpen
     >

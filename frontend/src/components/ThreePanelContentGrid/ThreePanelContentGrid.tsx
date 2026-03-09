@@ -5,13 +5,13 @@ import StyleComposer from "../../utils/StyleComposer";
 export type ThreePanelContentGridProps = PropsWithChildren<{
   isSidePanelOpen?: boolean;
   sidePanel?: ReactNode;
-  titleActions?: ReactNode;
+  titlePanel?: ReactNode;
 }>;
 
 function ThreePanelContentGrid({
   isSidePanelOpen = false,
   sidePanel,
-  titleActions,
+  titlePanel,
   children,
 }: ThreePanelContentGridProps) {
   const containerClass = StyleComposer(styles.container, {
@@ -20,7 +20,7 @@ function ThreePanelContentGrid({
 
   return (
     <div className={containerClass}>
-      <header className={styles.titlePanel}>{titleActions}</header>
+      <header className={styles.titlePanel}>{titlePanel}</header>
       <main className={styles.contentPanel}>{children}</main>
       <aside className={`${styles.sidePanel}`}>{sidePanel}</aside>
     </div>

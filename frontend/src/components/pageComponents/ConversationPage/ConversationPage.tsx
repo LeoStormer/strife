@@ -1,26 +1,31 @@
 import React from "react";
 import styles from "./ConversationPage.module.css";
-import sharedStyles from "../../../styles/ChannelViewer.module.css";
 import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
+import ChannelViewer from "../../ChannelViewer";
 
 const PAGE_NAME = "Direct Messages";
+
+const TitleBar = () => {
+  return <div>UserName</div>;
+};
+
+const UserProfilePanel = () => {
+  return <div className={styles.profileContainer}>User Profile</div>;
+};
 
 function ConversationPage() {
   usePageNameDispatchContext({ pageName: PAGE_NAME });
 
+  const sendMessage = async (message: string) => {};
+
   return (
-    <div className={sharedStyles.container}>
-      <div className={sharedStyles.channelTitleBarContainer}>UserName</div>
-      <div className={sharedStyles.flexContainer}>
-        <div className={sharedStyles.messageViewAreaContainer}>
-          Message View Area
-          <div className={sharedStyles.messageInputContainer}>
-            Message #channel-name
-          </div>
-        </div>
-        <div className={styles.profileContainer}>User Profile</div>
-      </div>
-    </div>
+    <ChannelViewer
+      titlePanel={<TitleBar />}
+      sidePanel={<UserProfilePanel />}
+      sendMessage={sendMessage}
+      channelName='@Username'
+      messages={[]}
+    />
   );
 }
 
