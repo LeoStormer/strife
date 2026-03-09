@@ -3,6 +3,7 @@ import styles from "./FriendsPage.module.css";
 import FriendList from "./FriendList";
 import ActivityFeed from "./ActivityFeed";
 import FriendFilterBar from "./FriendFilterBar";
+import ThreePanelContentGrid from "../../ThreePanelContentGrid";
 
 const PAGE_NAME = "Friends";
 
@@ -13,11 +14,13 @@ function FriendsPage() {
   });
 
   return (
-    <div className={styles.container}>
-      <FriendFilterBar />
+    <ThreePanelContentGrid
+      titleActions={<FriendFilterBar />}
+      sidePanel={<ActivityFeed />}
+      isSidePanelOpen
+    >
       <FriendList />
-      <ActivityFeed />
-    </div>
+    </ThreePanelContentGrid>
   );
 }
 
