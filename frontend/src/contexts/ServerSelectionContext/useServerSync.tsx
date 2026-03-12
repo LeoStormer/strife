@@ -6,7 +6,6 @@ import type {
   ServerItem,
   ServerItemOrFolderRecord,
 } from "./serverReducer";
-import { FOLDER_STORAGE_KEY, ROOT_ORDER_KEY } from "../../constants";
 import api from "../../api";
 import type { ServerManager } from "./useServerManager";
 
@@ -14,34 +13,9 @@ const getServersFromApi = async (): Promise<Server[]> => {
   return api.get("/user/servers").then((response) => response.data);
 };
 
-const getLocalFolders = (): Folder[] => {
-  try {
-    const storedData = localStorage.getItem(FOLDER_STORAGE_KEY);
-
-    if (!storedData) {
-      return [];
-    }
-    return JSON.parse(storedData);
-  } catch (error) {
-    return [];
-  }
-};
-
-const getRootOrder = (): string[] => {
-  try {
-    const storedData = localStorage.getItem(ROOT_ORDER_KEY);
-
-    if (!storedData) {
-      return [];
-    }
-    return JSON.parse(storedData);
-  } catch (error) {
-    return [];
-  }
-};
-
 const getUserJoinedServers = (
   serversFromApi: Server[],
+  storedFolders: Folder[],
 ): ServerItemOrFolderRecord => {
   const serverSet = new Set<string>();
   const serverItems: Record<string, ServerItem | Folder> = {};
@@ -51,7 +25,7 @@ const getUserJoinedServers = (
     serverSet.add(server.id);
   }
 
-  for (const folder of getLocalFolders()) {
+  for (const folder of storedFolders) {
     const filteredServerOrder = folder.serverOrder.filter((id) =>
       serverSet.has(id),
     );
@@ -90,14 +64,24 @@ const reconcileRootOrder = (
 type Props = Pick<
   ServerManager,
   "overwriteState" | "addServer" | "removeServer"
->;
+> & {
+  storedFolders: Folder[];
+  storedRootOrder: string[];
+  onSyncComplete: () => void;
+};
 
 type UpdateMessage =
   | { type: "SERVER_ADDED"; server: Server }
   | { type: "SERVER_REMOVED"; serverId: string };
 
-function useServerSync({ overwriteState, addServer, removeServer }: Props) {
-  const [isLoading, setIsLoading] = useState(true);
+function useServerSync({
+  overwriteState,
+  addServer,
+  removeServer,
+  storedFolders,
+  storedRootOrder,
+  onSyncComplete,
+}: Props) {
   const [error, setError] = useState(false);
   const { subscribe, unsubscribe, isConnected } = useWebsocketContext();
 
@@ -109,20 +93,19 @@ function useServerSync({ overwriteState, addServer, removeServer }: Props) {
 
     getServersFromApi()
       .then((serversFromApi) => {
-        const userServers = getUserJoinedServers(serversFromApi);
-        const storedRootOrder = getRootOrder();
+        const userServers = getUserJoinedServers(serversFromApi, storedFolders);
         const reconciledRootOrder = reconcileRootOrder(
           userServers,
           storedRootOrder,
         );
         overwriteState(userServers, reconciledRootOrder);
-        setIsLoading(false);
+        onSyncComplete();
         setError(false);
       })
       .catch(() => {
         setError(true);
       });
-  }, [isConnected, overwriteState, setIsLoading, setError]);
+  }, [isConnected, overwriteState, onSyncComplete, setError]);
 
   // subscribe to server updates
   useEffect(() => {
@@ -139,7 +122,7 @@ function useServerSync({ overwriteState, addServer, removeServer }: Props) {
     return () => unsubscribe(destination);
   }, [subscribe, unsubscribe]);
 
-  return { isLoading, error };
+  return { error };
 }
 
 export default useServerSync;

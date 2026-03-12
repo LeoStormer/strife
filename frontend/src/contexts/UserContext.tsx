@@ -8,6 +8,7 @@ import {
 } from "react";
 import api from "../api";
 import { HttpStatusCode, isAxiosError, isCancel } from "axios";
+import useLocalStorage from "./useLocalStorage";
 
 export type User = {
   id: string;
@@ -51,25 +52,9 @@ const mapResponseDataToUser = (data: any): User => {
 };
 
 const LOCAL_STORAGE_KEY = "strife_user_data";
+const METADATA_KEY = "strife_users_metadata"
 export const REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR =
   "REGISTRATION_SUCCESS_BUT_LOGIN_FAILED";
-
-const getStoredUserData = (): User | null => {
-  try {
-    const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!storedData) {
-      return null;
-    }
-
-    const userData = JSON.parse(storedData);
-    userData.createdDate = new Date(userData.createdDate);
-    return userData;
-  } catch (error) {
-    console.warn("Failed to parse user data from localStorage: ", error);
-  }
-
-  return null;
-};
 
 const useAuthenticationInterceptor = (logout: VoidFunction) => {
   useEffect(() => {
@@ -90,30 +75,41 @@ const useAuthenticationInterceptor = (logout: VoidFunction) => {
   }, [logout]);
 };
 
-const useUserPersistence = (user: User | null, isLoading: boolean) => {
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
+const updateMaintenanceMetadata = (currentUserId: string) => {
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
 
-    try {
-      if (user) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
+  try {
+    const raw = localStorage.getItem(METADATA_KEY);
+    const metadata: Record<string, { lastAccess: number }> = raw ? JSON.parse(raw) : {};
+
+    // 1. Update current user's timestamp
+    metadata[currentUserId] = { lastAccess: now };
+
+    // 2. Identify and remove data for other users older than 30 days
+    Object.entries(metadata).forEach(([userId, data]) => {
+      if (userId !== currentUserId && now - data.lastAccess > THIRTY_DAYS_MS) {
+        // Find all keys prefixed with this abandoned userId and wipe them
+        const prefix = `user_${userId}_`;
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith(prefix)) {
+            localStorage.removeItem(key);
+          }
+        });
+        delete metadata[userId];
       }
-    } catch (error) {
-      console.error("Error occurred while accessing localStorage:", error);
-    }
-  }, [user, isLoading]);
+    });
+
+    localStorage.setItem(METADATA_KEY, JSON.stringify(metadata));
+  } catch (e) {
+    console.warn("Maintenance cleanup failed:", e);
+  }
 };
 
 export const UserContextProvider = ({ children }: PropsWithChildren) => {
-  const storedUserData = getStoredUserData();
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(storedUserData !== null);
+  const [user, setUser] = useLocalStorage<User | null>({storageKey: LOCAL_STORAGE_KEY, initialValue: null});
+  const [isLoading, setIsLoading] = useState(user !== null);
 
-  // Inside UserContextProvider:
   const register = useCallback(async (request: RegistrationRequest) => {
     const response = await api.post<User>("/user/register", request);
 
@@ -142,40 +138,37 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
     } finally {
       // Always clear local state
       setUser(null);
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
     }
   }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    const storedUser = getStoredUserData();
-    if (storedUser) {
-      // verify with backend that the stored user data is still valid before setting user state
-      api
-        .get("/user/auth-status", { signal: controller.signal })
-        .then(() => {
-          // session is valid, set user state from localStorage
-          setUser(storedUser);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          // interceptor alread handles logging out on 401, so we just stop loading and let it do its thing
-          if (isCancel(error)) {
-            return;
-          }
-
-          setIsLoading(false);
-        });
-    } else {
+    if (!user) {
       setIsLoading(false);
+      return;
     }
+
+    // verify with backend that the stored user data is still valid
+    api
+      .get("/user/auth-status", { signal: controller.signal })
+      .then(() => {
+        updateMaintenanceMetadata(user.id);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        // interceptor alread handles logging out on 401, so we just stop loading and let it do its thing
+        if (isCancel(error)) {
+          return;
+        }
+
+        setIsLoading(false);
+      });
 
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [user?.id]);
 
-  useUserPersistence(user, isLoading);
   useAuthenticationInterceptor(logout);
 
   return (

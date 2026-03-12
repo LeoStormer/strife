@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import useLocalStorage from "./useLocalStorage";
+import { useUserContext } from "./UserContext";
 
 type UseLastVisitedPathProps = {
   storageKey: string;
@@ -23,37 +25,30 @@ export const useLastVisitedPath = ({
   defaultPath,
   isEnabled = true,
 }: UseLastVisitedPathProps) => {
+  const { user } = useUserContext();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [lastVisitedPath, setLastVisitedPath] = useLocalStorage<
+    string | undefined
+  >({ storageKey, initialValue: undefined, userId: user?.id });
 
   useEffect(() => {
     if (!isEnabled || !location.pathname.includes(basePath)) {
       return;
     }
 
-    const regex = new RegExp(basePath + "$");
-    const isBasePath = regex.test(location.pathname);
+    const isBasePath = new RegExp(basePath + "$").test(location.pathname);
 
     if (!isBasePath) {
-      // just record current path as the last visited path and return
-      try {
-        localStorage.setItem(storageKey, location.pathname);
-      } catch (error) {
-        console.log(error);
-      }
+      setLastVisitedPath(location.pathname);
       return;
     }
 
     const controller = new AbortController();
     const getTargetPath = async () => {
-      // get last visited sub path from storage
-      try {
-        const storedPath = localStorage.getItem(storageKey);
-        if (storedPath) {
-          return storedPath;
-        }
-      } catch (error) {
-        console.warn(error);
+      if (lastVisitedPath) {
+        return lastVisitedPath;
       }
 
       // get the default path
@@ -75,5 +70,13 @@ export const useLastVisitedPath = ({
     return () => {
       controller.abort();
     };
-  }, [location, storageKey, basePath, defaultPath, isEnabled]);
+  }, [
+    location.pathname,
+    storageKey,
+    basePath,
+    defaultPath,
+    isEnabled,
+    lastVisitedPath,
+    setLastVisitedPath,
+  ]);
 };

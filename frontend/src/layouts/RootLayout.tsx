@@ -6,18 +6,18 @@ import { SkeletonTheme } from "react-loading-skeleton";
 
 function RootLayout() {
   return (
-    <ThemeContextProvider>
-      <SkeletonTheme
-        baseColor='var(--on-background-contrast)'
-        highlightColor='var(--on-background-contrast-strong)'
-      >
-        <UserContextProvider>
+    <SkeletonTheme
+      baseColor='var(--on-background-contrast)'
+      highlightColor='var(--on-background-contrast-strong)'
+    >
+      <UserContextProvider>
+        <ThemeContextProvider>
           <TooltipContextProvier>
             <Outlet />
           </TooltipContextProvier>
-        </UserContextProvider>
-      </SkeletonTheme>
-    </ThemeContextProvider>
+        </ThemeContextProvider>
+      </UserContextProvider>
+    </SkeletonTheme>
   );
 }
 
