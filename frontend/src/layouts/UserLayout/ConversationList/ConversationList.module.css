@@ -48,12 +48,14 @@ a.button > svg {
   font-size: 14px;
 }
 
-.conversationHeader p {
+.conversationHeader h2 {
   margin: 0px;
   line-height: 100%;
+  font-size: 14px;
+  font-weight: normal;
 }
 
-.conversationHeader:hover p {
+.conversationHeader:hover h2 {
   color: var(--text-highlight-color);
 }
 

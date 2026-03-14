@@ -22,7 +22,9 @@ function ThreePanelContentGrid({
     <div className={containerClass}>
       <header className={styles.titlePanel}>{titlePanel}</header>
       <main className={styles.contentPanel}>{children}</main>
-      <aside className={`${styles.sidePanel}`}>{sidePanel}</aside>
+      <aside className={`${styles.sidePanel}`} aria-labelledby="side-panel-title" inert={!isSidePanelOpen}>
+        {sidePanel}
+      </aside>
     </div>
   );
 }

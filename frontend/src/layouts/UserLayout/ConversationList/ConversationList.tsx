@@ -32,7 +32,7 @@ const ConversationsHeader = () => {
 
   return (
     <div className={styles.conversationHeader}>
-      <p>Direct Messages</p>
+      <h2>Direct Messages</h2>
       <button {...getAllProps()} className={styles.createConversationButton}>
         <Icon name='plus-lg' />
       </button>
@@ -71,9 +71,9 @@ function ConversationList() {
   ]);
 
   return (
-    <div className={panelStyles.container}>
+    <nav aria-label="Conversations" className={panelStyles.container}>
       <button className={styles.button}>Find or start a conversation</button>
-      <nav className={panelStyles.scrollingContainer}>
+      <div className={panelStyles.scrollingContainer}>
         <CategoryLink
           icon='person-greeting'
           category='Friends'
@@ -92,8 +92,8 @@ function ConversationList() {
             />
           );
         })}
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }
 
