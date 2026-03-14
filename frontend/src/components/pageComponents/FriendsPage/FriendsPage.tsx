@@ -6,14 +6,11 @@ import FriendFilterBar from "./FriendFilterBar";
 import ThreePanelContentGrid from "../../ThreePanelContentGrid";
 import useLocalStorage from "../../../contexts/useLocalStorage";
 import { useUserContext } from "../../../contexts/UserContext";
+import AddFriendTab from "./AddFriendPanel";
 
 const PAGE_NAME = "Friends";
 const FILTERS = ["Online", "All", "Pending", "Blocked"];
 const storageKey = "FRIENDS_PAGE_ACTIVE_TAB";
-
-const AddFriendTab = () => {
-  return <div>Add Friends</div>
-}
 
 function FriendsPage() {
   usePageNameDispatchContext({
@@ -27,7 +24,7 @@ function FriendsPage() {
     initialValue: 0,
     userId: user!.id,
   });
-  const filter = FILTERS[activeTabIndex]
+  const filter = FILTERS[activeTabIndex];
 
   return (
     <ThreePanelContentGrid
@@ -41,7 +38,7 @@ function FriendsPage() {
       sidePanel={<ActivityFeed />}
       isSidePanelOpen
     >
-      {filter ? <FriendList /> : <AddFriendTab />}
+      {filter ? <FriendList activeFilter={filter} /> : <AddFriendTab />}
     </ThreePanelContentGrid>
   );
 }

@@ -16,7 +16,12 @@ const TabButton = ({ tabName, isSelected, onClick }: ButtonProps) => {
   });
 
   return (
-    <button className={className} disabled={isSelected} onClick={onClick}>
+    <button
+      role='tab'
+      className={className}
+      disabled={isSelected}
+      onClick={onClick}
+    >
       {tabName}
     </button>
   );
@@ -41,9 +46,9 @@ const FriendFilterBar = ({
   return (
     <div className={styles.container}>
       <Icon name='person-greeting' />
-      Friends
-      <Icon name='dot' />
-      <div className={styles.tabButtonGroup}>
+      <h2>Friends</h2>
+      <Icon name='dot' style={{ color: "var(--on-background-contrast)" }} />
+      <div role='tablist' className={styles.tabButtonGroup}>
         {filters.map((tabName, index) => (
           <TabButton
             key={tabName}

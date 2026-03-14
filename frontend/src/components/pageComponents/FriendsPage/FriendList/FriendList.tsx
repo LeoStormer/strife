@@ -1,9 +1,13 @@
 import React from 'react'
 import styles from "./FriendList.module.css"
 
-function FriendList() {
+type Props = {
+  activeFilter: string
+}
+
+function FriendList({ activeFilter } : Props) {
   return (
-    <div className={styles.container}>FriendList</div>
+    <div role='tabpanel' id={`${activeFilter} Friends List`}>FriendList</div>
   )
 }
 

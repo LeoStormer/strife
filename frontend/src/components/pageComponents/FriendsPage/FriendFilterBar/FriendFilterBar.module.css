@@ -12,6 +12,12 @@
   height: 1.5em;
 }
 
+.container > h2 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0px;
+}
+
 .tabButtonGroup {
   display: flex;
   column-gap: 16px;
@@ -34,7 +40,7 @@
 }
 
 .tabButton:disabled {
-  cursor: auto;
+  cursor: default;
 }
 
 .tabButton.isSelected,
