@@ -24,3 +24,8 @@ code {
     border: 0;
     white-space: nowrap;    /* Ensures the content stays on a single line for screen readers */
 }
+
+svg {
+  width: 1em;
+  height: 1em;
+}

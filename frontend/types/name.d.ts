@@ -4,6 +4,7 @@ export type IconName =
 	| "burger-menu"
 	| "chat-fill-plus"
 	| "chat-fill"
+	| "check-lg"
 	| "chevron-down"
 	| "chevron-left"
 	| "chevron-right"
@@ -25,6 +26,7 @@ export type IconName =
 	| "person-circle"
 	| "person-fill-add"
 	| "person-greeting"
+	| "person-x-fill"
 	| "plus-circle-fill"
 	| "plus-lg"
 	| "question-circle-fill"
@@ -33,4 +35,5 @@ export type IconName =
 	| "tiktok"
 	| "twitter-x"
 	| "volume-up-fill"
+	| "x-lg"
 	| "youtube";
