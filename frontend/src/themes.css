@@ -18,21 +18,17 @@
 [data-theme="light"] {
   --background-color: #ffdcdc;
   --on-background-color: #000000;
-  --on-background-contrast-weak: var(--darken-weak);
-  --on-background-contrast: var(--darken);
-  --on-background-contrast-medium: var(--darken-medium);
-  --on-background-contrast-strong: var(--darken-strong);
   --contrast-mix-color: black;
+  --on-background-contrast-base: 0, 0, 0;
+  --on-background-harmony-base: 255, 255, 255;
 }
 
 [data-theme="dark"] {
   --background-color: #200000;
   --on-background-color: #f5d9d9;
-  --on-background-contrast-weak: var(--brighten-weak);
-  --on-background-contrast: var(--brighten);
-  --on-background-contrast-medium: var(--brighten-medium);
-  --on-background-contrast-strong: var(--brighten-strong);
   --contrast-mix-color: white;
+  --on-background-contrast-base: 255, 255, 255;
+  --on-background-harmony-base: 0, 0, 0;
 }
 
 [data-theme] {
@@ -46,4 +42,13 @@
     var(--on-background-color) 40%,
     var(--contrast-mix-color) 60%
   );
+  
+  --on-background-contrast-weak: rgb(var(--on-background-contrast-base), 5%);
+  --on-background-contrast: rgb(var(--on-background-contrast-base), 10%);
+  --on-background-contrast-medium: rgb(var(--on-background-contrast-base), 15%);
+  --on-background-contrast-strong: rgb(var(--on-background-contrast-base), 20%);
+  --on-background-harmony-weak: rgb(var(--on-background-harmony-base), 5%);
+  --on-background-harmony: rgb(var(--on-background-harmony-base), 10%);
+  --on-background-harmony-medium: rgb(var(--on-background-harmony-base), 15%);
+  --on-background-harmony-strong: rgb(var(--on-background-harmony-base), 20%);
 }

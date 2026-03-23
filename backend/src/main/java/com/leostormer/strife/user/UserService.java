@@ -75,6 +75,10 @@ public class UserService implements UserDetailsService {
         return userRepository.findOneByUsername(username);
     }
 
+    public RelationshipResponse getUserRelationships(User user, int page, int size, String filter, String search) {
+        return userRepository.getUserRelationships(user.getId(), page, size, filter, search);
+    }
+
     public List<User> getBlockedUsers(User user) {
         return getUsersById(user.getBlockedUsers().stream().toList());
     }
@@ -170,12 +174,14 @@ public class UserService implements UserDetailsService {
     }
 
     public User login(LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
-        User user = userRepository.findOneByEmail(loginRequest.email()).orElseThrow(() -> new UsernameNotFoundException("Authentication failed"));
+        User user = userRepository.findOneByEmail(loginRequest.email())
+                .orElseThrow(() -> new UsernameNotFoundException("Authentication failed"));
         if (!passwordEncoder.matches(loginRequest.password(), user.getPassword()))
             throw new BadCredentialsException("Authentication failed");
-        
+
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(toUserDetails(user), null, List.of());
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(toUserDetails(user), null,
+                List.of());
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);

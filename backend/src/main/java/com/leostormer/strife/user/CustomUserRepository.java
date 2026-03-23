@@ -16,6 +16,8 @@ public interface CustomUserRepository {
 
     List<User> getBlockedUsers(ObjectId userId);
 
+    RelationshipResponse getUserRelationships(ObjectId userId, int page, int size, String filter, String search);
+
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);

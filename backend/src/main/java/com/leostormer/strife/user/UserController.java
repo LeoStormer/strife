@@ -56,6 +56,17 @@ public class UserController {
         }
     }
 
+    @GetMapping("/relationships")
+    public ResponseEntity<RelationshipResponse> getUserRelationships(Principal principal, @RequestParam int page,
+            @RequestParam int size, @RequestParam(required = false) String filter, @RequestParam(required = false) String search) {
+        User user = userService.getUser(principal);
+        try {
+            return ResponseEntity.ok(userService.getUserRelationships(user, page, size, filter, search));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/blocked")
     public ResponseEntity<List<UserView>> getBlockedUsers(Principal principal) {
         User user = userService.getUser(principal);
@@ -200,7 +211,8 @@ public class UserController {
 
     @GetMapping("/auth-status")
     public ResponseEntity<Void> checkLoginStatus() {
-        // If the user is not authenticated, Spring Security will automatically return a 401 Unauthorized response
+        // If the user is not authenticated, Spring Security will automatically return a
+        // 401 Unauthorized response
         return ResponseEntity.ok().build();
     }
 
