@@ -37,26 +37,25 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class ServerService implements RoleManager, ChannelManager, InviteManager {
     @Autowired
-    private final ServerRepository serverRepository;
+    private ServerRepository serverRepository;
 
     @Autowired
-    private final MessageRepository messageRepository;
+    private MessageRepository messageRepository;
 
     @Autowired
-    private final ChannelRepository channelRepository;
+    private ChannelRepository channelRepository;
 
     @Autowired
-    private final InviteRepository inviteRepository;
+    private InviteRepository inviteRepository;
 
     @Autowired
-    private final MemberService memberService;
+    private MemberService memberService;
 
     @Override
     public long getPermissions(ServerChannel channel, Member member) {
         return (channel.isPublic() || member.isOwner()) ? member.getPermissions() : channel.getPermissions(member);
     }
 
-    @SuppressWarnings("null")
     public Server joinServer(User user, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -65,7 +64,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         return server;
     }
 
-    @SuppressWarnings("null")
     public void leaveServer(User user, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -73,7 +71,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         memberService.leaveServer(user, server);
     }
 
-    @SuppressWarnings("null")
     public void kickMember(User commandUser, ObjectId userToKickId, ObjectId serverId) {
         if (!serverRepository.existsById(serverId)) {
             throw new ResourceNotFoundException(SERVER_NOT_FOUND);
@@ -95,7 +92,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         memberService.removeMember(userToKickId, serverId);
     }
 
-    @SuppressWarnings("null")
     public void banMember(User commandUser, ObjectId userToBanId, ObjectId serverId, String banReason) {
         if (!serverRepository.existsById(serverId)) {
             throw new ResourceNotFoundException(SERVER_NOT_FOUND);
@@ -117,7 +113,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         memberService.banMember(userToBanId, serverId, banReason);
     }
 
-    @SuppressWarnings("null")
     public void unbanMember(User commandUser, ObjectId bannedUserId, ObjectId serverId) {
         if (!serverRepository.existsById(serverId)) {
             throw new ResourceNotFoundException(SERVER_NOT_FOUND);
@@ -135,7 +130,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         memberService.unbanMember(bannedUserId, serverId);
     }
 
-    @SuppressWarnings("null")
     public void changeNickname(User commandUser, ObjectId userToChangeId, ObjectId serverId, String newName) {
         if (!serverRepository.existsById(serverId)) {
             throw new ResourceNotFoundException(SERVER_NOT_FOUND);
@@ -167,7 +161,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
                 : roleList.stream().filter(id -> validRoles.containsKey(id)).sorted(ordering).toList();
     }
 
-    @SuppressWarnings("null")
     public void updateMemberRoles(User roleGiver, ObjectId roleReceiverId, ObjectId serverId,
             MemberRoleUpdateOperation operation) {
         Server server = serverRepository.findById(serverId)
@@ -263,7 +256,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
     }
 
     @Transactional
-    @SuppressWarnings("null")
     public void transferServerOwnership(User commandUser, User newOwner, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -299,7 +291,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
     }
 
     @Transactional
-    @SuppressWarnings("null")
     public void deleteServer(User owner, ObjectId serverId) {
         Server server = serverRepository.findById(serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(SERVER_NOT_FOUND));
@@ -332,7 +323,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         return messages;
     }
 
-    @SuppressWarnings("null")
     public Message sendMessage(User user, ObjectId serverId, ObjectId channelId, String content) {
         if (!serverRepository.existsById(serverId)) {
             throw new ResourceNotFoundException(SERVER_NOT_FOUND);
@@ -353,7 +343,6 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
         return messageRepository.insertMessage(user, channel, content);
     }
 
-    @SuppressWarnings("null")
     public Message editMessage(User user, ObjectId serverId, ObjectId messageId, String newContent) {
         Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
@@ -371,7 +360,7 @@ public class ServerService implements RoleManager, ChannelManager, InviteManager
 
         return messageRepository.updateMessage(messageId, newContent);
     }
-    @SuppressWarnings("null")
+
     public void deleteMessage(User user, ObjectId serverId, ObjectId channelId, ObjectId messageId) {
         Member member = memberService.getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));

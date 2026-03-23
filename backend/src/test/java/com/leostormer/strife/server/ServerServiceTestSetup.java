@@ -22,142 +22,129 @@ import com.leostormer.strife.user.User;
 import com.leostormer.strife.user.UserRepository;
 
 public class ServerServiceTestSetup extends AbstractIntegrationTest {
-    @Autowired
-    protected ServerRepository serverRepository;
+        @Autowired
+        protected ServerRepository serverRepository;
 
-    @Autowired
-    protected ChannelRepository channelRepository;
+        @Autowired
+        protected ChannelRepository channelRepository;
 
-    @Autowired
-    protected MemberRepository memberRepository;
+        @Autowired
+        protected MemberRepository memberRepository;
 
-    @Autowired
-    protected ServerService serverService;
+        @Autowired
+        protected ServerService serverService;
 
-    @Autowired
-    protected MemberService memberService;
+        @Autowired
+        protected MemberService memberService;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId existingServerId;
+        @NonNull
+        protected ObjectId existingServerId;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId channel1Id;
+        @NonNull
+        protected ObjectId channel1Id;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId channel2Id;
+        @NonNull
+        protected ObjectId channel2Id;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId adminOnlyPrivateChannelId;
+        @NonNull
+        protected ObjectId adminOnlyPrivateChannelId;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId ownerRoleId;
+        @NonNull
+        protected ObjectId ownerRoleId;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId grandAdministratorRoleId;
+        @NonNull
+        protected ObjectId grandAdministratorRoleId;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId moderatorRoleId;
+        @NonNull
+        protected ObjectId moderatorRoleId;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected ObjectId defaultRoleId;
+        @NonNull
+        protected ObjectId defaultRoleId;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected static User owner;
+        @NonNull
+        protected static User owner;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected static User moderator;
+        @NonNull
+        protected static User moderator;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected static User basicMemberUser;
+        @NonNull
+        protected static User basicMemberUser;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected static User noPermissionsUser;
+        @NonNull
+        protected static User noPermissionsUser;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected static User nonMemberUser;
+        @NonNull
+        protected static User nonMemberUser;
 
-    @NonNull
-    @SuppressWarnings("null")
-    protected static User bannedUser;
+        @NonNull
+        protected static User bannedUser;
 
-    @BeforeAll
-    public static void setupUsers(@Autowired UserRepository userRepository) {
-        owner = TestUtils.createUser("owner", "", userRepository);
-        moderator = TestUtils.createUser("moderator", "", userRepository);
-        basicMemberUser = TestUtils.createUser("basicUser", "", userRepository);
-        noPermissionsUser = TestUtils.createUser("noPermissions", "", userRepository);
-        nonMemberUser = TestUtils.createUser("nonMember", "", userRepository);
-        bannedUser = TestUtils.createUser("bannedUser", "", userRepository);
-    }
+        @BeforeAll
+        public static void setupUsers(@Autowired UserRepository userRepository) {
+                owner = TestUtils.createUser("owner", "", userRepository);
+                moderator = TestUtils.createUser("moderator", "", userRepository);
+                basicMemberUser = TestUtils.createUser("basicUser", "", userRepository);
+                noPermissionsUser = TestUtils.createUser("noPermissions", "", userRepository);
+                nonMemberUser = TestUtils.createUser("nonMember", "", userRepository);
+                bannedUser = TestUtils.createUser("bannedUser", "", userRepository);
+        }
 
-    @AfterAll
-    public static void clearUsers(@Autowired UserRepository userRepository) {
-        userRepository.deleteAll();
-    }
+        @AfterAll
+        public static void clearUsers(@Autowired UserRepository userRepository) {
+                userRepository.deleteAll();
+        }
 
-    @BeforeEach
-    @SuppressWarnings("null")
-    public void setup() {
-        Role grandAdministratorRole = new Role(new ObjectId(), "Grand Administrator", 2, Permissions.ALL);
-        grandAdministratorRoleId = grandAdministratorRole.getId();
+        @BeforeEach
+        public void setup() {
+                Role grandAdministratorRole = new Role(new ObjectId(), "Grand Administrator", 2, Permissions.ALL);
+                grandAdministratorRoleId = grandAdministratorRole.getId();
 
-        Role moderatorRole = new Role(new ObjectId(), "Moderator", 1,
-                Permissions.revokePermission(Permissions.ALL,
-                        PermissionType.ADMINISTRATOR, PermissionType.MANAGE_SERVER));
-        moderatorRoleId = moderatorRole.getId();
+                Role moderatorRole = new Role(new ObjectId(), "Moderator", 1,
+                                Permissions.revokePermission(Permissions.ALL,
+                                                PermissionType.ADMINISTRATOR, PermissionType.MANAGE_SERVER));
+                moderatorRoleId = moderatorRole.getId();
 
-        Role defaultRole = new Role(new ObjectId(), "Member", 0,
-                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS,
-                        PermissionType.CHANGE_NICKNAME));
-        defaultRoleId = defaultRole.getId();
+                Role defaultRole = new Role(new ObjectId(), "Member", 0,
+                                Permissions.getPermissions(PermissionType.SEND_MESSAGES, PermissionType.VIEW_CHANNELS,
+                                                PermissionType.CHANGE_NICKNAME));
+                defaultRoleId = defaultRole.getId();
 
-        Server existingServer = TestUtils.createServer(owner, "TestServer", "A test Server", serverRepository, memberRepository,
-                grandAdministratorRole, moderatorRole, defaultRole);
+                Server existingServer = TestUtils.createServer(owner, "TestServer", "A test Server", serverRepository,
+                                memberRepository,
+                                grandAdministratorRole, moderatorRole, defaultRole);
 
-        Role ownerRole = existingServer.getRoles().values().stream().filter(r -> r.getPriority() == Integer.MAX_VALUE)
-                .findFirst().get();
-        ownerRoleId = ownerRole.getId();
-        existingServerId = existingServer.getId();
+                Role ownerRole = existingServer.getRoles().values().stream()
+                                .filter(r -> r.getPriority() == Integer.MAX_VALUE)
+                                .findFirst().get();
+                ownerRoleId = ownerRole.getId();
+                existingServerId = existingServer.getId();
 
-        TestUtils.createMember(moderator, existingServer, memberRepository, moderatorRole);
-        TestUtils.createMember(basicMemberUser, existingServer, memberRepository, defaultRole);
-        TestUtils.createMember(noPermissionsUser, existingServer, memberRepository);
-        TestUtils.createBannedMember(bannedUser, existingServer, "Because i can", memberRepository);
+                TestUtils.createMember(moderator, existingServer, memberRepository, moderatorRole);
+                TestUtils.createMember(basicMemberUser, existingServer, memberRepository, defaultRole);
+                TestUtils.createMember(noPermissionsUser, existingServer, memberRepository);
+                TestUtils.createBannedMember(bannedUser, existingServer, "Because i can", memberRepository);
 
-        channel1Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
-                .description("A general channel.").name("general").build()).getId();
-        channel2Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
-                .description("An events channel.").name("events").build()).getId();
+                channel1Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
+                                .description("A general channel.").name("general").build()).getId();
+                channel2Id = channelRepository.save(ServerChannel.builder().server(existingServer).category("General")
+                                .description("An events channel.").name("events").build()).getId();
 
-        Map<ObjectId, Long> rolePermissions = new HashMap<>();
-        rolePermissions.put(grandAdministratorRoleId, Permissions.ALL);
-        rolePermissions.put(moderatorRoleId, Permissions.revokePermission(moderatorRole.getPermissions(),
-                PermissionType.ADMINISTRATOR, PermissionType.MANAGE_CHANNELS));
-        adminOnlyPrivateChannelId = channelRepository
-                .save(ServerChannel.builder().server(existingServer).category("Admin")
-                        .description("Admin only channel")
-                        .name("admin-discussion").isPublic(false)
-                        .rolePermissions(rolePermissions).build())
-                .getId();
-    }
+                Map<ObjectId, Long> rolePermissions = new HashMap<>();
+                rolePermissions.put(grandAdministratorRoleId, Permissions.ALL);
+                rolePermissions.put(moderatorRoleId, Permissions.revokePermission(moderatorRole.getPermissions(),
+                                PermissionType.ADMINISTRATOR, PermissionType.MANAGE_CHANNELS));
+                adminOnlyPrivateChannelId = channelRepository
+                                .save(ServerChannel.builder().server(existingServer).category("Admin")
+                                                .description("Admin only channel")
+                                                .name("admin-discussion").isPublic(false)
+                                                .rolePermissions(rolePermissions).build())
+                                .getId();
+        }
 
-    @AfterEach
-    public void cleanup() {
-        channelRepository.deleteAll();
-        serverRepository.deleteAll();
-        memberRepository.deleteAll();
-    }
+        @AfterEach
+        public void cleanup() {
+                channelRepository.deleteAll();
+                serverRepository.deleteAll();
+                memberRepository.deleteAll();
+        }
 }

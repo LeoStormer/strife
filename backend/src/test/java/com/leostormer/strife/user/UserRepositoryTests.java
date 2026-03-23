@@ -64,7 +64,6 @@ public class UserRepositoryTests extends AbstractRepositoryTest {
     }
 
     @Test
-    @SuppressWarnings("null")
     void shouldUpdateUserDetails() {
         String newName = "AwesomeNewName";
         User user = userRepository.findById(user1Id).get();

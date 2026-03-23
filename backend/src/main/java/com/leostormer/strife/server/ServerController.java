@@ -39,21 +39,19 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequestMapping("/api/server")
 public class ServerController {
     @Autowired
-    private final ServerService serverService;
+    private ServerService serverService;
 
     @Autowired
-    private final UserService userService;
+    private UserService userService;
 
     @Autowired
-    private final SimpMessagingTemplate messagingTemplate;
+    private SimpMessagingTemplate messagingTemplate;
 
-    @SuppressWarnings("null")
     private void notifyServerAdded(Principal principal, ServerView serverView) {
         messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/server-updates",
                 ServerUpdateMessage.serverAdded(serverView));
     }
 
-    @SuppressWarnings("null")
     private void notifyServerRemoved(Principal principal, ObjectId serverId) {
         messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/server-updates",
                 ServerUpdateMessage.serverRemoved(serverId.toHexString()));

@@ -43,27 +43,21 @@ public class UserServiceTests extends AbstractIntegrationTest {
     UserService userService;
 
     @NonNull
-    @SuppressWarnings("null")
     private ObjectId user1Id;
 
     @NonNull
-    @SuppressWarnings("null")
     private ObjectId user2Id;
 
     @NonNull
-    @SuppressWarnings("null")
     private ObjectId user3Id;
 
     @NonNull
-    @SuppressWarnings("null")
     private ObjectId user4Id;
 
     @NonNull
-    @SuppressWarnings("null")
     private ObjectId user5Id;
 
     @BeforeEach
-    @SuppressWarnings("null")
     void setUp() {
         User user1 = TestUtils.createUser("user1", "password123", userRepository);
 
@@ -119,7 +113,6 @@ public class UserServiceTests extends AbstractIntegrationTest {
     }
 
     @Test
-    @SuppressWarnings("null")
     void shouldUpdateUserDetails() {
         User user1 = userRepository.findById(user1Id).get();
         UserUpdate userUpdate = new UserUpdate();

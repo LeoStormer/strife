@@ -39,7 +39,6 @@ public class FriendRequest {
         this(sender, receiver, false);
     }
 
-    @SuppressWarnings("null")
     // MongoDB automatically generates id
     public FriendRequest(User sender, User receiver, boolean accepted) {
         this.sender = sender;

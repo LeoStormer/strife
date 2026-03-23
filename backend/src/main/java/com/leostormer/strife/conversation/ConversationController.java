@@ -51,7 +51,7 @@ public class ConversationController {
     // Start a new conversation.
     @PostMapping("")
     public ResponseEntity<ConversationView> startNewConversation(Principal principal,
-            @RequestParam List<ObjectId> otherUserIds) {
+            @RequestBody List<ObjectId> otherUserIds) {
         User user = userService.getUser(principal);
         List<User> otherUsers = userService.getUsersById(otherUserIds);
         if (otherUsers.size() < otherUserIds.size())

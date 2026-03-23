@@ -37,17 +37,17 @@ public class UserService implements UserDetailsService {
 
     private static final String USER_NOT_FOUND = "User not found";
     @Autowired
-    private final UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    private final PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
     @Autowired
-    private final FriendRequestService friendRequestService;
+    private FriendRequestService friendRequestService;
     @Autowired
-    private final ConversationService conversationService;
+    private ConversationService conversationService;
     @Autowired
     private SecurityContextRepository securityContextRepository;
     @Autowired
-    private final MemberService memberService;
+    private MemberService memberService;
 
     public List<Server> getJoinedServers(User user) {
         return memberService.getServersByUserId(user.getId());
@@ -59,17 +59,14 @@ public class UserService implements UserDetailsService {
         return userRepository.findOneByEmail(principal.getName()).get();
     }
 
-    @SuppressWarnings("null")
     public Optional<User> getUserById(ObjectId userId) {
         return userRepository.findById(userId);
     }
 
-    @SuppressWarnings("null")
     public List<User> getUsersById(List<ObjectId> userIds) {
         return userRepository.findAllById(userIds);
     }
 
-    @SuppressWarnings("null")
     public boolean doesUserExist(ObjectId userId) {
         return userRepository.existsById(userId);
     }
@@ -90,7 +87,6 @@ public class UserService implements UserDetailsService {
         return friendRequestService.getAllPendingFriendRequests(user);
     }
 
-    @SuppressWarnings("null")
     public FriendRequest sendFriendRequest(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot send a friend request to yourself");
@@ -115,7 +111,6 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    @SuppressWarnings("null")
     public void blockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot block yourself");
@@ -132,7 +127,6 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    @SuppressWarnings("null")
     public void unblockUser(User sender, ObjectId receiverId) {
         if (sender.getId().equals(receiverId))
             throw new UnauthorizedActionException("You cannot unblock yourself");

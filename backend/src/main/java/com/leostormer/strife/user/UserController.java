@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @AllArgsConstructor
 public class UserController {
     @Autowired
-    private final UserService userService;
+    private UserService userService;
 
     @GetMapping("/servers")
     public ResponseEntity<List<ServerView>> getJoinedServers(Principal principal) {

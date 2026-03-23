@@ -34,7 +34,6 @@ public class Server {
 
     private Map<ObjectId, Role> roles;
 
-    @SuppressWarnings("null")
     public Server() {
         this.name = "";
         this.description = "";

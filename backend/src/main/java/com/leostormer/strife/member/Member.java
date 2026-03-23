@@ -78,7 +78,6 @@ public class Member {
     }
 
     // MongoDb automatically generates IDs
-    @SuppressWarnings("null")
     public Member(User user, Server server) {
         this.user = user;
         this.server = server;
@@ -86,7 +85,6 @@ public class Member {
         this.isOwner = server.getOwner().getId().equals(user.getId());
     }
 
-    @SuppressWarnings("null")
     public Member(User user, Server server, Role... roles) {
         List<Role> roleList = List.of(roles).stream().sorted().toList();
         long permissions = Permissions.getPermissions(roleList);
