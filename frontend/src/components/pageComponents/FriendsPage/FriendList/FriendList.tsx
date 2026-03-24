@@ -1,32 +1,31 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import styles from "./FriendList.module.css";
 import Icon from "../../../Icon";
 import { Virtuoso } from "react-virtuoso";
-import { useUserCacheContext } from "../../../../contexts/UserCacheContext";
 import ProfilePicture from "../../../ProfilePicture";
 import { type User } from "../../../../contexts/UserContext";
 import api from "../../../../api";
+import useDebounce from "../../../../contexts/useDebounce";
+import useRelationships, {
+  type Relationship,
+  type UseRelationshipsReturnType,
+} from "../../../../contexts/useRelationships";
+import Skeleton from "react-loading-skeleton";
 
-export type Relationship =
-  | { type: "FRIEND"; user: User }
-  | { type: "BLOCKED"; user: User }
-  | { type: "PENDING"; user: User; requestId: string }
-  | { type: "PENDING_OTHER"; user: User; requestId: string };
+type ActionFunction = (...args: any[]) => void | Promise<void>;
 
 type CardProps = {
   relationship: Relationship;
-  acceptFriendRequest?: AsyncVoidFunction | undefined;
-  rejectFriendRequest?: AsyncVoidFunction | undefined;
-  unblockUser?: AsyncVoidFunction | undefined;
-  startConversation?: AsyncVoidFunction | undefined;
+  acceptFriendRequest?: ActionFunction | undefined;
+  rejectFriendRequest?: ActionFunction | undefined;
+  unblockUser?: ActionFunction | undefined;
+  startConversation?: ActionFunction | undefined;
 };
-
-type AsyncVoidFunction = () => Promise<void>;
 
 const PendingActions = ({
   relationship,
-  acceptFriendRequest = () => Promise.reject(),
-  rejectFriendRequest = () => Promise.reject(),
+  acceptFriendRequest = () => {},
+  rejectFriendRequest = () => {},
 }: Pick<
   CardProps,
   "acceptFriendRequest" | "rejectFriendRequest" | "relationship"
@@ -48,7 +47,7 @@ const PendingActions = ({
 };
 
 const BlockedActions = ({
-  unblockUser = () => Promise.reject(),
+  unblockUser = () => {},
 }: Pick<CardProps, "unblockUser">) => {
   return (
     <div className={styles.cardActionWrapper}>
@@ -82,8 +81,6 @@ const ACTION_MAP = {
 };
 
 const UserDetails = ({ user }: { user: User }) => {
-  const { getUser } = useUserCacheContext();
-
   return (
     <div className={styles.userDetails}>
       <ProfilePicture
@@ -107,62 +104,139 @@ const RelationshipCard = ({ relationship, ...cardActions }: CardProps) => {
   );
 };
 
-type Props = {
-  activeFilter: string;
-  relationships: Relationship[];
-  onListActionSuccess: () => Promise<void>;
+const RelationshipCardSkeleton = () => {
+  return (
+    <div className={styles.relationshipCard}>
+      <div className={styles.userDetails}>
+        <Skeleton
+          circle
+          width={32}
+          height={32}
+          containerClassName={styles.profilepicture as string}
+        />
+        <div className={styles.username}>
+          <Skeleton width={120} height={16} />
+        </div>
+        <div className={styles.status}>
+          <Skeleton width={24} height={14} />
+        </div>
+      </div>
+      <div className={styles.cardActionWrapper}>
+        <Skeleton
+          circle
+          width={30}
+          height={30}
+          count={2}
+          inline
+          style={{ marginLeft: 12 }}
+        />
+      </div>
+    </div>
+  );
 };
 
-function FriendList({
-  relationships,
-  activeFilter,
-  onListActionSuccess,
-}: Props) {
-  const [search, setSearch] = useState<string>("");
-  // use a debounced value of search then quary the backend with that
+const FriendListLoadingSkeleton = () => {
+  return (
+    <div className={styles.container}>
+      <div>
+        <Skeleton height={40} />
+      </div>
+      <h3>
+        <Skeleton width={100} />
+      </h3>
+      {Array.from({ length: 10 }).map((_, i) => (
+        <RelationshipCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+};
 
-  const acceptFriendRequest = async (requestId: string) => {
-    await api.put(`/user/friends/friend-request?requestId=${requestId}`);
-    onListActionSuccess();
+type Props = {
+  activeFilter: string;
+};
+
+const EmptyState = ({ search }: { activeFilter: string; search: string }) => {
+  const isSearching = search.length > 0;
+  return (
+    <div className={styles.emptyStateContainer}>
+      <h3>No results found</h3>
+      {isSearching ? <p>We couldn't find anyone named {search}.</p> : null}
+    </div>
+  );
+};
+
+type ListContentProps = Props &
+  Omit<UseRelationshipsReturnType, "isLoading"> & {
+    startConversation: ActionFunction;
   };
-  const rejectFriendRequest = async (requestId: string) => {
-    await api.delete(`/user/friends/friend-request?requestId=${requestId}`);
-    onListActionSuccess();
-  };
-  const unblockUser = async (userId: string) => {
-    await api.delete(`/user/unblock-user?receiverId=${userId}`);
-    onListActionSuccess();
-  };
+
+const ListContent = (props: ListContentProps) => {
+  const isSearching = props.isFetching && !props.isFetchingNextPage;
+  return (
+    <>
+      <h3>{`${props.activeFilter} — ${props.total}`}</h3>
+      <div
+        style={{
+          flexGrow: "1",
+          opacity: isSearching ? 0.6 : 1,
+          transition: "opacity 0.2s ease-in-out",
+          pointerEvents: isSearching ? "none" : "auto",
+        }}
+      >
+        <Virtuoso
+          style={{ flexGrow: 1 }}
+          increaseViewportBy={200}
+          data={props.relationships}
+          endReached={() => {
+            if (!props.isFetching && props.hasNextPage) {
+              props.fetchNextPage();
+            }
+          }}
+          components={{
+            Footer: () =>
+              props.isFetchingNextPage ? <RelationshipCardSkeleton /> : null,
+          }}
+          itemContent={(_, rel) => (
+            <RelationshipCard
+              relationship={rel}
+              acceptFriendRequest={
+                rel.type === "PENDING"
+                  ? () => props.acceptFriendRequest(rel.requestId)
+                  : undefined
+              }
+              rejectFriendRequest={
+                rel.type === "PENDING" || rel.type === "PENDING_OTHER"
+                  ? () => props.rejectFriendRequest(rel.requestId)
+                  : undefined
+              }
+              unblockUser={() => props.unblockUser(rel.user.id)}
+              startConversation={() => props.startConversation(rel.user.id)}
+            />
+          )}
+        />
+      </div>
+    </>
+  );
+};
+
+function FriendList({ activeFilter }: Props) {
+  const [search, setSearch] = useState<string>("");
+  const debouncedSearch = useDebounce(search, 300);
+
+  const { relationships, isLoading, ...listProps } = useRelationships({
+    filter: activeFilter,
+    search: debouncedSearch,
+  });
+
   const startConversation = async (userId: string) => {
     api.post("/conversation", [userId]);
   };
 
-    // Move towards querying the backend instead
-  const filteredRelationships = useMemo(() => {
-    let result = relationships.filter((rel) => {
-      switch (activeFilter) {
-        case "Online":
-          return rel.type === "FRIEND"; // && rel.user.status === "online";
-        case "All":
-          return rel.type === "FRIEND";
-        case "Pending":
-          return rel.type === "PENDING" || rel.type === "PENDING_OTHER";
-        case "Blocked":
-          return rel.type === "BLOCKED";
-        default:
-          return true;
-      }
-    });
+  if (isLoading && relationships.length == 0) {
+    return <FriendListLoadingSkeleton />;
+  }
 
-    const query = search.trim().toLowerCase();
-    if (query) {
-      result = result.filter((rel) =>
-        rel.user.username.toLowerCase().includes(query),
-      );
-    }
-
-    return result;
-  }, [relationships, activeFilter, search]);
+  const isEmpty = !isLoading && relationships.length === 0;
 
   return (
     <div
@@ -181,28 +255,16 @@ function FriendList({
           }}
         />
       </div>
-      <h3>{`${activeFilter} — ${relationships.length}`}</h3>
-      <Virtuoso
-        style={{ flexGrow: "1" }}
-        data={filteredRelationships}
-        itemContent={(_, data) => (
-          <RelationshipCard
-            relationship={data}
-            acceptFriendRequest={
-              data.type === "PENDING"
-                ? () => acceptFriendRequest(data.requestId)
-                : undefined
-            }
-            rejectFriendRequest={
-              data.type === "PENDING" || data.type === "PENDING_OTHER"
-                ? () => rejectFriendRequest(data.requestId)
-                : undefined
-            }
-            unblockUser={() => unblockUser(data.user.id)}
-            startConversation={() => startConversation(data.user.id)}
-          />
-        )}
-      />
+      {isEmpty ? (
+        <EmptyState activeFilter={activeFilter} search={debouncedSearch} />
+      ) : (
+        <ListContent
+          {...listProps}
+          activeFilter={activeFilter}
+          relationships={relationships}
+          startConversation={startConversation}
+        />
+      )}
     </div>
   );
 }

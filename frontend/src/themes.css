@@ -17,16 +17,12 @@
 
 [data-theme="light"] {
   --background-color: #ffdcdc;
-  --on-background-color: #000000;
-  --contrast-mix-color: black;
   --on-background-contrast-base: 0, 0, 0;
   --on-background-harmony-base: 255, 255, 255;
 }
 
 [data-theme="dark"] {
   --background-color: #200000;
-  --on-background-color: #f5d9d9;
-  --contrast-mix-color: white;
   --on-background-contrast-base: 255, 255, 255;
   --on-background-harmony-base: 0, 0, 0;
 }
@@ -35,14 +31,19 @@
   --border-highlight-color: color-mix(
     in srgb,
     var(--background-color) 80%,
-    var(--contrast-mix-color) 20%
+    rgb(var(--on-background-contrast-base)) 20%
   );
   --text-highlight-color: color-mix(
     in srgb,
     var(--on-background-color) 40%,
-    var(--contrast-mix-color) 60%
+    rgb(var(--on-background-contrast-base)) 60%
   );
-  
+  --on-background-color: color-mix(
+    in srgb,
+    rgb(var(--on-background-contrast-base)) 90%,
+    var(--accent-color) 10%
+  );
+  --on-background-color-muted: rgb(from var(--on-background-color) r g b / 0.6);
   --on-background-contrast-weak: rgb(var(--on-background-contrast-base), 5%);
   --on-background-contrast: rgb(var(--on-background-contrast-base), 10%);
   --on-background-contrast-medium: rgb(var(--on-background-contrast-base), 15%);
