@@ -110,6 +110,7 @@ function ServerListItem({
       >
         <Link
           {...getTriggerProps()}
+          tabIndex={0}
           to={`/servers/${id}`}
           className={StyleComposer(styles.navItem, {
             [styles.selected as string]: selectedServerId === id,
@@ -341,7 +342,7 @@ function ServerSortableArea() {
     );
   });
 
-  const draggingServerIcon = (() => {
+  const getDraggingIcon = () => {
     let item = draggingId ? servers[draggingId]! : null;
     if (!item) {
       return null;
@@ -358,7 +359,7 @@ function ServerSortableArea() {
     return (
       <ServerIcon serverName={server.name} serverIconImage={server.icon} />
     );
-  })();
+  };
 
   return (
     <DndContext
@@ -374,7 +375,7 @@ function ServerSortableArea() {
       </div>
       <Portal style={{ pointerEvents: "none" }}>
         <DragOverlay modifiers={[snapCenterToCursor]}>
-          <div className={styles.dragOverlay}>{draggingServerIcon}</div>
+          <div className={styles.dragOverlay}>{getDraggingIcon()}</div>
         </DragOverlay>
       </Portal>
     </DndContext>

@@ -66,6 +66,7 @@ const NavItem = <T extends ElementType = "button">({
     <li {...getTargetProps()} className={styles.listItem}>
       <Component
         {...getTriggerProps()}
+        tabIndex={0}
         className={StyleComposer(styles.navItem, {
           [styles.selected as string]: isSelected,
         })}

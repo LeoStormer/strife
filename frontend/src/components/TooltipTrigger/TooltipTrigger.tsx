@@ -36,7 +36,12 @@ function TooltipTrigger<T extends HTMLElement>({
   };
 
   const getTriggerProps = () => {
-    return { onMouseEnter, onMouseLeave };
+    return {
+      onMouseEnter,
+      onMouseLeave,
+      onFocus: onMouseEnter,
+      onBlur: onMouseLeave,
+    };
   };
 
   const getAllProps = () => {
