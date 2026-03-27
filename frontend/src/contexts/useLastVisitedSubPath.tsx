@@ -31,7 +31,12 @@ export const useLastVisitedPath = ({
 
   const [lastVisitedPath, setLastVisitedPath] = useLocalStorage<
     string | undefined
-  >({ storageKey, initialValue: undefined, userId: user?.id });
+  >({
+    storageKey,
+    initialValue: undefined,
+    userId: user?.id,
+    syncToLocalStorage: isEnabled,
+  });
 
   useEffect(() => {
     if (!isEnabled || !location.pathname.includes(basePath)) {
