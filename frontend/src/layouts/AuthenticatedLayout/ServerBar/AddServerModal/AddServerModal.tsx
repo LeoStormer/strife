@@ -69,7 +69,7 @@ function ServerCreationForm({
         }
       />
       <label htmlFor='serverName'>Server Name</label>
-      <input type='text' {...register("serverName")} />
+      <input type='text' id="serverName" {...register("serverName")} />
       {errors.serverName ? errors.serverName.message : null}
       <button type='submit' className={styles.button}>
         {isSubmitting ? "Creating Server..." : "Create Server"}
@@ -137,7 +137,7 @@ function JoinServerForm({
         subheader='Enter an invite below to join an existing server'
       />
       <label htmlFor='invite'>Invite link</label>
-      <input type='text' {...register("invite")} />
+      <input type='text' id="invite" {...register("invite")} />
       {errors.invite ? errors.invite.message : null}
       <Link
         className={styles.link}
