@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   PointerSensor,
   pointerWithin,
   TouchSensor,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragCancelEvent,
   type DragEndEvent,
   type DragStartEvent,
+  type KeyboardCoordinateGetter,
 } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
 import Draggable, {
@@ -29,10 +33,19 @@ import StyleComposer from "../../../utils/StyleComposer";
 import TooltipTrigger from "../../../components/TooltipTrigger";
 import { Link } from "react-router-dom";
 import styles from "./ServerBar.module.css";
+import type { ServerItemOrFolderRecord } from "../../../contexts/ServerSelectionContext/serverReducer";
 
 const restrictSortableToOriginalPosition: TransformOverride = (transform) => {
   void transform;
   return { transform: undefined };
+};
+
+const hybridCollision: CollisionDetection = (args) => {
+  if (args.pointerCoordinates) {
+    return pointerWithin(args);
+  }
+
+  return closestCenter(args);
 };
 
 type DragType = "server" | "folder" | null;
@@ -245,20 +258,135 @@ function ServerFolder({
   );
 }
 
+type KeyboardNode = {
+  id: string;
+  type: "mover" | "combiner";
+  source: string;
+  folderId?: string | undefined;
+};
+
+const buildKeyboardGraph = (
+  rootOrder: string[],
+  servers: ServerItemOrFolderRecord,
+): KeyboardNode[] => {
+  const result: KeyboardNode[] = [];
+
+  const pushServer = (serverId: string, folderId?: string) => {
+    result.push({
+      id: `Mover(${serverId})`,
+      type: "mover",
+      source: serverId,
+      folderId,
+    });
+
+    result.push({
+      id: `Combiner(${serverId})`,
+      type: "combiner",
+      source: serverId,
+      folderId,
+    });
+  };
+
+  for (const itemId of rootOrder) {
+    const item = servers[itemId]!;
+
+    if (item.type === "server") {
+      pushServer(itemId);
+    } else {
+      // Folder itself
+      result.push({
+        id: `Mover(${itemId})`,
+        type: "mover",
+        source: itemId,
+      });
+
+      result.push({
+        id: `Combiner(${itemId})`,
+        type: "combiner",
+        source: "last",
+        folderId: itemId,
+      });
+
+      // Folder children
+      for (const serverId of item.serverOrder) {
+        pushServer(serverId, itemId);
+      }
+    }
+  }
+
+  // Final "last" drop zone
+  result.push({
+    id: `Mover(Last)`,
+    type: "mover",
+    source: "last",
+  });
+
+  return result;
+};
+
 function ServerSortableArea() {
   const { servers, rootOrder, getServer, selectedId, moveItem, createFolder } =
     useServerSelectionContext();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<DragType>(null);
+  const graphRef = useRef<KeyboardNode[] | null>(null);
+  const keyboardIndexRef = useRef<number | null>(null);
+
   const handleDragStart = (event: DragStartEvent) => {
     const { type } = servers[event.active.id]!;
     setDraggingId(event.active.id as string);
     setDragType(type);
+
+    const graph = buildKeyboardGraph(rootOrder, servers).filter((node) => {
+      if (dragType === "folder" && node.type === "combiner") {
+        return false;
+      }
+      return true;
+    });
+    graphRef.current = graph;
+    const startIndex = graph.findIndex(
+      (node) => node.source === event.active.id,
+    );
+
+    keyboardIndexRef.current = startIndex === -1 ? 0 : startIndex;
+  };
+
+  const customKeyboardCoordinates: KeyboardCoordinateGetter = (
+    event,
+    { context },
+  ) => {
+    const { draggingNodeRect, droppableRects } = context;
+    const graph = graphRef.current;
+    const currentIndex = keyboardIndexRef.current;
+    if (!graph || currentIndex === null) return;
+
+    let nextIndex = currentIndex;
+    if (event.code === "ArrowDown") {
+      nextIndex = Math.min(graph.length - 1, currentIndex + 1);
+    }
+
+    if (event.code === "ArrowUp") {
+      nextIndex = Math.max(0, currentIndex - 1);
+    }
+
+    const next = graph[nextIndex];
+    if (!next) return;
+
+    keyboardIndexRef.current = nextIndex;
+
+    const targetRect = droppableRects.get(next.id);
+    return targetRect && draggingNodeRect
+      ? {
+          x: targetRect.left + (targetRect.width - draggingNodeRect.width) / 2,
+          y: targetRect.top + (targetRect.height - draggingNodeRect.height) / 2,
+        }
+      : undefined;
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     setDraggingId(null);
     setDragType(null);
+    keyboardIndexRef.current = null;
     const { active, over } = event;
     if (!over || !over.data.current || active.id === over.data.current.source) {
       return;
@@ -303,6 +431,7 @@ function ServerSortableArea() {
     void event;
     setDraggingId(null);
     setDragType(null);
+    keyboardIndexRef.current = null;
   };
 
   const sensors = useSensors(
@@ -310,6 +439,9 @@ function ServerSortableArea() {
       activationConstraint: { distance: 5 },
     }),
     useSensor(TouchSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: customKeyboardCoordinates,
+    }),
   );
 
   const serverListItems = rootOrder.map((itemId) => {
@@ -364,7 +496,7 @@ function ServerSortableArea() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={hybridCollision}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
