@@ -1,4 +1,4 @@
-import { useState, type JSX, type MouseEventHandler } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,11 +33,12 @@ type SwappableFormProps = Pick<JSX.IntrinsicElements["form"], "inert"> & {
 function ServerCreationForm({
   swapForm,
   closeModal,
-  ...formProps
+  inert,
 }: SwappableFormProps) {
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<ServerCreationForm>({
     resolver: zodResolver(serverCreationSchema),
@@ -55,11 +56,25 @@ function ServerCreationForm({
       });
   };
 
+  useEffect(() => {
+    if (!inert) {
+      // HACK: Delay focusing the input to account for `inert` removal and CSS
+      // slide animation. Without this timeout, the input is either ignored by
+      // the browser on initial render. Using 100ms is arbitrary but empirically
+      // reliable for our modal animation timing.
+      const id = setTimeout(() => {
+        setFocus("serverName");
+      }, 100);
+
+      return () => clearTimeout(id);
+    }
+  }, [inert, setFocus]);
+
   return (
     <form
       className={styles.form}
       onSubmit={handleSubmit(onSubmit)}
-      {...formProps}
+      inert={inert}
     >
       <Header
         title='Create Your Server'
@@ -69,7 +84,7 @@ function ServerCreationForm({
         }
       />
       <label htmlFor='serverName'>Server Name</label>
-      <input type='text' id="serverName" {...register("serverName")} />
+      <input type='text' id='serverName' {...register("serverName")} />
       {errors.serverName ? errors.serverName.message : null}
       <button type='submit' className={styles.button}>
         {isSubmitting ? "Creating Server..." : "Create Server"}
@@ -98,14 +113,12 @@ const joinServerSchema = z.object({
 
 type JoinServerForm = z.infer<typeof joinServerSchema>;
 
-function JoinServerForm({
-  swapForm,
-  closeModal,
-  ...formProps
-}: SwappableFormProps) {
+function JoinServerForm({ swapForm, closeModal, inert }: SwappableFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<JoinServerForm>({
     resolver: zodResolver(joinServerSchema),
@@ -126,18 +139,37 @@ function JoinServerForm({
       });
   };
 
+  useEffect(() => {
+    if (!inert) {
+      // Focus the invite input after the form’s slide-in transition finishes.
+      // This avoids layout/scroll issues caused by focusing while the form is
+      // still off-screen.
+      const handleTransitionEnd = () => {
+        setFocus("invite");
+      };
+
+      const formEl = formRef.current;
+      formEl?.addEventListener("transitionend", handleTransitionEnd);
+
+      return () => {
+        formEl?.removeEventListener("transitionend", handleTransitionEnd);
+      };
+    }
+  }, [inert, setFocus]);
+
   return (
     <form
       className={styles.form}
       onSubmit={handleSubmit(onSubmit)}
-      {...formProps}
+      inert={inert}
+      ref={formRef}
     >
       <Header
         title='Join a Server'
         subheader='Enter an invite below to join an existing server'
       />
       <label htmlFor='invite'>Invite link</label>
-      <input type='text' id="invite" {...register("invite")} />
+      <input type='text' id='invite' {...register("invite")} />
       {errors.invite ? errors.invite.message : null}
       <Link
         className={styles.link}
@@ -193,12 +225,12 @@ function AddServerModal({
       <ServerCreationForm
         swapForm={() => setActiveForm("join")}
         closeModal={closeModal}
-        inert={activeForm === "join"}
+        inert={activeForm === "join" || !isOpen}
       />
       <JoinServerForm
         swapForm={() => setActiveForm("create")}
         closeModal={closeModal}
-        inert={activeForm === "create"}
+        inert={activeForm === "create" || !isOpen}
       />
     </Modal>
   );

@@ -2,18 +2,14 @@ import { useEffect, useRef, type FormEventHandler } from "react";
 import { Link } from "react-router-dom";
 import formStyles from "../../../../styles/Form.module.css";
 import { LOGIN_PAGE_PATH } from "../../../../constants";
+import useFocusOnMount from "../../../../contexts/useFocusOnMount";
 
 type RegistrationFormProps = {
   handleSubmit: FormEventHandler<HTMLFormElement>;
 };
 
 function RegistrationForm({ handleSubmit }: RegistrationFormProps) {
-  const focusRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (focusRef.current) {
-      focusRef.current.focus();
-    }
-  }, []);
+  const focusRef = useFocusOnMount()
 
   return (
     <div className={formStyles.container}>

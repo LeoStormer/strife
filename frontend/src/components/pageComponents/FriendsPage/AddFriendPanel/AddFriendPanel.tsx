@@ -3,10 +3,13 @@ import Icon from "../../../Icon";
 import styles from "./AddFriendPanel.module.css";
 import { SERVER_DISCOVERY_PATH } from "../../../../constants";
 import { useState } from "react";
+import useFocusOnMount from "../../../../contexts/useFocusOnMount";
 
 const AddFriendTab = () => {
   const navigate = useNavigate();
   const [emailInput, setEmailInput] = useState("");
+  const focusRef = useFocusOnMount();
+
   return (
     <div role='tabpanel' id='add-friend-panel'>
       <section className={styles.sectionBlock}>
@@ -18,6 +21,7 @@ const AddFriendTab = () => {
               Friend's Email
             </label>
             <input
+              ref={focusRef}
               type='email'
               id='email'
               placeholder='Enter email address...'

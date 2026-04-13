@@ -80,10 +80,10 @@
   border-color: var(--border-highlight-color);
   border-radius: 10px;
   padding: 0px;
+  outline: none;
 }
 
 .form > input:focus {
-  outline: none;
   border-color: var(--accent-color);
 }
 
