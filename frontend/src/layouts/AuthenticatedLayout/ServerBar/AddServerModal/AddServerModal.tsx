@@ -51,9 +51,7 @@ function ServerCreationForm({
         console.log("Server created successfully");
         closeModal();
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch(console.error);
   };
 
   useEffect(() => {
@@ -78,15 +76,12 @@ function ServerCreationForm({
     >
       <Header
         title='Create Your Server'
-        subheader={
-          "Your server is where you and your friends hang out." +
-          " Make yours and start talking."
-        }
+        subheader='Your server is where you and your friends hang out. Make yours and start talking.'
       />
       <label htmlFor='serverName'>Server Name</label>
       <input type='text' id='serverName' {...register("serverName")} />
       {errors.serverName ? errors.serverName.message : null}
-      <button type='submit' className={styles.button}>
+      <button type='submit' className={styles.button} disabled={isSubmitting}>
         {isSubmitting ? "Creating Server..." : "Create Server"}
       </button>
       <h3>Have an invite already?</h3>
@@ -126,17 +121,13 @@ function JoinServerForm({ swapForm, closeModal, inert }: SwappableFormProps) {
 
   const onSubmit: SubmitHandler<JoinServerForm> = (data) => {
     const inviteId = data.invite.match(inviteRegex)?.[1];
-    console.log(inviteId);
-
     api
       .post(`/server/join-by-invite?inviteId=${inviteId}`)
       .then(() => {
         console.log("Server joined successfully");
         closeModal();
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch(console.error);
   };
 
   useEffect(() => {
@@ -188,7 +179,7 @@ function JoinServerForm({ swapForm, closeModal, inert }: SwappableFormProps) {
         <button type='button' className={styles.backButton} onClick={swapForm}>
           Back
         </button>
-        <button type='submit' className={styles.joinButton}>
+        <button type='submit' className={styles.joinButton} disabled={isSubmitting}>
           {isSubmitting ? "Joining..." : "Join Server"}
         </button>
       </div>
