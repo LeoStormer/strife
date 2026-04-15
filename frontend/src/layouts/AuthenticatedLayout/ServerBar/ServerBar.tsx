@@ -96,7 +96,7 @@ function ServerBar() {
   }
 
   return (
-    <nav className={styles.navContainer}>
+    <nav aria-label='Servers' className={styles.navContainer}>
       <ul className={styles.list}>
         <NavItem
           as={Link}

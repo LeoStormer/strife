@@ -244,7 +244,7 @@ function FriendList({ activeFilter }: Props) {
       id={`${activeFilter} Friends List`}
       className={styles.container}
     >
-      <div className={styles.search}>
+      <search aria-label="Search Friends" className={styles.search}>
         <Icon name='search' />
         <input
           type='text'
@@ -254,7 +254,7 @@ function FriendList({ activeFilter }: Props) {
             setSearch(e.currentTarget.value.trim());
           }}
         />
-      </div>
+      </search>
       {isEmpty ? (
         <EmptyState activeFilter={activeFilter} search={debouncedSearch} />
       ) : (
