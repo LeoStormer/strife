@@ -135,8 +135,10 @@ function JoinServerForm({ swapForm, closeModal, inert }: SwappableFormProps) {
       // Focus the invite input after the form’s slide-in transition finishes.
       // This avoids layout/scroll issues caused by focusing while the form is
       // still off-screen.
-      const handleTransitionEnd = () => {
-        setFocus("invite");
+      const handleTransitionEnd = (ev: TransitionEvent) => {
+        if (ev.target === ev.currentTarget) {
+          setFocus("invite");
+        }
       };
 
       const formEl = formRef.current;
@@ -179,7 +181,11 @@ function JoinServerForm({ swapForm, closeModal, inert }: SwappableFormProps) {
         <button type='button' className={styles.backButton} onClick={swapForm}>
           Back
         </button>
-        <button type='submit' className={styles.joinButton} disabled={isSubmitting}>
+        <button
+          type='submit'
+          className={styles.joinButton}
+          disabled={isSubmitting}
+        >
           {isSubmitting ? "Joining..." : "Join Server"}
         </button>
       </div>
@@ -212,6 +218,7 @@ function AddServerModal({
       isOpen={isOpen}
       onClose={closeModal}
       key={`${styles.addServerModalContainer}${count}`}
+      aria-label='Add Server Modal'
     >
       <ServerCreationForm
         swapForm={() => setActiveForm("join")}
