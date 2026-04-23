@@ -4,7 +4,6 @@ import {
   useRef,
   type JSX,
   type MouseEventHandler,
-  type RefObject,
 } from "react";
 import Portal from "../Portal";
 import styles from "./Modal.module.css";
@@ -115,7 +114,7 @@ function Modal({
     >
       <div
         {...containerProps}
-        ref={ref as RefObject<HTMLDivElement>}
+        ref={ref}
         className={containerClassName}
         onMouseDown={(e) => {
           e.stopPropagation();

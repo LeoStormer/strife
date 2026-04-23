@@ -40,8 +40,10 @@ const getFocusables = (container: HTMLElement) =>
  * const containerRef = useFocusTrap(isOpen);
  * return <div ref={containerRef}>{children}</div>;
  */
-function useFocusTrap(isActive: boolean) {
-  const containerRef = useRef<HTMLElement | null>(null);
+const useFocusTrap = <T extends HTMLElement = HTMLDivElement>(
+  isActive: boolean,
+): RefObject<T> => {
+  const containerRef = useRef<T | null>(null);
 
   useLayoutEffect(() => {
     if (!isActive || !containerRef.current) return;
@@ -92,7 +94,7 @@ function useFocusTrap(isActive: boolean) {
     };
   }, [isActive, containerRef]);
 
-  return containerRef as RefObject<HTMLElement>;
-}
+  return containerRef as RefObject<T>;
+};
 
 export default useFocusTrap;
