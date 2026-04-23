@@ -3,6 +3,10 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 // Global stack to track active traps
 const trapStack: HTMLElement[] = [];
 const getTopMostTrap = () => trapStack[trapStack.length - 1];
+const removeTrap = (element: HTMLElement) => {
+  const index = trapStack.indexOf(element);
+  if (index > -1) trapStack.splice(index, 1);
+};
 
 // List of common focusable elements
 const FOCUSABLE_SELECTOR = [
@@ -31,7 +35,9 @@ const getFocusables = (container: HTMLElement) =>
  * A custom hook that traps keyboard focus within a specific container.
  *
  * When active, it prevents the user from tabbing out of the element,
- * looping focus back to the start or end instead. Ideal for modals and drawers.
+ * looping focus back to the start or end instead.
+ * If a user tries to focus outside the container, the trap will steal focus back.
+ * Ideal for modals and drawers.
  *
  * @param isActive - Determines if the focus trap is currently engaged.
  * @returns A `RefObject` to be attached to the container element.
@@ -46,13 +52,43 @@ const useFocusTrap = <T extends HTMLElement = HTMLDivElement>(
   const containerRef = useRef<T | null>(null);
 
   useLayoutEffect(() => {
-    if (!isActive || !containerRef.current) return;
+    if (!isActive) {
+      return;
+    }
 
-    const container = containerRef.current;
-    trapStack.push(container);
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      const container = containerRef.current;
+      if (
+        !container ||
+        getTopMostTrap() !== container ||
+        (target && container.contains(target))
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const focusables = getFocusables(container);
+      const first = focusables[0];
+      first?.focus();
+    };
+
+    document.addEventListener("focusin", handleFocusIn, true);
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn, true);
+    };
+  }, [isActive]);
+
+  useLayoutEffect(() => {
+    if (!isActive || !containerRef.current) {
+      return;
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      const container = containerRef.current;
       if (
+        !container ||
         e.key !== "Tab" ||
         // Stack Check: Only the top-most container handles the event
         getTopMostTrap() !== container
@@ -86,11 +122,13 @@ const useFocusTrap = <T extends HTMLElement = HTMLDivElement>(
       }
     };
 
+    const container = containerRef.current;
+    trapStack.push(container);
+
     document.addEventListener("keydown", handleKeyDown, true);
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
-      const index = trapStack.indexOf(container);
-      if (index > -1) trapStack.splice(index, 1);
+      removeTrap(container);
     };
   }, [isActive, containerRef]);
 

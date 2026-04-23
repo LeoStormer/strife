@@ -1,21 +1,23 @@
 import { useEffect } from "react";
 
-const activeRootTraps = new Set<string>();
+const rootTrapStore = (() => {
+  const activeRootTraps = new Set<string>();
 
-const rootTrapStore = {
-  add(id: string) {
-    activeRootTraps.add(id);
-    if (activeRootTraps.size === 1) {
-      document.getElementById("root")?.setAttribute("inert", "");
-    }
-  },
-  remove(id: string) {
-    activeRootTraps.delete(id);
-    if (activeRootTraps.size === 0) {
-      document.getElementById("root")?.removeAttribute("inert");
-    }
-  }
-};
+  return {
+    add(id: string) {
+      activeRootTraps.add(id);
+      if (activeRootTraps.size === 1) {
+        document.getElementById("root")?.setAttribute("inert", "");
+      }
+    },
+    remove(id: string) {
+      activeRootTraps.delete(id);
+      if (activeRootTraps.size === 0) {
+        document.getElementById("root")?.removeAttribute("inert");
+      }
+    },
+  };
+})();
 
 /**
  * A hook to manage the inert state of the root element. As long as at least
@@ -24,7 +26,7 @@ const rootTrapStore = {
  * @param id a unique identifier for the component instance
  */
 const useInertRoot = (shouldDeactivateRoot: boolean, id: string) => {
-  useEffect(() => {;
+  useEffect(() => {
     if (!shouldDeactivateRoot) {
       return;
     }
