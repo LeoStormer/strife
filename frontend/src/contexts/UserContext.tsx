@@ -4,11 +4,17 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
+  useMemo,
 } from "react";
 import api from "../api";
 import { HttpStatusCode, isAxiosError, isCancel } from "axios";
 import useLocalStorage from "./useLocalStorage";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  useSuspenseQueries,
+} from "@tanstack/react-query";
 
 export type User = {
   id: string;
@@ -30,6 +36,8 @@ export type RegistrationRequest = {
 
 type UserContextType = {
   isLoading: boolean;
+  isLoggingIn: boolean;
+  isRegistering: boolean;
   user: User | null;
   login: (request: LoginRequest) => Promise<void>;
   register: (request: RegistrationRequest) => Promise<void>;
@@ -38,6 +46,8 @@ type UserContextType = {
 
 export const UserContext = createContext<UserContextType>({
   isLoading: false,
+  isLoggingIn: false,
+  isRegistering: false,
   user: null,
   login: (request: LoginRequest) => Promise.resolve(),
   register: (request: RegistrationRequest) => Promise.resolve(),
@@ -51,8 +61,28 @@ const mapResponseDataToUser = (data: any): User => {
   };
 };
 
+const fetchUserById = async (userId: string) => {
+  try {
+    const response = await api.get(`/user/${userId}`);
+    return mapResponseDataToUser(response.data);
+  } catch (error) {
+    if (
+      isAxiosError(error) &&
+      error.response?.status === HttpStatusCode.NotFound
+    ) {
+      return {
+        id: userId,
+        username: `Deleted_User_${userId}`,
+        profilePic: "",
+        createdDate: new Date(),
+      };
+    }
+    throw error;
+  }
+};
+
 const LOCAL_STORAGE_KEY = "strife_user_data";
-const METADATA_KEY = "strife_users_metadata"
+const METADATA_KEY = "strife_users_metadata";
 export const REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR =
   "REGISTRATION_SUCCESS_BUT_LOGIN_FAILED";
 
@@ -81,7 +111,9 @@ const updateMaintenanceMetadata = (currentUserId: string) => {
 
   try {
     const raw = localStorage.getItem(METADATA_KEY);
-    const metadata: Record<string, { lastAccess: number }> = raw ? JSON.parse(raw) : {};
+    const metadata: Record<string, { lastAccess: number }> = raw
+      ? JSON.parse(raw)
+      : {};
 
     // 1. Update current user's timestamp
     metadata[currentUserId] = { lastAccess: now };
@@ -107,23 +139,31 @@ const updateMaintenanceMetadata = (currentUserId: string) => {
 };
 
 export const UserContextProvider = ({ children }: PropsWithChildren) => {
-  const [user, setUser] = useLocalStorage<User | null>({storageKey: LOCAL_STORAGE_KEY, initialValue: null});
-  const [isLoading, setIsLoading] = useState(user !== null);
+  const queryClient = useQueryClient();
+  const [localUser, setLocalUser] = useLocalStorage<User | null>({
+    storageKey: LOCAL_STORAGE_KEY,
+    initialValue: null,
+  });
 
-  const register = useCallback(async (request: RegistrationRequest) => {
-    const response = await api.post<User>("/user/register", request);
+  // Verify user session on app load to handle cases where the session might have expired server-side
+  const { data: verifiedUser, isLoading: isAuthLoading } = useQuery({
+    queryKey: ["user", localUser?.id],
+    queryFn: async () => {
+      await api.get("/user/auth-status");
+      return localUser;
+    },
+    enabled: !!localUser,
+    staleTime: Infinity,
+    retry: false,
+  });
 
-    if (response.status === HttpStatusCode.Created) {
-      throw new Error(REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR);
+  const currentUser = verifiedUser ?? localUser;
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      updateMaintenanceMetadata(currentUser.id);
     }
-
-    setUser(mapResponseDataToUser(response.data));
-  }, []);
-
-  const login = useCallback(async (request: LoginRequest) => {
-    const response = await api.post<User>("/user/login", request);
-    setUser(mapResponseDataToUser(response.data));
-  }, []);
+  }, [currentUser?.id]);
 
   const logout = useCallback(async () => {
     try {
@@ -136,46 +176,65 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
 
       throw error;
     } finally {
-      // Always clear local state
-      setUser(null);
+      setLocalUser(null);
+      queryClient.clear();
     }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
-    // verify with backend that the stored user data is still valid
-    api
-      .get("/user/auth-status", { signal: controller.signal })
-      .then(() => {
-        updateMaintenanceMetadata(user.id);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        // interceptor alread handles logging out on 401, so we just stop loading and let it do its thing
-        if (isCancel(error)) {
-          return;
-        }
-
-        setIsLoading(false);
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [user?.id]);
+  }, [queryClient, setLocalUser]);
 
   useAuthenticationInterceptor(logout);
 
-  return (
-    <UserContext value={{ user, register, login, logout, isLoading }}>
-      {children}
-    </UserContext>
+  const loginMutation = useMutation({
+    mutationFn: (request: LoginRequest) =>
+      api.post<User>("/user/login", request),
+    onSuccess: (response) => {
+      const user = mapResponseDataToUser(response.data);
+      setLocalUser(user);
+      queryClient.setQueryData(["user", user.id], user);
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (request: RegistrationRequest) => {
+      const response = await api.post<User>("/user/register", request);
+
+      if (response.status === HttpStatusCode.Created) {
+        throw new Error(REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR);
+      }
+
+      return response;
+    },
+    onSuccess: (response) => {
+      const user = mapResponseDataToUser(response.data);
+      setLocalUser(user);
+      queryClient.setQueryData(["user", user.id], user);
+    },
+  });
+
+  const value = useMemo(
+    () => ({
+      user: currentUser,
+      isLoading: isAuthLoading && !!localUser,
+      isLoggingIn: loginMutation.isPending,
+      isRegistering: registerMutation.isPending,
+      login: async (req: LoginRequest) => {
+        await loginMutation.mutateAsync(req);
+      },
+      register: async (req: RegistrationRequest) => {
+        await registerMutation.mutateAsync(req);
+      },
+      logout,
+    }),
+    [
+      currentUser,
+      isAuthLoading,
+      localUser,
+      loginMutation,
+      registerMutation,
+      logout,
+    ],
   );
+
+  return <UserContext value={value}>{children}</UserContext>;
 };
 
 export const useUserContext = () => useContext(UserContext);

@@ -1,7 +1,7 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import RegistrationForm from "./RegistrationForm";
 import { HttpStatusCode, isAxiosError } from "axios";
-import { type FormEvent } from "react";
+import { type FormEvent, type SubmitEventHandler } from "react";
 import {
   REGISTRATION_SUCCESS_BUT_LOGIN_FAILED_ERROR,
   useUserContext,
@@ -12,7 +12,7 @@ import LoadingPage from "../LoadingPage";
 
 function RegristrationPage() {
   const navigate = useNavigate();
-  const { user, register, isLoading } = useUserContext();
+  const { user, register, isLoading, isRegistering } = useUserContext();
 
   if (isLoading) {
     return <LoadingPage />;
@@ -22,7 +22,7 @@ function RegristrationPage() {
     return <Navigate to={FRIENDS_PAGE_PATH} replace />;
   }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     const formdata = new FormData(e.currentTarget);
     const payload = Object.fromEntries(
@@ -53,7 +53,12 @@ function RegristrationPage() {
     }
   };
 
-  return <RegistrationForm handleSubmit={handleSubmit} />;
+  return (
+    <RegistrationForm
+      handleSubmit={handleSubmit}
+      isRegistering={isRegistering}
+    />
+  );
 }
 
 export default RegristrationPage;
