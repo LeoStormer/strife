@@ -238,3 +238,30 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
 };
 
 export const useUserContext = () => useContext(UserContext);
+
+const CACHE_EXPIRATION_MS = 5 * 60 * 1000;
+
+export const useUserList = (userIds: string[]) => {
+  const { user: localUser } = useUserContext();
+
+  return useSuspenseQueries({
+    queries: userIds.map((id) => ({
+      queryKey: ["user", id],
+      queryFn: async () => {
+        if (id === localUser?.id) {
+          return localUser;
+        }
+
+        return fetchUserById(id);
+      },
+      staleTime: CACHE_EXPIRATION_MS,
+    })),
+    combine: (results) => {
+      return results.map((res, index) => ({
+        id: userIds[index],
+        isError: res.isError,
+        user: res.data,
+      }));
+    },
+  });
+};

@@ -1,28 +1,14 @@
 import Skeleton from "react-loading-skeleton";
 import ProfilePicture from "../../../../components/ProfilePicture";
 import styles from "./ProfileDisplayGrid.module.css";
-import { useUserCacheContext } from "../../../../contexts/UserCacheContext";
-import { Suspense, use, useMemo } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import Icon from "../../../../components/Icon";
+import { useUserList } from "../../../../contexts/UserContext";
 
 const ProfileGridContent = ({ userIds }: { userIds: string[] }) => {
-  const { getUser } = useUserCacheContext();
-
-  const usersPromise = useMemo(async () => {
-    const targets = userIds.slice(0, 4);
-    return Promise.allSettled(targets.map((id) => getUser(id))).then(
-      (results) =>
-        results.map((res, index) => {
-          const id = targets[index];
-          return res.status === "fulfilled"
-            ? ({ id, user: res.value, isError: false } as const)
-            : ({ id, user: null, isError: true } as const);
-        }),
-    );
-  }, [userIds, getUser]);
-
-  const results = use(usersPromise);
+  const truncatedUserIds = userIds.slice(0, 4);
+  const results = useUserList(truncatedUserIds);
 
   return (
     <div className={styles.profileDisplayGrid}>
