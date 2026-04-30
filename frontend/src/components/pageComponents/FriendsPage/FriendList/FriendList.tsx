@@ -4,13 +4,14 @@ import Icon from "../../../Icon";
 import { Virtuoso } from "react-virtuoso";
 import ProfilePicture from "../../../ProfilePicture";
 import { type User } from "../../../../contexts/UserContext";
-import api from "../../../../api";
 import useDebounce from "../../../../contexts/useDebounce";
 import useRelationships, {
   type Relationship,
   type UseRelationshipsReturnType,
 } from "../../../../contexts/useRelationships";
 import Skeleton from "react-loading-skeleton";
+import { useConversations } from "../../../../contexts/useConversations";
+import { useNavigate } from "react-router-dom";
 
 type ActionFunction = (...args: any[]) => void | Promise<void>;
 
@@ -222,15 +223,14 @@ const ListContent = (props: ListContentProps) => {
 function FriendList({ activeFilter }: Props) {
   const [search, setSearch] = useState<string>("");
   const debouncedSearch = useDebounce(search, 300);
+  const navigate = useNavigate();
 
   const { relationships, isLoading, ...listProps } = useRelationships({
     filter: activeFilter,
     search: debouncedSearch,
   });
 
-  const startConversation = async (userId: string) => {
-    api.post("/conversation", [userId]);
-  };
+  const { startConversation } = useConversations();
 
   if (isLoading && relationships.length == 0) {
     return <FriendListLoadingSkeleton />;
@@ -244,7 +244,7 @@ function FriendList({ activeFilter }: Props) {
       id={`${activeFilter} Friends List`}
       className={styles.container}
     >
-      <search aria-label="Search Friends" className={styles.search}>
+      <search aria-label='Search Friends' className={styles.search}>
         <Icon name='search' />
         <input
           type='text'
@@ -262,7 +262,10 @@ function FriendList({ activeFilter }: Props) {
           {...listProps}
           activeFilter={activeFilter}
           relationships={relationships}
-          startConversation={startConversation}
+          startConversation={async (userId: string) => {
+            const conversation = await startConversation([userId]);
+            navigate(`/servers/@me/${conversation.id}`);
+          }}
         />
       )}
     </div>

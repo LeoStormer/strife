@@ -11,7 +11,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ConversationView {
     private String id;
-    List<String> userids;
+    List<String> userIds;
     private boolean locked;
 
     public ConversationView(Conversation conversation) {

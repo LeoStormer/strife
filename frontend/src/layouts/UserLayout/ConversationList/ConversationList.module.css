@@ -66,10 +66,10 @@ a.button > svg {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--on-background-color);
+  color: var(--on-background-color-muted);
 }
 
-.createConversationButton:hover svg {
+.createConversationButton:hover {
   color: var(--text-highlight-color);
 }
 
@@ -84,4 +84,82 @@ a.button > svg {
   grid-template-rows: 100%;
   padding-top: 6px;
   padding-bottom: 6px;
+  position: relative;
+}
+
+.error {
+  color: var(--error-color);
+}
+
+.profileDisplayGrid {
+  display: grid;
+  grid-column: profile;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.profileDisplayGrid:has(> :only-child) {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.profileDisplayGrid:has(> :nth-child(2)) {
+  grid-template-columns: repeat(2, 50%);
+  grid-template-rows: repeat(2, 50%);
+}
+
+.profileDisplayGrid > * {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.linkSkeleton {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.conversationDetails {
+  grid-column: content;
+  display: grid;
+  align-items: center;
+}
+
+.conversationDetails:has(> :nth-child(2)) {
+  grid-template-rows: 1rem 0.875rem;
+}
+
+.status {
+  font-size: 0.875rem;
+  color: var(--on-background-color-muted);
+}
+
+.conversationLink:hover .status {
+  color: var(--text-highlight-color);
+}
+
+.conversationLink:not(:hover) > .leaveConversationButton {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.leaveConversationButton {
+  position: absolute;
+  right: 8px;
+  padding: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--on-background-harmony-strong);
+  color: var(--on-background-color-muted);
+  cursor: pointer;
+}
+
+.leaveConversationButton:hover {
+  color: var(--text-highlight-color);
 }

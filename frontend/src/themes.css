@@ -13,6 +13,7 @@
   --brighten: #ffffff1a;
   --brighten-medium: #ffffff26;
   --brighten-strong: #ffffff33;
+  --error-color: orange;
 }
 
 [data-theme="light"] {
