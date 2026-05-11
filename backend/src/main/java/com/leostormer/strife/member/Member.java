@@ -1,9 +1,11 @@
 package com.leostormer.strife.member;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -143,4 +145,10 @@ public class Member {
      * The accumulated permissions of all contained roles.
      */
     private long permissions = 0L;
+
+    /**
+     * The date the member joined the server.
+     */
+    @CreatedDate
+    private Date joinedAt;
 }

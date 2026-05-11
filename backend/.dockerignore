@@ -5,6 +5,7 @@ target/
 
 # Ignore local environment/secrets
 .env
+.env.example
 .env.local
 
 # Ignore IDE and OS files

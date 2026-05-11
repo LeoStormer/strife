@@ -1,9 +1,11 @@
 package com.leostormer.strife.server;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
@@ -33,6 +35,9 @@ public class Server {
     private User owner;
 
     private Map<ObjectId, Role> roles;
+
+    @CreatedDate
+    private Date createdAt;
 
     public Server() {
         this.name = "";

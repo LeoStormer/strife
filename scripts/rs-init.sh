@@ -6,7 +6,7 @@ wait_for_mongo() {
     local HOST=$1
     until mongosh --host "$HOST" --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)' &>/dev/null; do
         echo -n "."
-        sleep 1
+        sleep 0.2
     done
     echo "✅ $HOST is ready"
 }
@@ -30,3 +30,11 @@ mongosh --host mongo1:27017 <<EOF
 EOF
 
 echo "✅ Replica set initialized."
+
+echo "Waiting for Primary to be ready for writes..."
+
+until mongosh --host mongo1:27017 --quiet --eval "db.hello().isWritablePrimary" | grep -q "true"; do
+    sleep 0.5
+done
+
+echo "✅ Primary is ready for writes."
