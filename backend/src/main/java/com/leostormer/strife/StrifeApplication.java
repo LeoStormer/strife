@@ -3,6 +3,8 @@ package com.leostormer.strife;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,5 +20,10 @@ public class StrifeApplication {
 	@GetMapping("/")
 	public String apiRoot() {
 		return "Welcome to Strife!";
+	}
+
+	@GetMapping("/api/auth/csrf")
+	public ResponseEntity<Void> getCsrfToken(CsrfToken token) {
+		return ResponseEntity.ok().build();
 	}
 }

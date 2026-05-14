@@ -46,7 +46,11 @@ public class SecurityConfig {
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");
         repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax")
+        // .secure(true)
+        );
         return repository;
     }
 
@@ -77,6 +81,7 @@ public class SecurityConfig {
                         .requireExplicitSave(true))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/api/auth/csrf",
                                 "/api/user/register",
                                 "/api/user/login",
                                 "/error")

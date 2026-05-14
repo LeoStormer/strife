@@ -1,6 +1,5 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import Cookies from "js-cookie";
 
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL
 
@@ -21,12 +20,7 @@ axiosRetry(api, {
   shouldResetTimeout: true,
 });
 
-api.interceptors.request.use((config) => {
-  const csrfToken = Cookies.get("XSRF-TOKEN");
-  if (csrfToken) {
-    config.headers["X-XSRF-TOKEN"] = csrfToken;
-  }
-  return config;
-});
+api.defaults.xsrfCookieName = "XSRF-TOKEN";
+api.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
 
 export default api;
