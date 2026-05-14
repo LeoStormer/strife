@@ -30,16 +30,28 @@ work in progress.
 ## Technologies Used
 
 - Frontend: Typescript, Node, CSS, Nextjs, React, React Router, Axios, dnd-kit,
-  js-cookie, jest
+  vitest
 - Backend: Java, Spring Boot, Spring Security, Spring Data, MongoDB,
   TestContainers, JUnit
 - Real-time Communication: WebSockets
 
 ## Installation and Setup
 
+### Quick Start
+
 - Clone the repository
-- Set up environment variables
-- Install frontend and backend Dependencies
+- Launch application with docker compose up
+- Navigate to http://localhost/login
+- Sign in with pre-seeded test user: 
+  - Email: testuser@example.com
+  - Password: password
+- Explore the app
+
+### For Development
+
+- Clone the repository
+- Set up environment variables (see .env.example files)
+- Run npm install in the frontend directory
 - Run the frontend and backend services with two options.
   - Start the containerized application in concert with docker compose up
   - Start the frontend and backend dev servers separately
