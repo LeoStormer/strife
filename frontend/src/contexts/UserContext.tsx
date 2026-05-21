@@ -179,6 +179,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
     } finally {
       setLocalUser(null);
       queryClient.clear();
+      api.get("/auth/csrf")
     }
   }, [queryClient, setLocalUser]);
 
