@@ -144,6 +144,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
     storageKey: LOCAL_STORAGE_KEY,
     initialValue: null,
   });
+  const localUserFound = !!localUser;
 
   // Verify user session on app load to handle cases where the session might have expired server-side
   const { data: verifiedUser, isLoading: isAuthLoading } = useQuery({
@@ -152,7 +153,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
       await api.get("/user/auth-status");
       return localUser;
     },
-    enabled: !!localUser,
+    enabled: localUserFound,
     staleTime: Infinity,
     retry: false,
   });
@@ -213,7 +214,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
   const value = useMemo(
     () => ({
       user: currentUser,
-      isLoading: isAuthLoading && !!localUser,
+      isLoading: localUserFound && isAuthLoading,
       isLoggingIn: loginMutation.isPending,
       isRegistering: registerMutation.isPending,
       login: async (req: LoginRequest) => {
