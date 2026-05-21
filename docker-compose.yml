@@ -100,13 +100,46 @@ services:
     container_name: gateway
     volumes:
       - ./nginx-gateway.conf:/etc/nginx/nginx.conf:ro
+      # # Volume for persistent certificate storage
+      # - certbot-etc:/etc/nginx/ssl:ro
+      # # Volume for webroot validation challenges
+      # - certbot-webroot:/var/www/certbot:ro
+      # - certbot-signals:/var/run/certbot-signals:ro
     ports:
       - "80:80"
+      # - "443:443"
     depends_on:
       - frontend
       - backend
     networks:
       - mongo-network
+    # # Installs 'inotify-tools', boots Nginx, and watches the shared signal directory in the background
+    # entrypoint: >
+    #   /bin/sh -c "
+    #   apk add --no-cache inotify-tools &&
+    #   nginx &
+    #   while inotifywait -e modify,create /var/run/certbot-signals; do
+    #     echo '🔄 Certbot signal detected! Reloading Nginx configuration...';
+    #     nginx -s reload;
+    #   done
+    #   "
+
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   volumes:
+  #     - certbot-etc:/etc/letsencrypt
+  #     - certbot-webroot:/var/www/certbot
+  #     - certbot-signals:/var/run/certbot-signals
+  #   # Checks for renewal every 12 hours. If a renewal occurs, it touches the signal file.
+  #   entrypoint: >
+  #     /bin/sh -c "
+  #     trap exit TERM;
+  #     while :; do
+  #       certbot renew --deploy-hook 'touch /var/run/certbot-signals/renewed';
+  #       sleep 12h & wait $${!};
+  #     done;
+  #     "
 
 networks:
   mongo-network:
@@ -116,3 +149,6 @@ volumes:
   mongo1-data:
   mongo2-data:
   mongo3-data:
+  # certbot-etc:
+  # certbot-webroot:
+  # certbot-signals:
