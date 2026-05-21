@@ -7,7 +7,7 @@ export const USER_LAYOUT_PATH = "/servers/@me"
 export const FRIENDS_PAGE_PATH = "/servers/@me/friends"
 export const DISCOVERY_LAYOUT_PATH = "/servers/discover"
 export const SERVER_DISCOVERY_PATH = "/servers/discover/servers"
-export const APPLICATION_DISCOVERY_PATH = "/server/discover/applications"
+export const APPLICATION_DISCOVERY_PATH = "/servers/discover/applications"
 export const NOT_FOUND_PATH = "/not-found"
 
 export const FOLDER_STORAGE_KEY = "SERVERBAR_FOLDERS";

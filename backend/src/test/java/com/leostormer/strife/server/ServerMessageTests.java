@@ -28,7 +28,6 @@ public class ServerMessageTests extends ServerServiceTestSetup {
     MessageRepository messageRepository;
 
     @NonNull
-    @SuppressWarnings("null")
     ObjectId basicMemberMessageId;
 
     static final int NUM_MESSAGES_CHANNEL_2 = 10;

@@ -63,8 +63,7 @@ public class Invite {
     public boolean isExpired() {
         return expiresAt.isBefore(Instant.now());
     }
-    
-    @SuppressWarnings("null")
+
     public Invite(User inviter, Server server, long expiresAfterSeconds, int maxUses, int remainingUses) {
         this.server = server;
         this.inviter = inviter;

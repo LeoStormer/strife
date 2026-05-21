@@ -1,9 +1,11 @@
 package com.leostormer.strife.member;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -78,7 +80,6 @@ public class Member {
     }
 
     // MongoDb automatically generates IDs
-    @SuppressWarnings("null")
     public Member(User user, Server server) {
         this.user = user;
         this.server = server;
@@ -86,7 +87,6 @@ public class Member {
         this.isOwner = server.getOwner().getId().equals(user.getId());
     }
 
-    @SuppressWarnings("null")
     public Member(User user, Server server, Role... roles) {
         List<Role> roleList = List.of(roles).stream().sorted().toList();
         long permissions = Permissions.getPermissions(roleList);
@@ -145,4 +145,10 @@ public class Member {
      * The accumulated permissions of all contained roles.
      */
     private long permissions = 0L;
+
+    /**
+     * The date the member joined the server.
+     */
+    @CreatedDate
+    private Date joinedAt;
 }

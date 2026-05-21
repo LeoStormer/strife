@@ -56,7 +56,7 @@ function UserStatusController() {
   const { profilePic, username } = user as User;
 
   return (
-    <div className={styles.container}>
+    <section className={styles.container}>
       <button className={`${styles.button} ${styles.statusContainer}`}>
         <ProfilePicture
           profilePic={profilePic}
@@ -84,7 +84,7 @@ function UserStatusController() {
           options={null}
         />
       </div>
-    </div>
+    </section>
   );
 }
 

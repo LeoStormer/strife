@@ -1,19 +1,21 @@
-import { useEffect, useRef, type FormEventHandler } from "react";
+import { type SubmitEventHandler } from "react";
 import { Link } from "react-router-dom";
 import formStyles from "../../../../styles/Form.module.css";
 import { REGISTRATION_PAGE_PATH } from "../../../../constants";
+import useFocusOnMount from "../../../../contexts/useFocusOnMount";
+import StyleComposer from "../../../../utils/StyleComposer";
 
 type LoginFormProps = {
-  handleSubmit: FormEventHandler<HTMLFormElement>;
+  handleSubmit: SubmitEventHandler<HTMLFormElement>;
+  isLoggingIn: boolean;
 };
 
-function LoginForm({ handleSubmit }: LoginFormProps) {
-  const focusRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (focusRef.current) {
-      focusRef.current.focus();
-    }
-  }, []);
+function LoginForm({ handleSubmit, isLoggingIn }: LoginFormProps) {
+  const focusRef = useFocusOnMount();
+
+  const linkClassName = StyleComposer(formStyles.link, {
+    [formStyles.disabled as string]: isLoggingIn,
+  });
 
   return (
     <div className={formStyles.container}>
@@ -46,20 +48,27 @@ function LoginForm({ handleSubmit }: LoginFormProps) {
             id='password'
             required
           />
-          <label className={`${formStyles.label} ${formStyles.link}`}>
+          <Link className={`${formStyles.label} ${linkClassName}`} to='#'>
             Forgot your password?
-          </label>
+          </Link>
         </div>
         <div>
-          <button className={formStyles.button} type='submit'>
-            Log In
+          <button
+            className={formStyles.button}
+            type='submit'
+            disabled={isLoggingIn}
+          >
+            {isLoggingIn ? "Logging in..." : "Log In"}
           </button>
-          <label className={formStyles.label}>
+          <div className={formStyles.label}>
             Need an Account?{" "}
-            <Link className={formStyles.link} to={REGISTRATION_PAGE_PATH}>
+            <Link
+              className={linkClassName}
+              to={isLoggingIn ? "#" : REGISTRATION_PAGE_PATH}
+            >
               Register
             </Link>
-          </label>
+          </div>
         </div>
       </form>
     </div>

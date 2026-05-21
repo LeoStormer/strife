@@ -2,13 +2,15 @@ import React from "react";
 import { usePageNameDispatchContext } from "../../../contexts/PageNameContext";
 import { useServerSelectionContext } from "../../../contexts/ServerSelectionContext";
 import styles from "./ServerChannelPage.module.css";
-import sharedStyles from "../../../styles/ChannelViewer.module.css";
+import ChannelViewer from "../../ChannelViewer";
 
-function ChannelTitleBar() {
-  return (
-    <div className={sharedStyles.channelTitleBarContainer}>ChannelTitleBar</div>
-  );
-}
+const TitleBar = () => {
+  return <div>channel-name</div>;
+};
+
+const ServerMembersPanel = () => {
+  return <div className={styles.serverMembersContainer}>Server Members</div>;
+};
 
 function ServerChannelPage() {
   const { getServer, selectedId } = useServerSelectionContext();
@@ -19,19 +21,16 @@ function ServerChannelPage() {
     iconProps: { type: "serverIcon", serverName: name, serverIconImage: icon },
   });
 
+  const sendMessage = async (message: string) => {};
+
   return (
-    <div className={sharedStyles.container}>
-      <ChannelTitleBar />
-      <div className={sharedStyles.flexContainer}>
-        <div className={sharedStyles.messageViewAreaContainer}>
-          Message View Area
-          <div className={sharedStyles.messageInputContainer}>
-            Message #channel-name
-          </div>
-        </div>
-        <div className={styles.serverMembersContainer}>Server Members</div>
-      </div>
-    </div>
+    <ChannelViewer
+      titlePanel={<TitleBar />}
+      sidePanel={<ServerMembersPanel />}
+      sendMessage={sendMessage}
+      channelName={`#channel-name`}
+      messages={[]}
+    />
   );
 }
 

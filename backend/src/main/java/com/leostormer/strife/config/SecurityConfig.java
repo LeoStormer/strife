@@ -10,7 +10,6 @@ import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -39,14 +38,21 @@ public class SecurityConfig {
     @NonNull
     private final String[] ALLOWED_ORIGINS;
 
-    public SecurityConfig(@Value("${app.cors.allowed-origins}") @NonNull String[] allowedOrigins) {
+    private final boolean isCSRFSecure;
+
+    public SecurityConfig(@Value("${app.cors.allowed-origins}") @NonNull String[] allowedOrigins,
+            @Value("${app.csrf.secure:false}") boolean isCSRFSecure) {
         ALLOWED_ORIGINS = allowedOrigins;
+        this.isCSRFSecure = isCSRFSecure;
     }
 
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");
         repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax")
+                .secure(isCSRFSecure));
         return repository;
     }
 
@@ -77,6 +83,7 @@ public class SecurityConfig {
                         .requireExplicitSave(true))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/api/auth/csrf",
                                 "/api/user/register",
                                 "/api/user/login",
                                 "/error")
@@ -87,8 +94,8 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/api/user/logout")
                         .addLogoutHandler(logoutHandler())
+                        .deleteCookies("SESSION")
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler()))
-                .httpBasic(Customizer.withDefaults())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .build();

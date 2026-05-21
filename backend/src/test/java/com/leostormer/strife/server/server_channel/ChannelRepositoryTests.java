@@ -78,7 +78,6 @@ public class ChannelRepositoryTests extends AbstractRepositoryTest {
     }
 
     @BeforeEach
-    @SuppressWarnings("null")
     public void setupChannels() {
         for (int i = 0; i < NUM_PUBLIC_CHANNELS; i++) {
             ServerChannel channel = ServerChannel.builder().server(server).name("public-channel-" + i)

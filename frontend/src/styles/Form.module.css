@@ -7,7 +7,7 @@
 }
 
 .form {
-  background-color: var(--background-color) ;
+  background-color: var(--background-color);
   border-radius: 10px;
   box-sizing: border-box;
   width: 480px;
@@ -56,7 +56,7 @@
   height: 40px;
   width: 100%;
   margin-top: 8px;
-  color: var(--on-background-color)
+  color: var(--on-background-color);
 }
 
 .inputLabel:has(~ .input:required)::after {
@@ -74,7 +74,6 @@
   cursor: pointer;
   height: 40px;
   width: 100%;
-
 }
 
 .label {
@@ -83,12 +82,18 @@
   font-size: 14px;
 }
 
-.link {
-  color: var(--accent-color) !important;
+.link,
+.link.label {
+  color: var(--accent-color);
   text-decoration: none;
 }
 
-.link:hover {
+.link.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.link:hover:not(.disabled) {
   text-decoration: underline;
   cursor: pointer;
 }

@@ -1,5 +1,4 @@
 services:
-
   mongo1:
     image: mongo:8.0
     container_name: mongo1
@@ -10,7 +9,6 @@ services:
     command: mongod --replSet rs0 --bind_ip_all --port 27017
     networks:
       - mongo-network
-
 
   mongo2:
     image: mongo:8.0
@@ -49,22 +47,45 @@ services:
       - ./scripts/rs-init.sh:/scripts/rs-init.sh
     networks:
       - mongo-network
-    entrypoint: [ "bash", "/scripts/rs-init.sh" ]
+    entrypoint: ["bash", "/scripts/rs-init.sh"]
+
+  mongo-data-seeder:
+    image: node:24-slim
+    container_name: mongo-data-seeder
+    depends_on:
+      mongo-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./scripts:/scripts
+    networks:
+      - mongo-network
+    environment:
+      - MONGO_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/strife?replicaSet=rs0
+      - MONGO_DATABASE=strife
+    working_dir: /scripts
+    entrypoint: ["bash", "-c", "npm install && npm run seed"]
 
   backend:
     build: ./backend
     depends_on:
-      - mongo-init
+      mongo-data-seeder:
+        condition: service_completed_successfully
     networks:
       - mongo-network
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://mongo1:27017,mongo2:27017,mongo3:27017/strife?replicaSet=rs0
+      - SPRING_DATA_MONGODB_DATABASE=strife
       - APP_WEBSOCKET_ALLOWED_ORIGINS=http://localhost
       - APP_CORS_ALLOWED_ORIGINS=http://localhost
       - SPRING_SESSION_TIMEOUT=7d
+      - SERVER_FORWARD-HEADERS_STRATEGY=native
+      - SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY=true
+      - SERVER_SERVLET_SESSION_COOKIE_SAME_SITE=lax
+      # - SERVER_SERVLET_SESSION_COOKIE_SECURE=true
+      # - APP_CSRF_SECURE=true
 
   frontend:
-    build: 
+    build:
       context: ./frontend
       args:
         - NEXT_PUBLIC_BACKEND_API_URL=/api
@@ -75,17 +96,50 @@ services:
       - mongo-network
 
   gateway:
-      image: nginx:stable-alpine
-      container_name: gateway
-      volumes:
-        - ./nginx-gateway.conf:/etc/nginx/nginx.conf:ro
-      ports:
-        - "80:80"
-      depends_on:
-        - frontend
-        - backend
-      networks:
-        - mongo-network
+    image: nginx:stable-alpine
+    container_name: gateway
+    volumes:
+      - ./nginx-gateway.conf:/etc/nginx/nginx.conf:ro
+      # # Volume for persistent certificate storage
+      # - certbot-etc:/etc/nginx/ssl:ro
+      # # Volume for webroot validation challenges
+      # - certbot-webroot:/var/www/certbot:ro
+      # - certbot-signals:/var/run/certbot-signals:ro
+    ports:
+      - "80:80"
+      # - "443:443"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - mongo-network
+    # # Installs 'inotify-tools', boots Nginx, and watches the shared signal directory in the background
+    # entrypoint: >
+    #   /bin/sh -c "
+    #   apk add --no-cache inotify-tools &&
+    #   nginx &
+    #   while inotifywait -e modify,create /var/run/certbot-signals; do
+    #     echo '🔄 Certbot signal detected! Reloading Nginx configuration...';
+    #     nginx -s reload;
+    #   done
+    #   "
+
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   volumes:
+  #     - certbot-etc:/etc/letsencrypt
+  #     - certbot-webroot:/var/www/certbot
+  #     - certbot-signals:/var/run/certbot-signals
+  #   # Checks for renewal every 12 hours. If a renewal occurs, it touches the signal file.
+  #   entrypoint: >
+  #     /bin/sh -c "
+  #     trap exit TERM;
+  #     while :; do
+  #       certbot renew --deploy-hook 'touch /var/run/certbot-signals/renewed';
+  #       sleep 12h & wait $${!};
+  #     done;
+  #     "
 
 networks:
   mongo-network:
@@ -95,3 +149,6 @@ volumes:
   mongo1-data:
   mongo2-data:
   mongo3-data:
+  # certbot-etc:
+  # certbot-webroot:
+  # certbot-signals:

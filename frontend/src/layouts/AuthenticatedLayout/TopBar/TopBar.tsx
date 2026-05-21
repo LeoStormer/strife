@@ -28,7 +28,7 @@ function TopBar() {
       {iconProps ? (
         <DynamicIcon {...iconProps} className={styles.pageIcon} />
       ) : null}
-      <p className={styles.pageTitle}>{pageName}</p>
+      <h1 className={styles.pageTitle}>{pageName}</h1>
       <div className={styles.iconButtonContainer}>
         <button className={styles.iconButton}>
           <Icon name='inbox-fill' />

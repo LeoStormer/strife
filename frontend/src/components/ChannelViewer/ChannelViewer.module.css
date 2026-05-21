@@ -1,0 +1,54 @@
+.messageList {
+  flex: 1;
+  min-height: 30px;
+  overflow-y: scroll;
+}
+
+.inputContainer {
+  flex-shrink: 0;
+  min-height: 58px;
+  margin: 0px 8px 8px 8px;
+  background-color: var(--on-background-contrast);
+  border-radius: 12px;
+  border: 1px solid var(--border-highlight-color);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 60px 1fr max-content;
+  justify-items: center;
+}
+
+.iconButton {
+  background-color: transparent;
+  border-style: none;
+  width: 36px;
+  height: 36px;
+  margin-top: 14px;
+  margin-right: 8px;
+  color: var(--on-background-color);
+  border-radius: 8px;
+}
+
+.iconButton:hover {
+  background-color: var(--on-background-contrast);
+}
+.iconButton > svg {
+  width: 2em;
+  height: 2em;
+}
+
+.textarea {
+  width: 100%;
+  max-height: 400px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-style: none;
+  background-color: transparent;
+  color: var(--on-background-color);
+  resize: none;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.4rem;
+  outline: none;
+  overflow-y: auto;
+}
+

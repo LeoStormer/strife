@@ -1,7 +1,7 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import LoginForm from "./LoginForm";
 import { HttpStatusCode, isAxiosError } from "axios";
-import { type FormEvent } from "react";
+import { type SubmitEventHandler } from "react";
 import {
   useUserContext,
   type LoginRequest,
@@ -11,7 +11,7 @@ import LoadingPage from "../LoadingPage";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { user, login, isLoading } = useUserContext();
+  const { user, login, isLoading, isLoggingIn } = useUserContext();
 
   if (isLoading) {
     return <LoadingPage />;
@@ -21,7 +21,7 @@ function LoginPage() {
     return <Navigate to={FRIENDS_PAGE_PATH} replace />;
   }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     const formdata = new FormData(e.currentTarget);
     const loginRequest = Object.fromEntries(formdata.entries()) as LoginRequest;
@@ -40,7 +40,7 @@ function LoginPage() {
     }
   };
 
-  return <LoginForm handleSubmit={handleSubmit} />;
+  return <LoginForm handleSubmit={handleSubmit} isLoggingIn={isLoggingIn} />;
 }
 
 export default LoginPage;

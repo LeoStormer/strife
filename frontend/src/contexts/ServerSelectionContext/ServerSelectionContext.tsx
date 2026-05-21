@@ -1,8 +1,10 @@
 import {
   createContext,
   type PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
+  useState,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useServerManager, { type MoveItem } from "./useServerManager";
@@ -15,6 +17,7 @@ import type {
   Folder,
   ServerItemOrFolderRecord,
 } from "./serverReducer";
+import { useUserContext } from "../UserContext";
 
 export type { Server, ServerItem, Folder };
 
@@ -40,6 +43,9 @@ export const getServerIdFromPath = (path: string) => {
 export const ServerSelectionContextProvider = ({
   children,
 }: PropsWithChildren) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useUserContext();
+
   const {
     state: { servers, rootOrder },
     overwriteState,
@@ -59,8 +65,24 @@ export const ServerSelectionContextProvider = ({
     return item?.type === "server" ? item : null;
   };
 
-  const { isLoading, error } = useServerSync({ overwriteState, addServer, removeServer });
-  useServerPersistence({ servers, rootOrder, isLoading });
+  const handleSyncComplete = useCallback(() => {
+    setIsLoading(false);
+  }, [])
+  const { storedFolders, storedRootOrder } = useServerPersistence({
+    servers,
+    rootOrder,
+    isLoading,
+    userId: user?.id,
+  });
+
+  const { error } = useServerSync({
+    overwriteState,
+    addServer,
+    removeServer,
+    storedFolders,
+    storedRootOrder,
+    onSyncComplete: handleSyncComplete
+  });
 
   useEffect(() => {
     if (error) {

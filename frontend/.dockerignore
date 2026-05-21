@@ -13,6 +13,7 @@ dist
 
 # Environment Variables - protect sensitive keys
 .env
+.env.example
 .env.local
 .env.production
 .env.development

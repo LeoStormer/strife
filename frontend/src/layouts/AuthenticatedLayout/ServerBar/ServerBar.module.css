@@ -1,6 +1,6 @@
 .navContainer {
-  grid-row: 2;
-  grid-column: 1;
+  grid-row: content;
+  grid-column: serverbar;
 }
 
 .list {
@@ -117,7 +117,11 @@
 }
 
 .navItem {
-  all: unset;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: none;
   box-sizing: border-box;
   display: flex;
   justify-content: center;
@@ -159,6 +163,7 @@
   transition: height 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   background-color: var(--on-background-color);
 }
+
 .folder::after {
   left: -16px;
 }

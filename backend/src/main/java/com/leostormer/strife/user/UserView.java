@@ -3,10 +3,12 @@ package com.leostormer.strife.user;
 import java.util.Date;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
-@Getter
+@NoArgsConstructor
+@Data
 public class UserView {
     private String id;
     private String username;

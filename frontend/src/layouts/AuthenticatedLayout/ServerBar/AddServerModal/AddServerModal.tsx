@@ -1,4 +1,4 @@
-import { useState, type JSX, type MouseEventHandler } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,13 +27,18 @@ type ServerCreationForm = z.infer<typeof serverCreationSchema>;
 
 type SwappableFormProps = Pick<JSX.IntrinsicElements["form"], "inert"> & {
   swapForm: VoidFunction;
-  closeModal?: VoidFunction;
+  closeModal: VoidFunction;
 };
 
-function ServerCreationForm({ swapForm, closeModal, ...formProps }: SwappableFormProps) {
+function ServerCreationForm({
+  swapForm,
+  closeModal,
+  inert,
+}: SwappableFormProps) {
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<ServerCreationForm>({
     resolver: zodResolver(serverCreationSchema),
@@ -41,33 +46,42 @@ function ServerCreationForm({ swapForm, closeModal, ...formProps }: SwappableFor
 
   const onSubmit: SubmitHandler<ServerCreationForm> = (data) => {
     api
-    .post(`/server?serverName=${data.serverName}`)
-    .then(() => {
-      console.log("Server created successfully");
-      closeModal?.();
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+      .post(`/server?serverName=${data.serverName}`)
+      .then(() => {
+        console.log("Server created successfully");
+        closeModal();
+      })
+      .catch(console.error);
   };
+
+  useEffect(() => {
+    if (!inert) {
+      // HACK: Delay focusing the input to account for `inert` removal and CSS
+      // slide animation. Without this timeout, the input is either ignored by
+      // the browser on initial render. Using 100ms is arbitrary but empirically
+      // reliable for our modal animation timing.
+      const id = setTimeout(() => {
+        setFocus("serverName");
+      }, 100);
+
+      return () => clearTimeout(id);
+    }
+  }, [inert, setFocus]);
 
   return (
     <form
       className={styles.form}
       onSubmit={handleSubmit(onSubmit)}
-      {...formProps}
+      inert={inert}
     >
       <Header
         title='Create Your Server'
-        subheader={
-          "Your server is where you and your friends hang out." +
-          " Make yours and start talking."
-        }
+        subheader='Your server is where you and your friends hang out. Make yours and start talking.'
       />
       <label htmlFor='serverName'>Server Name</label>
-      <input type='text' {...register("serverName")} />
+      <input type='text' id='serverName' {...register("serverName")} />
       {errors.serverName ? errors.serverName.message : null}
-      <button type='submit' className={styles.button}>
+      <button type='submit' className={styles.button} disabled={isSubmitting}>
         {isSubmitting ? "Creating Server..." : "Create Server"}
       </button>
       <h3>Have an invite already?</h3>
@@ -94,14 +108,12 @@ const joinServerSchema = z.object({
 
 type JoinServerForm = z.infer<typeof joinServerSchema>;
 
-function JoinServerForm({
-  swapForm,
-  closeModal,
-  ...formProps
-}: SwappableFormProps) {
+function JoinServerForm({ swapForm, closeModal, inert }: SwappableFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors, isSubmitting },
   } = useForm<JoinServerForm>({
     resolver: zodResolver(joinServerSchema),
@@ -109,31 +121,48 @@ function JoinServerForm({
 
   const onSubmit: SubmitHandler<JoinServerForm> = (data) => {
     const inviteId = data.invite.match(inviteRegex)?.[1];
-    console.log(inviteId);
-
     api
       .post(`/server/join-by-invite?inviteId=${inviteId}`)
       .then(() => {
         console.log("Server joined successfully");
-        closeModal?.();
+        closeModal();
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch(console.error);
   };
+
+  useEffect(() => {
+    if (!inert) {
+      // Focus the invite input after the form’s slide-in transition finishes.
+      // This avoids layout/scroll issues caused by focusing while the form is
+      // still off-screen.
+      const handleTransitionEnd = (ev: TransitionEvent) => {
+        if (ev.target === ev.currentTarget) {
+          setFocus("invite");
+        }
+      };
+
+      const formEl = formRef.current;
+      formEl?.addEventListener("transitionend", handleTransitionEnd);
+
+      return () => {
+        formEl?.removeEventListener("transitionend", handleTransitionEnd);
+      };
+    }
+  }, [inert, setFocus]);
 
   return (
     <form
       className={styles.form}
       onSubmit={handleSubmit(onSubmit)}
-      {...formProps}
+      inert={inert}
+      ref={formRef}
     >
       <Header
         title='Join a Server'
         subheader='Enter an invite below to join an existing server'
       />
       <label htmlFor='invite'>Invite link</label>
-      <input type='text' {...register("invite")} />
+      <input type='text' id='invite' {...register("invite")} />
       {errors.invite ? errors.invite.message : null}
       <Link
         className={styles.link}
@@ -152,7 +181,11 @@ function JoinServerForm({
         <button type='button' className={styles.backButton} onClick={swapForm}>
           Back
         </button>
-        <button type='submit' className={styles.joinButton}>
+        <button
+          type='submit'
+          className={styles.joinButton}
+          disabled={isSubmitting}
+        >
           {isSubmitting ? "Joining..." : "Join Server"}
         </button>
       </div>
@@ -167,13 +200,15 @@ function AddServerModal({
   const [activeForm, setActiveForm] = useState<"create" | "join">("create");
   const [count, setCount] = useState(0);
   const forceRemount = () => {
-    setCount(previous => previous + 1);
-  }
+    setCount((previous) => previous + 1);
+  };
 
   const closeModal = () => {
     onClose?.();
-    setTimeout(() => setActiveForm("create"), 200);
-    forceRemount();
+    setTimeout(() => {
+      setActiveForm("create");
+      forceRemount();
+    }, 200);
   };
 
   return (
@@ -183,16 +218,17 @@ function AddServerModal({
       isOpen={isOpen}
       onClose={closeModal}
       key={`${styles.addServerModalContainer}${count}`}
+      aria-label='Add Server Modal'
     >
       <ServerCreationForm
         swapForm={() => setActiveForm("join")}
         closeModal={closeModal}
-        inert={activeForm === "join"}
+        inert={activeForm === "join" || !isOpen}
       />
       <JoinServerForm
         swapForm={() => setActiveForm("create")}
         closeModal={closeModal}
-        inert={activeForm === "create"}
+        inert={activeForm === "create" || !isOpen}
       />
     </Modal>
   );

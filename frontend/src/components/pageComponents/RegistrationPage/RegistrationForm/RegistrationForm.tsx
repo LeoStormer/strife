@@ -1,19 +1,24 @@
-import { useEffect, useRef, type FormEventHandler } from "react";
+import { type SubmitEventHandler } from "react";
 import { Link } from "react-router-dom";
 import formStyles from "../../../../styles/Form.module.css";
 import { LOGIN_PAGE_PATH } from "../../../../constants";
+import useFocusOnMount from "../../../../contexts/useFocusOnMount";
+import StyleComposer from "../../../../utils/StyleComposer";
 
 type RegistrationFormProps = {
-  handleSubmit: FormEventHandler<HTMLFormElement>;
+  handleSubmit: SubmitEventHandler<HTMLFormElement>;
+  isRegistering: boolean;
 };
 
-function RegistrationForm({ handleSubmit }: RegistrationFormProps) {
-  const focusRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (focusRef.current) {
-      focusRef.current.focus();
-    }
-  }, []);
+function RegistrationForm({
+  handleSubmit,
+  isRegistering,
+}: RegistrationFormProps) {
+  const focusRef = useFocusOnMount();
+
+  const linkClassName = StyleComposer(formStyles.link, {
+    [formStyles.disabled as string]: isRegistering,
+  });
 
   return (
     <div className={formStyles.container}>
@@ -60,17 +65,21 @@ function RegistrationForm({ handleSubmit }: RegistrationFormProps) {
         </div>
         <div className={formStyles.label}>
           Lorem ipsum dolor sit amet, consectetur adipiscing{" "}
-          <span className={formStyles.link}>elit sed vel</span> neque nec risus
+          <span className={linkClassName}>elit sed vel</span> neque nec risus
           tristique condimentum{" "}
-          <span className={formStyles.link}>Pellentesque finibus</span>
+          <span className={linkClassName}>Pellentesque finibus</span>
         </div>
         <div>
-          <button className={formStyles.button} type='submit'>
-            Create Account
+          <button
+            className={formStyles.button}
+            type='submit'
+            disabled={isRegistering}
+          >
+            {isRegistering ? "Creating Account..." : "Create Account"}
           </button>
           <Link
-            className={`${formStyles.link} ${formStyles.label}`}
-            to={LOGIN_PAGE_PATH}
+            className={`${linkClassName} ${formStyles.label}`}
+            to={isRegistering ? "#" : LOGIN_PAGE_PATH}
           >
             Already have an account? Log in
           </Link>

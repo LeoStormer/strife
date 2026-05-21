@@ -1,6 +1,6 @@
 .container {
-  grid-row: 1;
-  grid-column: span 4;
+  grid-row: topbar;
+  grid-column: full-width;
   position: relative;
   display: flex;
   align-items: center;
@@ -13,6 +13,8 @@
   margin: 0px;
   text-align: center;
   line-height: 100%;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .pageIcon {
@@ -46,7 +48,7 @@ p.pageIcon {
 }
 
 .iconButton:hover {
-  color: color-mix(in srgb, var(--on-background-color) 40%, white 60%);
+  color: var(--text-highlight-color);
 }
 
 .iconButton > svg {

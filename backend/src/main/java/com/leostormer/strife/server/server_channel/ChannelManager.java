@@ -26,11 +26,13 @@ import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
 public interface ChannelManager extends IUsesServerRepository, IUsesMemberService {
     public ChannelRepository getChannelRepository();
+
     public MessageRepository getMessageRepository();
 
     public long getPermissions(ServerChannel channel, Member member);
 
-    default ServerChannel createChannel(Server server, String name, String category, String description, boolean isPublic) {
+    default ServerChannel createChannel(Server server, String name, String category, String description,
+            boolean isPublic) {
         ServerChannel channel = new ServerChannel();
         channel.setServer(server);
         channel.setName(name);
@@ -80,7 +82,6 @@ public interface ChannelManager extends IUsesServerRepository, IUsesMemberServic
         return channelRepository.getFirstVisibleServerChannel(serverId, member);
     }
 
-    @SuppressWarnings("null")
     default ServerChannel addChannel(User user, ObjectId serverId, String channelName, String channelCategory,
             String channelDescription, boolean isPublic) {
         ServerRepository serverRepository = getServerRepository();
@@ -100,7 +101,6 @@ public interface ChannelManager extends IUsesServerRepository, IUsesMemberServic
         return createChannel(server, channelName, channelCategory, channelDescription, isPublic);
     }
 
-    @SuppressWarnings("null")
     default void updateChannelSettings(User commandUser, ObjectId serverId, ObjectId channelId,
             ChannelUpdateOperation operation) {
         ServerRepository serverRepository = getServerRepository();
@@ -137,7 +137,6 @@ public interface ChannelManager extends IUsesServerRepository, IUsesMemberServic
     }
 
     @Transactional
-    @SuppressWarnings("null")
     default void removeChannel(User user, ObjectId serverId, ObjectId... channelIds) {
         Member member = getMemberService().getMember(user.getId(), serverId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_MEMBER));
@@ -155,6 +154,7 @@ public interface ChannelManager extends IUsesServerRepository, IUsesMemberServic
         });
 
         getMessageRepository().deleteAllByChannel(channelIds);
-        getChannelRepository().deleteAllById(Stream.of(channelIds).toList());;
+        getChannelRepository().deleteAllById(Stream.of(channelIds).toList());
+        ;
     }
 }

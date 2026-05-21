@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @AllArgsConstructor
 public class UserController {
     @Autowired
-    private final UserService userService;
+    private UserService userService;
 
     @GetMapping("/servers")
     public ResponseEntity<List<ServerView>> getJoinedServers(Principal principal) {
@@ -53,6 +53,17 @@ public class UserController {
             return new ResponseEntity<UserView>(new UserView(optionalUser.get()), HttpStatus.OK);
         } else {
             return new ResponseEntity<UserView>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/relationships")
+    public ResponseEntity<RelationshipResponse> getUserRelationships(Principal principal, @RequestParam int page,
+            @RequestParam int size, @RequestParam(required = false) String filter, @RequestParam(required = false) String search) {
+        User user = userService.getUser(principal);
+        try {
+            return ResponseEntity.ok(userService.getUserRelationships(user, page, size, filter, search));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -200,7 +211,8 @@ public class UserController {
 
     @GetMapping("/auth-status")
     public ResponseEntity<Void> checkLoginStatus() {
-        // If the user is not authenticated, Spring Security will automatically return a 401 Unauthorized response
+        // If the user is not authenticated, Spring Security will automatically return a
+        // 401 Unauthorized response
         return ResponseEntity.ok().build();
     }
 

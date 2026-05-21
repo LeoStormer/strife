@@ -38,19 +38,15 @@ public class MessageRepositoryTests extends AbstractRepositoryTest {
     ChannelRepository channelRepository;
 
     @NonNull
-    @SuppressWarnings("null")
     static ObjectId channelId;
 
     @NonNull
-    @SuppressWarnings("null")
     static ObjectId conversationId;
 
     @NonNull
-    @SuppressWarnings("null")
     ObjectId existingDirectMessageId;
 
     @NonNull
-    @SuppressWarnings("null")
     ObjectId existingChannelMessageId;
 
     @BeforeAll

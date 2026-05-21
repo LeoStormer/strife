@@ -9,11 +9,7 @@
   border-radius: 12px;
   border-width: 1px;
   border-style: solid;
-  border-color: color-mix(
-    in srgb,
-    var(--background-color) 80%,
-    var(--contrast-mix-color) 20%
-  );
+  border-color: var(--border-highlight-color);
   background-color: var(--background-color);
   color: var(--on-background-color);
   display: grid;

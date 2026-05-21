@@ -38,7 +38,6 @@ public class CustomChannelRepositoryImpl implements CustomChannelRepository {
     }
 
     @NonNull
-    @SuppressWarnings("null")
     private Criteria getServerVisibilityCriiteria(ObjectId serverId, Member member) {
         Criteria isServerCriteria = Criteria.where("server").is(serverId);
         if (member.isOwner()) {

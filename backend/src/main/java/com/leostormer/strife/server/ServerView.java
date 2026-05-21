@@ -1,5 +1,6 @@
 package com.leostormer.strife.server;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,7 +21,9 @@ public class ServerView {
 
     private UserView owner;
 
-    Map<String, Role> roles;
+    private Map<String, Role> roles;
+
+    private Date createdAt;
 
     public ServerView(Server server) {
         this.id = server.getId().toHexString();
@@ -29,5 +32,6 @@ public class ServerView {
         this.owner = new UserView(server.getOwner());
         this.roles = server.getRoles().entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey().toHexString(), e -> e.getValue()));
+        this.createdAt = server.getCreatedAt();
     }
 }

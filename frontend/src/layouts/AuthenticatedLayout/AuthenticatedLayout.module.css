@@ -2,8 +2,7 @@
   width: 100vw;
   height: 100vh;
   display: grid;
-  grid-template-columns: 72px 300px 1fr;
-  grid-template-rows: 32px 1fr;
+  grid-template-columns: [full-width-start serverbar-start] 72px [serverbar-end selectionPanel-start] 300px [selectionPanel-end content-start] 1fr [content-end full-width-end];
+  grid-template-rows: [topbar-start] 32px [topbar-end content-start] 1fr [content-end];
   background-color: var(--background-color);
-  z-index: -1;
 }

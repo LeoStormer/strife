@@ -66,6 +66,7 @@ const NavItem = <T extends ElementType = "button">({
     <li {...getTargetProps()} className={styles.listItem}>
       <Component
         {...getTriggerProps()}
+        tabIndex={0}
         className={StyleComposer(styles.navItem, {
           [styles.selected as string]: isSelected,
         })}
@@ -95,7 +96,7 @@ function ServerBar() {
   }
 
   return (
-    <nav className={styles.navContainer}>
+    <nav aria-label='Servers' className={styles.navContainer}>
       <ul className={styles.list}>
         <NavItem
           as={Link}

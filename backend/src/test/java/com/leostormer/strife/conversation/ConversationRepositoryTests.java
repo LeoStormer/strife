@@ -35,7 +35,6 @@ public class ConversationRepositoryTests extends AbstractRepositoryTest {
     }
 
     @BeforeEach
-    @SuppressWarnings("null")
     void setup() {
         user1 = createUser("User1", "password123");
         user2 = createUser("User2", "password1234");

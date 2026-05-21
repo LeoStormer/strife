@@ -11,7 +11,6 @@ import com.leostormer.strife.exceptions.UnauthorizedActionException;
 import com.leostormer.strife.server.Server;
 import com.leostormer.strife.user.User;
 
-
 import static com.leostormer.strife.server.ServerExceptionMessage.*;
 
 @Service
@@ -19,11 +18,10 @@ public class MemberService {
     @Autowired
     MemberRepository memberRepository;
 
-    @SuppressWarnings("null")
     public void save(Member... members) {
         memberRepository.saveAll(List.of(members));
     }
-    
+
     public boolean isMember(ObjectId userId, ObjectId serverId) {
         return memberRepository.isMember(userId, serverId);
     }

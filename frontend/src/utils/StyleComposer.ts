@@ -9,7 +9,7 @@ function StyleComposer(baseStyle: string = '', additionalStyles: Record<string, 
         style += ` ${styleAddon}`;
     }
 
-    return style;
+    return style.trim();
 }
 
 export default StyleComposer;

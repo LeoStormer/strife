@@ -36,7 +36,6 @@ public class TestUtils {
         friendRequestRepository.save(friendRequest);
     }
 
-    @SuppressWarnings("null")
     public static void createAcceptedFriendship(User sender, User receiver, UserRepository userRepository,
             FriendRequestRepository friendRequestRepository) {
         FriendRequest friendRequest = new FriendRequest(sender, receiver, true);
@@ -51,7 +50,8 @@ public class TestUtils {
         createBlockedRelationship(sender, receiver, false, userRepository, conversationRepository);
     }
 
-    public static void createBlockedRelationship(User sender, User receiver, boolean isMutual, UserRepository userRepository,
+    public static void createBlockedRelationship(User sender, User receiver, boolean isMutual,
+            UserRepository userRepository,
             ChannelRepository conversationRepository) {
         Optional<Conversation> result = conversationRepository.findConversationByUserIds(sender.getId(),
                 receiver.getId());
@@ -70,7 +70,8 @@ public class TestUtils {
     }
 
     @NonNull
-    public static Server createServer(User owner, String serverName, String serverDescription, ServerRepository serverRepository, MemberRepository memberRepository, Role... roles) {
+    public static Server createServer(User owner, String serverName, String serverDescription,
+            ServerRepository serverRepository, MemberRepository memberRepository, Role... roles) {
         Server server = new Server();
         server.setName(serverName);
         server.setDescription(serverDescription);
@@ -99,7 +100,8 @@ public class TestUtils {
     }
 
     @NonNull
-    public static Member createBannedMember(User user, Server server, String banReason, MemberRepository memberRepository) {
+    public static Member createBannedMember(User user, Server server, String banReason,
+            MemberRepository memberRepository) {
         return memberRepository.save(Member.createBannedMember(user, server, banReason));
     }
 }

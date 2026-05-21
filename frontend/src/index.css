@@ -11,3 +11,31 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0); /* Older property */
+    clip-path: inset(50%);  /* Modern property */
+    border: 0;
+    white-space: nowrap;    /* Ensures the content stays on a single line for screen readers */
+}
+
+svg {
+  width: 1em;
+  height: 1em;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* :focus-visible {
+  outline: 2px solid var(--on-background-color);
+  outline-offset: 2px;
+} */

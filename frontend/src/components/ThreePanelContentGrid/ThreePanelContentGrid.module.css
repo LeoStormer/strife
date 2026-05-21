@@ -1,0 +1,40 @@
+.container {
+  --sidebar-width: 0px;
+  grid-area: content;
+  display: grid;
+  grid-template-rows: [title-start] 48px [title-end content-start] 1fr [content-end];
+  grid-template-columns:
+    [full-width-start content-start] 1fr [content-end side-panel-start] var(
+      --sidebar-width
+    )
+    [side-panel-end full-width-end];
+  background-color: var(--on-background-contrast-weak);
+  color: var(--on-background-color);
+  transition: grid-template-columns 0.3s ease;
+}
+
+.container.isSidebarOpen {
+  --sidebar-width: max-content;
+}
+
+.titlePanel {
+  grid-row: title;
+  grid-column: full-width;
+  border-top: 1px solid var(--border-highlight-color);
+  border-bottom: 1px solid var(--border-highlight-color);
+}
+
+.contentPanel {
+  grid-area: content;
+  position: relative;
+  width: 100%;
+  border-right: 1px solid var(--border-highlight-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidePanel {
+  grid-column: side-panel;
+  grid-row: content;
+  overflow: hidden;
+}

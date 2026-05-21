@@ -27,32 +27,30 @@ public class InviteManagerTests extends ServerServiceTestSetup {
     private static final int MAX_ALLOWED_USES = 100;
 
     @NonNull
-    @SuppressWarnings("null")
     private String inviteId;
 
     @NonNull
-    @SuppressWarnings("null")
     private String unlimitedInviteId;
 
     @NonNull
-    @SuppressWarnings("null")
     private String inviteByBannedUserId;
 
     @NonNull
-    @SuppressWarnings("null")
     private String inviteWithNoRemainingUsesId;
 
     @NonNull
-    @SuppressWarnings("null")
     private String expiredInviteId;
 
     @BeforeEach
     public void setupInvites() {
         Server existingServer = serverRepository.findById(existingServerId).get();
         inviteId = inviteRepository.save(new Invite(owner, existingServer, SEVEN_DAYS, MAX_ALLOWED_USES)).getId();
-        expiredInviteId = inviteRepository.save(new Invite(owner, existingServer, -SEVEN_DAYS, MAX_ALLOWED_USES)).getId();
-        inviteWithNoRemainingUsesId = inviteRepository.save(new Invite(owner, existingServer, NUM_INVITES, MAX_ALLOWED_USES, 0)).getId();
-        unlimitedInviteId = inviteRepository.save(new Invite(bannedUser, existingServer, SEVEN_DAYS, Invite.UNLIMITED_USES)).getId();
+        expiredInviteId = inviteRepository.save(new Invite(owner, existingServer, -SEVEN_DAYS, MAX_ALLOWED_USES))
+                .getId();
+        inviteWithNoRemainingUsesId = inviteRepository
+                .save(new Invite(owner, existingServer, NUM_INVITES, MAX_ALLOWED_USES, 0)).getId();
+        unlimitedInviteId = inviteRepository
+                .save(new Invite(bannedUser, existingServer, SEVEN_DAYS, Invite.UNLIMITED_USES)).getId();
 
         for (int i = 0; i < NUM_INVITES - 4; i++) {
             Invite invite = new Invite(owner, existingServer, SEVEN_DAYS, MAX_ALLOWED_USES);
