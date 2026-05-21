@@ -78,6 +78,11 @@ services:
       - APP_WEBSOCKET_ALLOWED_ORIGINS=http://localhost
       - APP_CORS_ALLOWED_ORIGINS=http://localhost
       - SPRING_SESSION_TIMEOUT=7d
+      - SERVER_FORWARD-HEADERS_STRATEGY=native
+      - SERVER_SERVLET_SESSION_COOKIE_HTTP_ONLY=true
+      - SERVER_SERVLET_SESSION_COOKIE_SAME_SITE=lax
+      # - SERVER_SERVLET_SESSION_COOKIE_SECURE=true
+      # - APP_CSRF_SECURE=true
 
   frontend:
     build:
