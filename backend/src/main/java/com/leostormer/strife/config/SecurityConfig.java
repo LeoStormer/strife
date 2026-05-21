@@ -92,8 +92,8 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/api/user/logout")
                         .addLogoutHandler(logoutHandler())
+                        .deleteCookies("SESSION")
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler()))
-                .httpBasic(Customizer.withDefaults())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .build();
