@@ -150,15 +150,20 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
   const { data: verifiedUser, isLoading: isAuthLoading } = useQuery({
     queryKey: ["user", localUser?.id],
     queryFn: async () => {
-      await api.get("/user/auth-status");
-      return localUser;
+      const user = await api
+        .get("/user/auth-status")
+        .then(() => localUser!)
+        .catch(() => null);
+
+      return user;
     },
     enabled: localUserFound,
     staleTime: Infinity,
     retry: false,
   });
 
-  const currentUser = verifiedUser ?? localUser;
+  const isLoading = localUserFound && isAuthLoading;
+  const currentUser = verifiedUser ?? null;
 
   useEffect(() => {
     if (currentUser?.id) {
@@ -179,7 +184,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
     } finally {
       setLocalUser(null);
       queryClient.clear();
-      api.get("/auth/csrf")
+      api.get("/auth/csrf");
     }
   }, [queryClient, setLocalUser]);
 
@@ -215,7 +220,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
   const value = useMemo(
     () => ({
       user: currentUser,
-      isLoading: localUserFound && isAuthLoading,
+      isLoading,
       isLoggingIn: loginMutation.isPending,
       isRegistering: registerMutation.isPending,
       login: async (req: LoginRequest) => {
@@ -226,14 +231,7 @@ export const UserContextProvider = ({ children }: PropsWithChildren) => {
       },
       logout,
     }),
-    [
-      currentUser,
-      isAuthLoading,
-      localUser,
-      loginMutation,
-      registerMutation,
-      logout,
-    ],
+    [currentUser, isLoading, loginMutation, registerMutation, logout],
   );
 
   return <UserContext value={value}>{children}</UserContext>;
