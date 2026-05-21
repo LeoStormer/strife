@@ -33,7 +33,7 @@ echo "✅ Replica set initialized."
 
 echo "Waiting for Primary to be ready for writes..."
 
-until mongosh --host mongo1:27017 --quiet --eval "db.hello().isWritablePrimary" | grep -q "true"; do
+until mongosh --host mongo1:27017 --quiet --json=canonical --eval "db.hello().isWritablePrimary" | grep -q "true"; do
     sleep 0.5
 done
 
